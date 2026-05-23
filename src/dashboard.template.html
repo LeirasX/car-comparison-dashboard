@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Car Money Left Comparison</title>
+  <style>
+    :root {
+      --bg:#f4f1ec;
+      --bg-soft:#faf8f4;
+      --panel:rgba(255,255,255,.86);
+      --panel-solid:#fffdfa;
+      --ink:#171a1d;
+      --muted:#66706d;
+      --muted-2:#89918d;
+      --line:rgba(31,38,35,.12);
+      --line-strong:rgba(31,38,35,.2);
+      --accent:#315f52;
+      --accent-soft:#e8f0ec;
+      --good:#14714f;
+      --good-soft:#e7f4ee;
+      --amber:#9a650c;
+      --amber-soft:#fff5dc;
+      --red:#b13a32;
+      --red-soft:#fff0ee;
+      --shadow:0 18px 50px rgba(28,31,30,.08);
+      --shadow-soft:0 8px 24px rgba(28,31,30,.06);
+      --radius:18px;
+      --radius-sm:12px;
+      --max:1180px;
+      --font:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color:var(--ink);
+      background:var(--bg);
+      font-family:var(--font);
+    }
+    * { box-sizing:border-box; }
+    html { background:var(--bg); scroll-behavior:smooth; }
+    body {
+      margin:0;
+      min-width:320px;
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,.95), transparent 38rem),
+        linear-gradient(180deg, #fbfaf7 0%, var(--bg) 46%, #f7f5f0 100%);
+      color:var(--ink);
+      font-size:15px;
+      line-height:1.45;
+    }
+    body::before {
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background-image:linear-gradient(rgba(23,26,29,.035) 1px, transparent 1px);
+      background-size:100% 34px;
+      mask-image:linear-gradient(to bottom, rgba(0,0,0,.8), transparent 420px);
+    }
+    header, main { width:min(var(--max), calc(100% - clamp(28px,5vw,72px))); margin:0 auto; }
+    header { padding:34px 0 22px; }
+    main { padding:0 0 54px; }
+    h1 { margin:0; max-width:820px; font-size:clamp(34px,6vw,64px); line-height:.98; letter-spacing:-.03em; font-weight:760; }
+    h2 { margin:0 0 14px; font-size:20px; letter-spacing:-.01em; }
+    h3 { margin:0 0 10px; font-size:15px; letter-spacing:-.005em; }
+    p { margin:0; color:var(--muted); }
+    button, input, select { font:inherit; }
+    .hero {
+      display:grid;
+      grid-template-columns:minmax(0,1.45fr) minmax(280px,.8fr);
+      gap:22px;
+      align-items:stretch;
+      margin-bottom:22px;
+    }
+    .hero-copy, .hero-card, .panel {
+      background:var(--panel);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow-soft);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+    }
+    .hero-copy { border-radius:28px; padding:clamp(24px,4vw,42px); min-height:300px; display:flex; flex-direction:column; justify-content:space-between; }
+    .eyebrow { display:inline-flex; align-items:center; gap:8px; margin-bottom:18px; color:var(--accent); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
+    .hero-copy p { max-width:700px; margin-top:18px; font-size:clamp(16px,2vw,19px); color:#4f5955; }
+    .hero-card { border-radius:28px; padding:22px; display:flex; flex-direction:column; gap:16px; }
+    .hero-card h2 { font-size:16px; margin:0; }
+    .hero-metric { padding:16px; border-radius:16px; background:linear-gradient(180deg, #fff, #f8faf8); border:1px solid var(--line); }
+    .hero-metric span { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+    .hero-metric strong { display:block; margin-top:7px; font-size:clamp(22px,3vw,34px); letter-spacing:-.02em; }
+    .hero-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:24px; }
+    .button {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      min-height:42px;
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid var(--line-strong);
+      background:#fff;
+      color:var(--ink);
+      text-decoration:none;
+      font-weight:800;
+      cursor:pointer;
+      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease;
+    }
+    .button:hover { transform:translateY(-1px); box-shadow:var(--shadow-soft); border-color:rgba(49,95,82,.36); }
+    .button.primary { background:var(--ink); border-color:var(--ink); color:#fff; }
+    .panel { border-radius:var(--radius); padding:18px; }
+    .group { margin-bottom:18px; overflow:hidden; animation:rise .34s ease both; }
+    .group > summary {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-height:46px;
+      list-style:none;
+      cursor:pointer;
+      font-weight:820;
+      font-size:18px;
+      margin:-4px -4px 16px;
+      padding:4px;
+      border-radius:14px;
+      outline:none;
+    }
+    .group > summary::-webkit-details-marker { display:none; }
+    .group > summary::after {
+      content:"";
+      width:9px;
+      height:9px;
+      margin-left:auto;
+      border-right:2px solid var(--muted);
+      border-bottom:2px solid var(--muted);
+      transform:rotate(45deg);
+      transition:transform .18s ease;
+    }
+    .group[open] > summary::after { transform:rotate(225deg); }
+    .group > summary:hover { background:rgba(49,95,82,.06); }
+    .section-icon, .icon {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 auto;
+    }
+    .section-icon {
+      width:32px;
+      height:32px;
+      border-radius:10px;
+      background:var(--accent-soft);
+      color:var(--accent);
+    }
+    .icon svg, .section-icon svg, [data-icon] > svg { width:18px; height:18px; stroke:currentColor; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; display:block; }
+    .grid { display:grid; gap:16px; }
+    .two { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; align-items:start; }
+    .car-panel {
+      background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(253,251,247,.9));
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px;
+      box-shadow:0 1px 0 rgba(255,255,255,.7) inset;
+    }
+    .car-panel h3 { display:flex; align-items:center; gap:8px; margin-bottom:14px; font-size:16px; }
+    label { display:grid; gap:6px; color:#303835; font-size:13px; font-weight:760; }
+    .field-label { display:flex; align-items:center; gap:6px; color:#303835; font-size:13px; font-weight:760; }
+    .field-row { display:grid; grid-template-columns:minmax(170px,1fr) minmax(120px,170px); gap:10px; align-items:start; margin-bottom:12px; }
+    input, select {
+      width:100%;
+      min-height:42px;
+      border:1px solid var(--line-strong);
+      border-radius:12px;
+      padding:10px 12px;
+      background:rgba(255,255,255,.92);
+      color:var(--ink);
+      box-shadow:0 1px 0 rgba(255,255,255,.75) inset;
+      transition:border-color .16s ease, box-shadow .16s ease, transform .16s ease, background .16s ease;
+    }
+    select { appearance:auto; }
+    input:hover, select:hover { border-color:rgba(49,95,82,.34); background:#fff; }
+    input:focus, select:focus, button:focus-visible, summary:focus-visible, a:focus-visible {
+      outline:3px solid rgba(49,95,82,.2);
+      outline-offset:2px;
+      border-color:var(--accent);
+      box-shadow:0 0 0 4px rgba(49,95,82,.09);
+    }
+    .field-help { margin-top:6px; color:var(--muted); font-size:12px; line-height:1.35; font-weight:500; }
+    .help {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:17px;
+      height:17px;
+      border:1px solid rgba(49,95,82,.22);
+      border-radius:50%;
+      color:var(--accent);
+      background:#fff;
+      font-size:11px;
+      font-weight:900;
+      cursor:help;
+      vertical-align:middle;
+    }
+    .subtle { color:var(--muted); font-size:12px; }
+    .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+    .kpi {
+      position:relative;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:linear-gradient(180deg, #fff, #fbfaf6);
+      padding:16px;
+      box-shadow:var(--shadow-soft);
+      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+    .kpi:hover { transform:translateY(-2px); box-shadow:var(--shadow); }
+    .kpi span { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px; font-weight:820; text-transform:uppercase; letter-spacing:.04em; }
+    .kpi strong { display:block; margin-top:8px; font-size:18px; line-height:1.2; }
+    .kpi p { margin-top:7px; font-weight:760; color:var(--accent); }
+    .selected-card {
+      border-color:rgba(20,113,79,.42);
+      background:linear-gradient(180deg, #fbfffc, var(--good-soft));
+      box-shadow:0 18px 40px rgba(20,113,79,.12);
+      animation:winnerPulse .9s ease both;
+    }
+    .selected-card::before {
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:18px;
+      pointer-events:none;
+      box-shadow:0 0 0 1px rgba(20,113,79,.12) inset;
+    }
+    .reason-card {
+      margin-top:14px;
+      background:linear-gradient(180deg, #fff, #fbfaf6);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px;
+    }
+    .reason-card h3 { display:flex; align-items:center; gap:8px; }
+    .table-wrap {
+      overflow-x:auto;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:var(--panel-solid);
+      box-shadow:0 1px 0 rgba(255,255,255,.7) inset;
+      -webkit-overflow-scrolling:touch;
+    }
+    table { width:100%; min-width:920px; border-collapse:separate; border-spacing:0; }
+    th,td { padding:12px 14px; border-bottom:1px solid var(--line); text-align:right; font-size:13px; vertical-align:top; }
+    th:first-child,td:first-child { text-align:left; position:sticky; left:0; z-index:1; background:var(--panel-solid); }
+    th {
+      background:#f0eee8;
+      color:#3e4643;
+      font-size:12px;
+      font-weight:820;
+      text-transform:uppercase;
+      letter-spacing:.035em;
+      white-space:nowrap;
+    }
+    th:first-child { background:#f0eee8; z-index:2; }
+    tbody tr:hover td { background:#fbfaf6; }
+    tbody tr:last-child td { border-bottom:0; }
+    .winner { color:var(--good); font-weight:900; }
+    .charts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+    .chart-card {
+      background:linear-gradient(180deg, #fff, #fbfaf6);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+      min-height:330px;
+      box-shadow:var(--shadow-soft);
+      transition:transform .16s ease, box-shadow .16s ease;
+    }
+    .chart-card:hover { transform:translateY(-2px); box-shadow:var(--shadow); }
+    .chart-card h3 { display:flex; align-items:center; gap:8px; }
+    svg { width:100%; height:250px; display:block; overflow:visible; }
+    path, circle, line { transition:all .22s ease; }
+    .legend { display:flex; flex-wrap:wrap; gap:8px 12px; margin-top:8px; color:#43504b; font-size:12px; }
+    .legend span { display:inline-flex; align-items:center; max-width:100%; }
+    .swatch { display:inline-block; width:10px; height:10px; border-radius:999px; margin-right:6px; box-shadow:0 0 0 2px rgba(255,255,255,.8); }
+    details.inline { border-top:1px solid var(--line); padding-top:12px; margin-top:12px; }
+    summary { cursor:pointer; font-weight:800; }
+    ul { margin:8px 0 0; padding-left:18px; color:var(--muted); line-height:1.55; }
+    ol { margin:8px 0 0; padding-left:20px; color:var(--muted); line-height:1.58; }
+    li + li { margin-top:4px; }
+    .notice {
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      margin-top:12px;
+      padding:12px 14px;
+      border:1px solid rgba(154,101,12,.25);
+      background:var(--amber-soft);
+      color:#5f4108;
+      border-radius:14px;
+    }
+    .deficit { color:var(--red); }
+    .section-note { margin:-4px 0 16px; color:var(--muted); font-size:14px; }
+    .mobile-card-list { display:none; }
+    .assumption-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:12px; }
+    .mini-card { border:1px solid var(--line); border-radius:14px; padding:13px; background:rgba(255,255,255,.72); }
+    .mini-card strong { display:block; margin-bottom:4px; }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes winnerPulse { from { transform:translateY(2px); } to { transform:translateY(0); } }
+    @media (prefers-reduced-motion:reduce) {
+      *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.001ms !important; }
+    }
+    @media (max-width:1080px) {
+      .hero { grid-template-columns:1fr; }
+      .two, .charts { grid-template-columns:1fr; }
+      .field-row { grid-template-columns:1fr; }
+      th:first-child,td:first-child { position:static; }
+      table { min-width:760px; }
+    }
+    @media (max-width:680px) {
+      header, main { width:min(100% - 24px, var(--max)); }
+      header { padding-top:18px; }
+      .hero-copy, .hero-card, .panel { border-radius:18px; }
+      .hero-copy { min-height:auto; padding:22px; }
+      .hero-card { padding:16px; }
+      .panel { padding:14px; }
+      .controls { grid-template-columns:1fr; }
+      .group > summary { font-size:16px; }
+      .field-row { gap:6px; }
+      input, select { min-height:46px; font-size:16px; }
+      .kpis { grid-template-columns:1fr; }
+      .charts { gap:12px; }
+      .chart-card { min-height:300px; padding:13px; }
+      svg { height:220px; }
+      table { min-width:700px; }
+      th,td { padding:10px; font-size:12px; }
+      .desktop-table-note { display:none; }
+      .mobile-card-list { display:grid; gap:10px; margin-bottom:12px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <section class="hero" aria-labelledby="pageTitle">
+      <div class="hero-copy">
+        <div>
+          <div class="eyebrow"><span class="section-icon" data-icon="settings"></span>Car money model</div>
+          <h1 id="pageTitle">Which option leaves the most money?</h1>
+          <p>Compare two cars by final money left after investments, resale value, loans, and deficits.</p>
+        </div>
+        <div class="hero-actions">
+          <a class="button primary" href="#results"><span data-icon="winner"></span>See winner</a>
+          <a class="button" href="#setup"><span data-icon="budget"></span>Edit assumptions</a>
+        </div>
+      </div>
+      <aside class="hero-card" id="heroSummary" aria-label="Selected-year decision summary"></aside>
+    </section>
+  </header>
+
+  <main>
+    <section id="results" aria-labelledby="resultsTitle">
+      <h2 id="resultsTitle" class="sr-only">Winner cards</h2>
+      <div id="winnerCards" class="kpis"></div>
+      <div id="winnerReasons"></div>
+      <div id="warningBox"></div>
+    </section>
+
+    <details id="setup" class="panel group" open>
+      <summary><span class="section-icon" data-icon="settings"></span>Setup</summary>
+      <p class="section-note">Start here. These values drive every card, table, chart, and summary below.</p>
+      <div id="setupInputs" class="controls"></div>
+      <h3 style="margin-top:18px"><span data-icon="investment"></span>No Car Baseline</h3>
+      <div id="baselineTable" class="table-wrap"></div>
+    </details>
+
+    <details class="panel group" open>
+      <summary><span class="section-icon" data-icon="car"></span>Car Comparison Inputs</summary>
+      <p class="section-note">Choose the two cars and which payment paths should appear in the results.</p>
+      <div id="choiceInputs" class="grid two"></div>
+    </details>
+
+    <details class="panel group" open>
+      <summary><span class="section-icon" data-icon="loan"></span>Purchase And Finance</summary>
+      <p class="section-note">Financing total is calculated internally from down payment, monthly payment, fees, term, and balloon payment.</p>
+      <div id="financeInputs" class="grid two"></div>
+    </details>
+
+    <details class="panel group" open>
+      <summary><span class="section-icon" data-icon="fuel"></span>Energy And Running Costs</summary>
+      <p class="section-note">Only the fields relevant to the selected car type are shown.</p>
+      <div id="runningInputs" class="grid two"></div>
+    </details>
+
+    <details class="panel group" open>
+      <summary><span class="section-icon" data-icon="resale"></span>Resale Values</summary>
+      <p class="section-note">These values are used directly at each horizon.</p>
+      <div id="resaleInputs" class="grid two"></div>
+    </details>
+
+    <details class="panel group">
+      <summary><span class="section-icon" data-icon="info"></span>Optional Quality Scores</summary>
+        <p style="margin:8px 0 12px">Quality scores do not affect the financial winner.</p>
+        <div id="qualityInputs" class="grid two"></div>
+    </details>
+
+    <details class="panel group" open>
+      <summary><span class="section-icon" data-icon="chart"></span>Results Table</summary>
+      <p class="section-note desktop-table-note">The table scrolls horizontally on small screens. The selected analysis year controls the detail columns.</p>
+      <div id="mobileResultCards" class="mobile-card-list"></div>
+      <h3 style="margin-top:4px">Primary Table</h3>
+      <div id="primaryTable" class="table-wrap"></div>
+      <h3 style="margin-top:16px">Secondary Table</h3>
+      <div id="secondaryTable" class="table-wrap"></div>
+    </details>
+
+    <details class="panel group" open>
+      <summary><span class="section-icon" data-icon="chart"></span>Charts</summary>
+      <div class="charts">
+        <div class="chart-card"><h3><span data-icon="winner"></span>Final money left over time</h3><svg id="moneyChart" role="img" aria-label="Final money left over time chart"></svg><div id="legend1" class="legend"></div></div>
+        <div class="chart-card"><h3><span data-icon="investment"></span>Investment balance over time</h3><svg id="investmentChart" role="img" aria-label="Investment balance over time chart"></svg><div id="legend2" class="legend"></div></div>
+        <div class="chart-card"><h3><span data-icon="budget"></span>Total paid over time</h3><svg id="paidChart" role="img" aria-label="Total paid over time chart"></svg><div id="legend3" class="legend"></div></div>
+      </div>
+    </details>
+
+    <details class="panel group" open>
+      <summary><span class="section-icon" data-icon="info"></span>Explanation And Sensitivity</summary>
+      <div id="summarySteps"></div>
+      <p style="margin-top:12px">final money left = investments + car resale value - loan still owed - deficits</p>
+      <h3 style="margin-top:16px">What Would Change The Winner?</h3>
+      <div id="sensitivityBox"></div>
+    </details>
+
+    <details class="panel group">
+      <summary><span class="section-icon" data-icon="warning"></span>Assumptions And Tests</summary>
+      <div class="assumption-grid">
+        <div class="mini-card"><strong>Not financial advice</strong><p>This is a decision model, not a recommendation to buy, finance, sell, or invest.</p></div>
+        <div class="mini-card"><strong>Default context</strong><p>Portugal-like 2026 assumptions, 25,000 km/year, €500 monthly car budget.</p></div>
+        <div class="mini-card"><strong>Validation</strong><p>Automated tests cover compounding, loans, energy costs, payment modes, and selected-year alignment.</p></div>
+      </div>
+    </details>
+  </main>
+
+  <script>
+/* __MODEL_JS__ */
+  </script>
+  <script>
+    const M = window.CarCompareModel;
+    const colors = ["#176b87", "#b65f35", "#1f7a4d", "#6f5aa8"];
+    const state = {
+      assumptions: structuredClone(M.DEFAULT_ASSUMPTIONS),
+      cars: { car1: M.applyPreset("tesla_model_3_new"), car2: M.applyPreset("cheap_used_ev") },
+    };
+
+    const setupFields = [
+      ["initialCashBudget", "Initial cash available (€)", 0, 200000, 100],
+      ["monthlyBudget", "Monthly car budget (€)", 0, 3000, 10],
+      ["investmentReturn", "Stock return % yearly", 0, 12, 0.25],
+      ["analysisYears", "Analysis years", 3, 10, 1],
+      ["annualKm", "Annual km", 0, 100000, 1000],
+    ];
+    const financeFields = [
+      ["upfrontPrice", "Upfront price (€)", 100],
+      ["downPayment", "Down payment (€)", 100],
+      ["monthlyPayment", "Monthly payment (€)", 1],
+      ["loanMonths", "Loan months", 1],
+      ["openingFee", "Opening fee (€)", 100],
+      ["balloonPayment", "Balloon payment (€)", 100],
+    ];
+    const runningFields = [
+      ["kwhPer100Km", "kWh/100km if EV", 0.1],
+      ["litersPer100Km", "L/100km if combustion", 0.1],
+      ["fuelPrice", "Fuel price €/L", 0.01],
+      ["homeElectricityPrice", "Home electricity €/kWh", 0.01],
+      ["publicElectricityPrice", "Public electricity €/kWh", 0.01],
+      ["homeChargingPct", "Home charging %", 5],
+      ["publicChargingPct", "Public charging %", 5],
+      ["annualMaintenance", "Maintenance/year (€)", 100],
+      ["annualInsurance", "Insurance/year (€)", 100],
+      ["annualRepairs", "Repairs/year (€)", 100],
+      ["annualTax", "Tax/year (€)", 100],
+    ];
+    const HELP = {
+      finalMoneyLeft: "Investments + resale value - loan owed - deficits.",
+      investments: "Money left in the investment account at this year.",
+      carValueLeft: "Estimated resale value at this year.",
+      loanStillOwed: "Remaining loan balance subtracted from money left.",
+      totalPaid: "Cash paid for purchase, loan, running costs, and deficits.",
+      budgetDeficit: "Costs above the monthly budget. Not invested.",
+      financingCost: "Finance total paid minus upfront price.",
+      resaleValue: "Expected car value if sold at this year.",
+      initialCashBudget: "Cash available at month 0 for this decision.",
+      monthlyBudget: "Monthly car budget. Unused money is invested.",
+      investmentReturn: "Annual return converted to a monthly compound rate.",
+      analysisYears: "The headline year used for cards, detail columns, charts, and summary.",
+      annualKm: "Driving distance used for fuel or electricity.",
+      runningCost: "Energy, maintenance, insurance, repairs, and tax.",
+      paymentMode: "Controls which scenarios are shown for this car.",
+      winner: "Highest final money left. Not lowest ownership cost.",
+      upfrontPrice: "Cash price paid at month 0 for upfront scenarios.",
+      downPayment: "Cash paid at month 0 for finance scenarios.",
+      monthlyPayment: "Manual payment used if greater than zero.",
+      loanMonths: "Number of monthly loan payments.",
+      openingFee: "Paid at month 0 and included in finance total.",
+      balloonPayment: "Final payment due at the last loan month.",
+      kwhPer100Km: "EV electricity use per 100 km.",
+      litersPer100Km: "Combustion fuel use per 100 km.",
+      fuelPrice: "Used only for combustion scenarios.",
+      homeElectricityPrice: "Home charging price per kWh.",
+      publicElectricityPrice: "Public charging price per kWh.",
+      chargingSplit: "Home/public shares are normalized if they do not total 100.",
+      maintenance: "Annual maintenance estimate.",
+      insurance: "Annual insurance estimate.",
+      repairs: "Annual repair reserve.",
+      tax: "Annual road tax estimate.",
+    };
+    const FIELD_HELP = {
+      initialCashBudget: "Cash available at month 0 before buying or financing.",
+      monthlyBudget: "Unused monthly budget is invested. Deficits are tracked separately.",
+      investmentReturn: "Used to compound unused cash and monthly leftover budget.",
+      analysisYears: "Controls the headline winner, detail columns, charts, and summary.",
+      annualKm: "Higher distance makes fuel and efficiency matter more.",
+      paymentMode: "Only enabled payment paths appear in results.",
+      upfrontPrice: "Paid immediately in upfront scenarios.",
+      downPayment: "Paid immediately in finance scenarios.",
+      monthlyPayment: "Used directly when filled; otherwise the model calculates a payment.",
+      loanMonths: "Loan balance is subtracted if the loan is not finished.",
+      openingFee: "Paid at month 0 and included in financing cost.",
+      balloonPayment: "Paid at the final loan month if applicable.",
+      kwhPer100Km: "Used only for EV energy cost.",
+      litersPer100Km: "Used only for combustion fuel cost.",
+      fuelPrice: "Combustion energy cost uses this price.",
+      homeElectricityPrice: "Set to 0 for free home charging.",
+      publicElectricityPrice: "Used with the public charging share.",
+      homeChargingPct: "The model normalizes home and public shares.",
+      publicChargingPct: "The model normalizes home and public shares.",
+      annualMaintenance: "Annual estimate divided monthly.",
+      annualInsurance: "Annual estimate divided monthly.",
+      annualRepairs: "Annual repair reserve divided monthly.",
+      annualTax: "Annual tax estimate divided monthly.",
+    };
+    const ICON_PATHS = {
+      budget: '<path d="M3 7h18v10H3z"/><path d="M7 7V5h10v2"/><path d="M7 12h.01M17 12h.01M12 12a2 2 0 1 0 0 .01"/>',
+      investment: '<path d="M4 19V5"/><path d="M4 19h16"/><path d="m7 15 4-4 3 3 5-7"/><path d="M15 7h4v4"/>',
+      car: '<path d="M5 17h14"/><path d="M6 17l1-5 3-4h4l3 4 1 5"/><path d="M8 17v1"/><path d="M16 17v1"/><path d="M8 12h8"/>',
+      fuel: '<path d="M5 21V4h9v17"/><path d="M5 9h9"/><path d="M14 7h2l3 3v8a2 2 0 0 1-4 0v-5h-1"/>',
+      electricity: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+      loan: '<path d="M4 7h16v12H4z"/><path d="M4 11h16"/><path d="M8 15h4"/><path d="M16 15h.01"/>',
+      resale: '<path d="M7 7h10v10H7z"/><path d="M9 3h6v4H9z"/><path d="M9 17v4"/><path d="M15 17v4"/><path d="M5 21h14"/>',
+      winner: '<path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 3"/><path d="M17 6h3a3 3 0 0 1-3 3"/>',
+      warning: '<path d="M12 3 2.5 20h19z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+      info: '<path d="M12 17v-5"/><path d="M12 8h.01"/><circle cx="12" cy="12" r="9"/>',
+      chart: '<path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M12 16V8"/><path d="M16 16v-3"/>',
+      settings: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2 3.4-.2-.1a1.7 1.7 0 0 0-1.9.3 1.7 1.7 0 0 0-.8 1.7V22H9v-.3a1.7 1.7 0 0 0-.8-1.7 1.7 1.7 0 0 0-1.9-.3l-.2.1-2-3.4.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3V9h.3a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1 2-3.4.2.1a1.7 1.7 0 0 0 1.9-.3A1.7 1.7 0 0 0 9.3 1H15v.3a1.7 1.7 0 0 0 .8 1.7 1.7 1.7 0 0 0 1.9.3l.2-.1 2 3.4-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.3v4h-.3a1.7 1.7 0 0 0-1.6 1.4z"/>',
+    };
+
+    function euro(value) {
+      return new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(finite(value));
+    }
+    function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : 0; }
+    function number(value, digits = 1) { return finite(value).toLocaleString("en-IE", { maximumFractionDigits: digits }); }
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+    }
+    function scenarioName(row) { return M.scenarioLabel(row); }
+    function rowAt(scenario, year) { return scenario.horizons[year]; }
+    function selectedYear(result) { return M.selectedYear(result.assumptions); }
+    function help(key) {
+      const text = HELP[key] || "";
+      return text ? `<span class="help" title="${escapeHtml(text)}" aria-label="${escapeHtml(text)}">i</span>` : "";
+    }
+    function labelWithHelp(label, key) { return `${escapeHtml(label)}${help(key)}`; }
+    function icon(name) {
+      return `<span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24">${ICON_PATHS[name] || ICON_PATHS.info}</svg></span>`;
+    }
+    function iconOnly(name) {
+      return `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[name] || ICON_PATHS.info}</svg>`;
+    }
+    function renderStaticIcons() {
+      if (!document.querySelectorAll) return;
+      document.querySelectorAll("[data-icon]").forEach((node) => {
+        node.innerHTML = iconOnly(node.dataset.icon);
+      });
+    }
+    function helperText(field) {
+      const text = FIELD_HELP[field];
+      return text ? `<span class="field-help">${escapeHtml(text)}</span>` : "";
+    }
+
+    function init() {
+      renderStaticIcons();
+      renderSetup();
+      renderAllInputs();
+      update();
+    }
+
+    function renderSetup() {
+      document.getElementById("setupInputs").innerHTML = setupFields.map(([field, label, min, max, step]) => {
+        if (field === "analysisYears") {
+          return `<label>${labelWithHelp(label, field)}<select data-assumption="${field}">${M.HORIZONS.map((year) => `<option value="${year}" ${Number(state.assumptions[field]) === year ? "selected" : ""}>${year} years</option>`).join("")}</select>${helperText(field)}</label>`;
+        }
+        return `<label>${labelWithHelp(label, field)}<input data-assumption="${field}" type="number" min="${min}" max="${max}" step="${step}" value="${state.assumptions[field]}">${helperText(field)}</label>`;
+      }).join("");
+      document.querySelectorAll ? null : null;
+      document.getElementById("setupInputs").querySelectorAll("[data-assumption]").forEach((input) => {
+        input.addEventListener("input", () => {
+          state.assumptions[input.dataset.assumption] = input.value === "" ? "" : Number(input.value);
+          update();
+        });
+      });
+    }
+
+    function renderAllInputs() {
+      renderChoice();
+      renderFinance();
+      renderRunning();
+      renderResale();
+      renderQuality();
+    }
+
+    function carPanel(carKey, html) {
+      return `<div class="car-panel"><h3>${icon("car")}${escapeHtml(state.cars[carKey].name || "Custom vehicle")}</h3>${html}</div>`;
+    }
+
+    function renderChoice() {
+      document.getElementById("choiceInputs").innerHTML = ["car1", "car2"].map((carKey) => {
+        const car = state.cars[carKey];
+        const presetOptions = Object.entries(M.PRESETS).map(([key, preset]) => `<option value="${key}">${escapeHtml(preset.label)}</option>`).join("");
+        const html = `
+          ${selectRow(carKey, "preset", "Preset", `<select data-preset="${carKey}">${presetOptions}</select>`, "runningCost")}
+          ${inputRow(carKey, "name", "Name", `<input id="${carKey}-name" data-car="${carKey}" data-field="name" type="text" value="${escapeHtml(car.name)}">`, "winner")}
+          ${inputRow(carKey, "type", "Type", `<select id="${carKey}-type" data-car="${carKey}" data-field="type"><option value="electric" ${car.type === "electric" ? "selected" : ""}>EV</option><option value="combustion" ${car.type === "combustion" ? "selected" : ""}>Combustion</option></select>`, "runningCost")}
+          ${inputRow(carKey, "paymentMode", "Payment mode", `<select id="${carKey}-paymentMode" data-car="${carKey}" data-field="paymentMode"><option value="upfront" ${car.paymentMode === "upfront" ? "selected" : ""}>Upfront</option><option value="finance" ${car.paymentMode === "finance" ? "selected" : ""}>Finance</option><option value="both" ${car.paymentMode === "both" ? "selected" : ""}>Both</option></select>`, "paymentMode")}`;
+        return carPanel(carKey, html);
+      }).join("");
+      document.querySelectorAll ? null : null;
+      ["car1", "car2"].forEach((carKey) => {
+        const selects = document.getElementById("choiceInputs").querySelectorAll(`[data-preset="${carKey}"]`);
+        selects.forEach((select) => {
+          select.value = presetKeyFor(state.cars[carKey]);
+          select.addEventListener("input", () => {
+            state.cars[carKey] = M.applyPreset(select.value);
+            renderAllInputs();
+            update();
+          });
+        });
+      });
+      bindCarInputs("choiceInputs");
+    }
+
+    function presetKeyFor(car) {
+      const found = Object.entries(M.PRESETS).find(([, preset]) => preset.label === car.label || preset.name === car.name);
+      return found ? found[0] : "custom";
+    }
+
+    function renderFinance() {
+      document.getElementById("financeInputs").innerHTML = ["car1", "car2"].map((carKey) => carPanel(carKey, financeFields.map(([field, label, step]) => numberInput(carKey, field, label, step)).join(""))).join("");
+      bindCarInputs("financeInputs");
+    }
+
+    function renderRunning() {
+      document.getElementById("runningInputs").innerHTML = ["car1", "car2"].map((carKey) => carPanel(carKey, runningFields.filter(([field]) => visibleRunningField(state.cars[carKey], field)).map(([field, label, step]) => {
+        const value = state.cars[carKey][field] ?? state.assumptions[field] ?? "";
+        return inputRow(carKey, field, label, `<input id="${carKey}-${field}" data-car="${carKey}" data-field="${field}" type="number" step="${step}" value="${value}">`, helpKeyForField(field));
+      }).join(""))).join("");
+      bindCarInputs("runningInputs");
+    }
+
+    function visibleRunningField(car, field) {
+      if (car.type === "electric") return !["litersPer100Km", "fuelPrice"].includes(field);
+      return !["kwhPer100Km", "homeElectricityPrice", "publicElectricityPrice", "homeChargingPct", "publicChargingPct"].includes(field);
+    }
+
+    function renderResale() {
+      document.getElementById("resaleInputs").innerHTML = ["car1", "car2"].map((carKey) => {
+        const car = state.cars[carKey];
+        const html = M.HORIZONS.map((year) => inputRow(carKey, `resale-${year}`, `Year ${year} resale (€)`, `<input id="${carKey}-resale-${year}" data-car="${carKey}" data-resale="${year}" type="number" step="100" min="0" value="${car.resaleValues[year]}">`, "resaleValue")).join("");
+        return carPanel(carKey, html);
+      }).join("");
+      bindCarInputs("resaleInputs");
+    }
+
+    function renderQuality() {
+      document.getElementById("qualityInputs").innerHTML = ["car1", "car2"].map((carKey) => carPanel(carKey, numberInput(carKey, "qualityScore", "Quality score 0-10", 0.5))).join("");
+      bindCarInputs("qualityInputs");
+    }
+
+    function numberInput(carKey, field, label, step) {
+      return inputRow(carKey, field, label, `<input id="${carKey}-${field}" data-car="${carKey}" data-field="${field}" type="number" step="${step}" value="${state.cars[carKey][field] ?? ""}">`, helpKeyForField(field));
+    }
+
+    function inputRow(carKey, field, label, control, helpKey) {
+      const id = `${carKey}-${field}`;
+      return `<div class="field-row"><label class="field-label" for="${id}">${labelWithHelp(label, helpKey)}</label><div>${control}${helperText(field)}</div></div>`;
+    }
+
+    function selectRow(carKey, field, label, control, helpKey) {
+      return `<div class="field-row"><label class="field-label">${labelWithHelp(label, helpKey)}</label><div>${control}${helperText(field)}</div></div>`;
+    }
+
+    function helpKeyForField(field) {
+      const map = {
+        upfrontPrice: "upfrontPrice",
+        downPayment: "downPayment",
+        monthlyPayment: "monthlyPayment",
+        loanMonths: "loanMonths",
+        openingFee: "openingFee",
+        balloonPayment: "balloonPayment",
+        kwhPer100Km: "kwhPer100Km",
+        litersPer100Km: "litersPer100Km",
+        fuelPrice: "fuelPrice",
+        homeElectricityPrice: "homeElectricityPrice",
+        publicElectricityPrice: "publicElectricityPrice",
+        homeChargingPct: "chargingSplit",
+        publicChargingPct: "chargingSplit",
+        annualMaintenance: "maintenance",
+        annualInsurance: "insurance",
+        annualRepairs: "repairs",
+        annualTax: "tax",
+      };
+      return map[field] || "runningCost";
+    }
+
+    function bindCarInputs(rootId) {
+      document.getElementById(rootId).querySelectorAll("[data-car]").forEach((input) => {
+        input.addEventListener("input", () => {
+          const car = state.cars[input.dataset.car];
+          if (input.dataset.resale) {
+            car.resaleValues[input.dataset.resale] = Math.max(0, Number(input.value) || 0);
+          } else if (input.tagName === "SELECT" || input.type === "text") {
+            car[input.dataset.field] = input.value;
+            if (input.dataset.field === "type") {
+              if (input.value === "electric") {
+                car.litersPer100Km = 0;
+                if (!car.kwhPer100Km) car.kwhPer100Km = 15;
+              } else {
+                car.kwhPer100Km = 0;
+                if (!car.litersPer100Km) car.litersPer100Km = 6;
+              }
+              renderRunning();
+            }
+          } else {
+            car[input.dataset.field] = input.value === "" ? "" : Number(input.value);
+          }
+          update();
+        });
+      });
+    }
+
+    function update() {
+      const result = M.analyze(state);
+      renderHero(result);
+      renderBaseline(result);
+      renderWinners(result);
+      renderPrimary(result);
+      renderSecondary(result);
+      renderMobileResults(result);
+      renderCharts(result);
+      renderSummary(result);
+      renderSensitivity(result);
+    }
+
+    function renderHero(result) {
+      const activeYear = selectedYear(result);
+      const selected = result.horizonResults.find((horizon) => horizon.year === activeYear);
+      const winner = selected.winner;
+      const runnerUp = selected.rows.filter((row) => row.id !== winner.id).sort((a, b) => b.finalMoneyLeft - a.finalMoneyLeft)[0];
+      const gap = runnerUp ? winner.finalMoneyLeft - runnerUp.finalMoneyLeft : 0;
+      document.getElementById("heroSummary").innerHTML = `
+        <h2>${icon("winner")}Selected ${activeYear}-year winner</h2>
+        <div class="hero-metric"><span>${icon("winner")}Winner</span><strong>${escapeHtml(scenarioName(winner))}</strong></div>
+        <div class="hero-metric"><span>${icon("investment")}Final money left</span><strong>${euro(winner.finalMoneyLeft)}</strong></div>
+        <div class="hero-metric"><span>${icon("chart")}Lead over next option</span><strong>${runnerUp ? euro(gap) : euro(0)}</strong></div>
+      `;
+    }
+
+    function renderBaseline(result) {
+      const activeYear = selectedYear(result);
+      document.getElementById("baselineTable").innerHTML = `<table><thead><tr><th>Year</th><th>Initial cash invested ${help("initialCashBudget")}</th><th>Monthly budget invested ${help("monthlyBudget")}</th><th>Final baseline wealth ${help("finalMoneyLeft")}</th></tr></thead><tbody>${result.baseline.map((row) => `<tr class="${row.year === activeYear ? "winner" : ""}"><td>${row.year}</td><td>${euro(row.initialCashInvested)}</td><td>${euro(row.monthlyBudgetInvested)}</td><td>${euro(row.finalBaselineWealth)}</td></tr>`).join("")}</tbody></table>`;
+    }
+
+    function renderWinners(result) {
+      const activeYear = selectedYear(result);
+      const active = result.horizonResults.find((horizon) => horizon.year === activeYear);
+      document.getElementById("winnerCards").innerHTML = M.HORIZONS.map((year) => {
+        const winner = result.winners[year];
+        return `<div class="kpi ${year === activeYear ? "selected-card" : ""}"><span>${icon("winner")}${year === activeYear ? "Selected winner" : `${year} year winner`} ${help("winner")}</span><strong>${escapeHtml(scenarioName(winner))}</strong><p>${euro(winner.finalMoneyLeft)} final money left</p></div>`;
+      }).join("");
+      const winnerReasons = active ? M.scenarioReasons(active.winner, active.winner, active.rows) : [];
+      const loserReasons = active ? active.rows.filter((row) => row.id !== active.winner.id).map((row) => `<li><strong>${escapeHtml(scenarioName(row))}:</strong> ${escapeHtml(M.scenarioReasons(row, active.winner, active.rows)[0] || row.takeaway)}</li>`).join("") : "";
+      document.getElementById("winnerReasons").innerHTML = active ? `<div class="reason-card"><h3>${icon("winner")}${escapeHtml(scenarioName(active.winner))} wins at ${activeYear} years because</h3><ul>${winnerReasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>${loserReasons ? `<h3 style="margin-top:14px">${icon("info")}Why the others lose</h3><ul>${loserReasons}</ul>` : ""}</div>` : "";
+      const deficits = result.horizonResults.flatMap((h) => h.rows).filter((row) => row.budgetDeficit > 0);
+      document.getElementById("warningBox").innerHTML = deficits.length ? `<div class="notice">${icon("warning")}<span>At least one scenario exceeds the monthly budget. Deficits are subtracted from final money left.</span></div>` : "";
+    }
+
+    function renderPrimary(result) {
+      const activeYear = selectedYear(result);
+      document.getElementById("primaryTable").innerHTML = `<table><thead><tr><th>Scenario</th><th>3y money left ${help("finalMoneyLeft")}</th><th>5y money left ${help("finalMoneyLeft")}</th><th>7y money left ${help("finalMoneyLeft")}</th><th>10y money left ${help("finalMoneyLeft")}</th><th>Investments (${activeYear}y) ${help("investments")}</th><th>Car value (${activeYear}y) ${help("carValueLeft")}</th><th>Loan owed (${activeYear}y) ${help("loanStillOwed")}</th><th>Total paid (${activeYear}y) ${help("totalPaid")}</th><th>Takeaway</th></tr></thead><tbody>${result.scenarios.map((scenario) => {
+        const selected = rowAt(scenario, activeYear);
+        return `<tr><td><strong>${escapeHtml(scenarioName(scenario))}</strong></td>${M.HORIZONS.map((year) => `<td class="${result.winners[year].id === scenario.id ? "winner" : ""}">${euro(rowAt(scenario, year).finalMoneyLeft)}</td>`).join("")}<td>${euro(selected.investments)}</td><td>${euro(selected.carValueLeft)}</td><td>${euro(selected.loanStillOwed)}</td><td>${euro(selected.totalPaid)}</td><td>${escapeHtml(selected.takeaway)}</td></tr>`;
+      }).join("")}</tbody></table>`;
+    }
+
+    function renderSecondary(result) {
+      const activeYear = selectedYear(result);
+      document.getElementById("secondaryTable").innerHTML = `<table><thead><tr><th>Scenario</th><th>Purchase paid</th><th>Running paid ${help("runningCost")}</th><th>Financing cost ${help("financingCost")}</th><th>Resale value ${help("resaleValue")}</th><th>Total paid ${help("totalPaid")}</th><th>Takeaway</th></tr></thead><tbody>${result.scenarios.map((scenario) => {
+        const selected = rowAt(scenario, activeYear);
+        return `<tr><td><strong>${escapeHtml(scenarioName(scenario))}</strong></td><td>${euro(selected.purchasePaid)}</td><td>${euro(selected.runningPaid)}</td><td>${euro(selected.financingCost)}</td><td>${euro(selected.resaleValue)}</td><td>${euro(selected.totalPaid)}</td><td>${escapeHtml(selected.takeaway)}</td></tr>`;
+      }).join("")}</tbody></table>`;
+    }
+
+    function renderMobileResults(result) {
+      const activeYear = selectedYear(result);
+      document.getElementById("mobileResultCards").innerHTML = result.scenarios.map((scenario) => {
+        const selected = rowAt(scenario, activeYear);
+        const winnerClass = result.winners[activeYear].id === scenario.id ? " selected-card" : "";
+        return `<article class="kpi${winnerClass}">
+          <span>${icon("car")}${escapeHtml(scenarioName(scenario))}</span>
+          <strong>${euro(selected.finalMoneyLeft)}</strong>
+          <p>${activeYear}y final money left</p>
+          <p class="subtle">${euro(selected.investments)} investments · ${euro(selected.carValueLeft)} car value · ${euro(selected.loanStillOwed)} loan</p>
+        </article>`;
+      }).join("");
+    }
+
+    function renderCharts(result) {
+      const series = result.scenarios.map((scenario, index) => ({ name: scenarioName(scenario), color: colors[index % colors.length], values: M.HORIZONS.map((year) => scenario.horizons[year]) }));
+      const activeYear = selectedYear(result);
+      lineChart("moneyChart", series, "finalMoneyLeft", "legend1", activeYear);
+      lineChart("investmentChart", series, "investments", "legend2", activeYear);
+      lineChart("paidChart", series, "totalPaid", "legend3", activeYear);
+    }
+
+    function lineChart(id, series, field, legendId, activeYear) {
+      const svg = document.getElementById(id);
+      const width = 620, height = 245, pad = 44;
+      const all = series.flatMap((s) => s.values.map((v) => finite(v[field])));
+      const maxY = Math.max(1, ...all) * 1.08;
+      const minY = Math.min(0, ...all);
+      const x = (year) => pad + (year - 3) / 7 * (width - pad * 1.4);
+      const y = (value) => height - pad - (value - minY) / (maxY - minY || 1) * (height - pad * 1.45);
+      const grid = [0, 0.25, 0.5, 0.75, 1].map((tick) => {
+        const gy = pad * 0.5 + tick * (height - pad * 1.45);
+        const value = maxY - tick * (maxY - minY);
+        return `<line x1="${pad}" x2="${width - 18}" y1="${gy}" y2="${gy}" stroke="#e6eaf0"/><text x="3" y="${gy + 4}" font-size="10" fill="#667180">${euro(value)}</text>`;
+      }).join("");
+      const activeX = x(activeYear);
+      const axis = `<line x1="${pad}" x2="${width - 18}" y1="${height - pad}" y2="${height - pad}" stroke="#aeb7c3"/><line x1="${activeX}" x2="${activeX}" y1="${pad * 0.5}" y2="${height - pad}" stroke="#176b87" stroke-dasharray="4 4"/>${M.HORIZONS.map((year) => `<text x="${x(year) - 6}" y="${height - 18}" font-size="11" fill="#667180">${year}</text>`).join("")}`;
+      const paths = series.map((s) => `<path d="${s.values.map((point, index) => `${index === 0 ? "M" : "L"} ${x(point.year).toFixed(1)} ${y(point[field]).toFixed(1)}`).join(" ")}" fill="none" stroke="${s.color}" stroke-width="2.5"/>`).join("");
+      const markers = series.map((s) => {
+        const point = s.values.find((value) => value.year === activeYear);
+        return point ? `<circle cx="${x(point.year).toFixed(1)}" cy="${y(point[field]).toFixed(1)}" r="4" fill="${s.color}" stroke="#fff" stroke-width="1.5"/>` : "";
+      }).join("");
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.innerHTML = `${grid}${axis}${paths}${markers}`;
+      document.getElementById(legendId).innerHTML = series.map((item) => `<span><i class="swatch" style="background:${item.color}"></i>${escapeHtml(item.name)}</span>`).join("");
+    }
+
+    function renderSummary(result) {
+      const activeYear = selectedYear(result);
+      const selected = result.horizonResults.find((horizon) => horizon.year === activeYear);
+      const winner = selected.winner;
+      const runnerUp = selected.rows.filter((row) => row.id !== winner.id).sort((a, b) => b.finalMoneyLeft - a.finalMoneyLeft)[0];
+      const gap = runnerUp ? winner.finalMoneyLeft - runnerUp.finalMoneyLeft : 0;
+      document.getElementById("summarySteps").innerHTML = `<ol>
+        <li>You start with ${euro(result.assumptions.initialCashBudget)}.</li>
+        <li>${escapeHtml(scenarioName(winner))} pays ${euro(winner.month0Paid)} at month 0, so ${euro(winner.month0Invested)} is invested immediately.</li>
+        <li>Its average monthly car cost is ${euro(winner.averageMonthlyCarCost)}, leaving about ${euro(winner.averageMonthlyInvested)} per month to invest from the ${euro(result.assumptions.monthlyBudget)} budget.</li>
+        <li>The monthly investment rate is (1 + annual return)^(1/12) - 1.</li>
+        <li>At ${activeYear} years it has ${euro(winner.investments)} in investments, ${euro(winner.carValueLeft)} car value, ${euro(winner.loanStillOwed)} loan owed, and ${euro(winner.budgetDeficit)} deficits.</li>
+        <li>Final money left = investments + car resale value - loan still owed - deficits.</li>
+        <li>The ${activeYear} year winner is ${escapeHtml(scenarioName(winner))} with ${euro(winner.finalMoneyLeft)}${runnerUp ? `, ${euro(gap)} ahead of ${escapeHtml(scenarioName(runnerUp))}` : ""}.</li>
+      </ol>`;
+    }
+
+    function renderSensitivity(result) {
+      const activeYear = selectedYear(result);
+      const baseWinner = result.winners[activeYear];
+      const baseRows = result.horizonResults.find((horizon) => horizon.year === activeYear).rows;
+      const insights = [];
+      const runVariant = (mutate) => {
+        const draft = structuredClone(state);
+        draft.assumptions.analysisYears = activeYear;
+        mutate(draft);
+        return M.analyze(draft);
+      };
+      const winnerName = (variant) => scenarioName(variant.winners[activeYear]);
+      const stockWinners = [0, 5, 8, 10].map((rate) => {
+        const variant = runVariant((draft) => { draft.assumptions.investmentReturn = rate; });
+        return { rate, name: winnerName(variant) };
+      });
+      const changedStock = stockWinners.find((item) => item.name !== scenarioName(baseWinner));
+      insights.push(changedStock
+        ? `At ${changedStock.rate}% stock return, the winner changes to ${changedStock.name}.`
+        : `Winner is stable across 0%, 5%, 8%, and 10% stock return checks.`);
+
+      const kmWinners = [10000, 15000, 25000, 35000].map((km) => {
+        const variant = runVariant((draft) => { draft.assumptions.annualKm = km; });
+        return { km, name: winnerName(variant) };
+      });
+      const changedKm = kmWinners.find((item) => item.name !== scenarioName(baseWinner));
+      insights.push(changedKm
+        ? `At ${number(changedKm.km, 0)} km/year, the winner changes to ${changedKm.name}.`
+        : `Winner is stable from 10k to 35k km/year.`);
+
+      const fuelUp = runVariant((draft) => {
+        draft.assumptions.fuelPrice = finite(draft.assumptions.fuelPrice) * 1.2;
+        Object.values(draft.cars).forEach((car) => { if (typeof car.fuelPrice !== "undefined") car.fuelPrice = finite(car.fuelPrice) * 1.2; });
+      });
+      insights.push(winnerName(fuelUp) !== scenarioName(baseWinner)
+        ? `With fuel 20% higher, the winner changes to ${winnerName(fuelUp)}.`
+        : `Fuel +20% does not change the ${activeYear} year winner.`);
+
+      const resaleDown = runVariant((draft) => {
+        Object.values(draft.cars).forEach((car) => {
+          Object.keys(car.resaleValues).forEach((year) => { car.resaleValues[year] = Math.max(0, finite(car.resaleValues[year]) * 0.8); });
+        });
+      });
+      insights.push(winnerName(resaleDown) !== scenarioName(baseWinner)
+        ? `With resale values 20% lower, the winner changes to ${winnerName(resaleDown)}.`
+        : `Resale -20% does not change the ${activeYear} year winner.`);
+
+      const repairsUp = runVariant((draft) => {
+        Object.values(draft.cars).forEach((car) => { car.annualRepairs = finite(car.annualRepairs) * 1.2; });
+      });
+      const repairWinner = winnerName(repairsUp);
+      if (repairWinner !== scenarioName(baseWinner)) insights.push(`With repairs 20% higher, the winner changes to ${repairWinner}.`);
+      const margin = baseRows.slice().sort((a, b) => b.finalMoneyLeft - a.finalMoneyLeft);
+      if (margin[1]) insights.push(`Current ${activeYear} year margin is ${euro(margin[0].finalMoneyLeft - margin[1].finalMoneyLeft)} over ${scenarioName(margin[1])}.`);
+
+      document.getElementById("sensitivityBox").innerHTML = `<ul>${insights.slice(0, 4).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+    }
+
+    init();
+  </script>
+</body>
+</html>
