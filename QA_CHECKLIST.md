@@ -1,47 +1,37 @@
 # QA Checklist
 
 ## Calculation Tests
-- Baseline compounding uses `(1 + annual return)^(1/12) - 1`.
-- 0% return equals starting invested cash plus monthly contributions.
-- Finance total equals down payment + monthly payment * months + fees + balloon.
-- Loan balance is subtracted before the loan ends and is never negative.
+
+- Stock return is fixed at 8% yearly and converted to a monthly compound rate.
+- Changing `Years owned` updates the winner, final money, resale estimate, loan left, summary, table, and warnings.
+- Finance total equals down payment + monthly payment * months.
+- Loan terms shorter than ownership years stop payments and increase later monthly investing.
+- Loan terms longer than ownership years leave a remaining loan balance that is subtracted.
+- Monthly budget deficits are warned and subtracted from final money.
+- Upfront price or down payment above initial cash marks the option impossible.
+- Auto resale updates with years unless custom resale is active.
 - EV free home charging produces zero energy cost.
+- 0 km/year produces zero fuel/energy cost.
 - Combustion fuel cost equals annual km / 100 * L/100km * fuel price.
-- Deficits are subtracted and never invested.
+- Results avoid NaN, undefined, Infinity, and negative loan balances.
 
-## Input Reactivity Tests
-- Initial cash, monthly budget, stock return, analysis year, annual km.
-- Preset, name, type, and payment mode.
-- Upfront price, down payment, monthly payment, loan months, opening fee, balloon payment.
-- kWh/100km, L/100km, fuel, electricity prices, charging split.
-- Maintenance, insurance, repairs, tax.
-- Resale values at 3, 5, 7, and 10 years.
+## UI Tests
 
-## UI Alignment Tests
-- Winner cards use the selected analysis year as the headline.
-- Primary detail columns use the selected year.
-- Secondary table uses the selected year.
-- Charts mark the selected year.
-- Final summary uses the selected year.
-- Takeaways are based on the selected year.
-- Hidden payment modes never display disabled scenarios.
+- Upfront mode shows upfront price and hides finance fields.
+- Finance mode shows cash price, down payment, monthly payment, and months.
+- EV shows electricity fields and hides fuel fields.
+- Hybrid and combustion show fuel fields and hide electricity fields.
+- Custom names appear in results; `Custom`, `Car 1`, and `Car 2` do not.
+- Help text is attached to section titles and important labels, and matches the formulas.
+- Results have one table with the requested columns only.
+- Removed sections stay removed: presets, charts, baseline, quality scores, assumptions, explanation, and duplicate tables.
 
-## Responsive Tests
-- Desktop, laptop, tablet, and mobile layouts keep controls usable.
-- Tables scroll horizontally instead of breaking the page.
-- Charts resize inside their cards.
-- Collapsible sections remain tappable.
+## Responsive Checks
 
-## Edge Cases
-- 0% stock return.
-- 0 annual km.
-- 0 fuel/electricity cost.
-- 100% home charging and 100% public charging.
-- Upfront price higher than initial cash.
-- Down payment higher than initial cash.
-- Monthly car cost higher than monthly budget.
-- Loan longer and shorter than analysis period.
-- Resale value higher than purchase price.
-- Empty custom name.
-- Switching EV to combustion and combustion to EV.
-- Switching presets after manual edits.
+- iPhone width has no page-level horizontal overflow; table scrolls inside its card.
+- Android width has no page-level horizontal overflow; table scrolls inside its card.
+- iPad/tablet width keeps fields readable and controls touch-sized.
+- Desktop width keeps the quiet card layout and premium spacing.
+- All five sections collapse and reopen.
+- Mobile/touch help works by tapping labels or reopening section titles.
+- Hero, warnings, and results update immediately when inputs change.

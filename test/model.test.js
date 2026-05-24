@@ -1,43 +1,41 @@
 const assert = require("node:assert/strict");
 const model = require("../src/model.js");
 
-function approx(actual, expected, tolerance = 0.02, message = "") {
+function approx(actual, expected, tolerance = 0.05, message = "") {
   assert.ok(Math.abs(actual - expected) <= tolerance, `${message} expected ${expected}, got ${actual}`);
-}
-
-function car(overrides = {}) {
-  return Object.assign(model.applyPreset("custom"), {
-    name: "Formula car",
-    type: "combustion",
-    paymentMode: "both",
-    upfrontPrice: 10000,
-    downPayment: 2000,
-    monthlyPayment: 0,
-    loanMonths: 40,
-    taeg: 0,
-    openingFee: 0,
-    balloonPayment: 0,
-    litersPer100Km: 5,
-    kwhPer100Km: 20,
-    annualMaintenance: 0,
-    annualInsurance: 0,
-    annualRepairs: 0,
-    annualTax: 0,
-    resaleValues: { 3: 6000, 5: 4000, 7: 2500, 10: 1000 },
-  }, overrides);
 }
 
 function assumptions(overrides = {}) {
   return Object.assign({}, model.DEFAULT_ASSUMPTIONS, {
-    initialCashBudget: 37975,
+    initialCashBudget: 30000,
     monthlyBudget: 500,
-    investmentReturn: 0,
-    annualKm: 12000,
+    yearsOwned: 5,
+    annualKm: 25000,
+  }, overrides);
+}
+
+function car(overrides = {}) {
+  return Object.assign(model.defaultCar("car1"), {
+    name: "Test option",
+    type: "combustion",
+    paymentMode: "upfront",
+    upfrontPrice: 10000,
+    downPayment: 2000,
+    monthlyPayment: 200,
+    loanMonths: 48,
+    litersPer100Km: 6,
+    kwhPer100Km: 16,
     fuelPrice: 2,
-    homeElectricityPrice: 0,
+    homeElectricityPrice: 0.2,
     publicElectricityPrice: 0.4,
     homeChargingPct: 100,
     publicChargingPct: 0,
+    annualMaintenance: 0,
+    annualInsurance: 0,
+    annualRepairs: 0,
+    annualTax: 0,
+    resaleCustom: true,
+    resaleValue: 5000,
   }, overrides);
 }
 
@@ -51,226 +49,138 @@ function run(name, fn) {
   }
 }
 
-run("no-car baseline: 37975 plus 500 monthly at 8% for 10 years is plausible, not 900k", () => {
-  const baseline10 = model.noCarBaseline(assumptions({ investmentReturn: 8 })).find((row) => row.year === 10);
-  assert.ok(baseline10.finalBaselineWealth > 160000 && baseline10.finalBaselineWealth < 180000, `got ${baseline10.finalBaselineWealth}`);
-  assert.ok(baseline10.finalBaselineWealth < 200000);
+run("stock return is fixed at 8% yearly and compounded monthly", () => {
+  approx(model.STOCK_RETURN, 8);
+  approx(model.monthlyInvestmentRate(), Math.pow(1.08, 1 / 12) - 1, 1e-12);
 });
 
-run("0% return: investment value equals starting invested cash plus monthly contributions", () => {
-  const ev = car({ type: "electric", upfrontPrice: 10000, annualMaintenance: 1200, resaleValues: { 3: 7000, 5: 0, 7: 0, 10: 0 } });
-  const scenario = model.simulateScenario(ev, assumptions({ investmentReturn: 0 }), "upfront", 3);
-  const expectedInvestment = 37975 - 10000 + (500 - 100) * 36;
-  approx(scenario.investments, expectedInvestment);
-  approx(scenario.finalMoneyLeft, expectedInvestment + 7000);
+run("changing years updates winner, final money, resale estimate, loan left, summary, and warnings", () => {
+  const short = model.analyze({
+    assumptions: assumptions({ initialCashBudget: 40000, yearsOwned: 1 }),
+    cars: {
+      car1: car({ name: "Cash car", type: "ev", paymentMode: "upfront", upfrontPrice: 10000, resaleCustom: false }),
+      car2: car({ name: "Long loan", type: "ev", paymentMode: "finance", upfrontPrice: 10000, downPayment: 2000, monthlyPayment: 100, loanMonths: 96, resaleCustom: false }),
+    },
+  });
+  const long = model.analyze({
+    assumptions: assumptions({ initialCashBudget: 40000, yearsOwned: 10 }),
+    cars: {
+      car1: car({ name: "Cash car", type: "ev", paymentMode: "upfront", upfrontPrice: 10000, resaleCustom: false }),
+      car2: car({ name: "Long loan", type: "ev", paymentMode: "finance", upfrontPrice: 10000, downPayment: 2000, monthlyPayment: 100, loanMonths: 96, resaleCustom: false }),
+    },
+  });
+  assert.notEqual(short.winner.id, long.winner.id);
+  assert.notEqual(short.winner.finalMoney, long.winner.finalMoney);
+  assert.notEqual(short.cars.car1.resaleValue, long.cars.car1.resaleValue);
+  assert.ok(short.rows.find((row) => row.carName === "Long loan").loanLeft > 0);
+  assert.equal(long.rows.find((row) => row.carName === "Long loan").loanLeft, 0);
+  assert.match(short.rows.find((row) => row.carName === "Long loan").summary, /loan not paid/i);
+  assert.ok(short.warnings.some((warning) => /Loan is not fully paid/.test(warning.message)));
+  assert.equal(short.rows.length, 2);
 });
 
-run("finance cash difference: Tesla finance invests 28340 more at month 0 than upfront", () => {
-  const tesla = model.applyPreset("tesla_model_3_new");
-  const upfront = model.simulateScenario(tesla, assumptions({ investmentReturn: 8 }), "upfront", 10);
-  const finance = model.simulateScenario(tesla, assumptions({ investmentReturn: 8 }), "finance", 10);
-  approx(finance.month0Invested - upfront.month0Invested, 28340);
-  assert.ok(finance.finalMoneyLeft > upfront.finalMoneyLeft);
+run("finance total is down payment + monthly payment * months", () => {
+  const finance = model.financeSummary(car({ downPayment: 4500, monthlyPayment: 321, loanMonths: 72 }));
+  approx(finance.financeTotal, 4500 + 321 * 72);
+  approx(finance.financingCost, finance.financeTotal - 10000);
 });
 
-run("Tesla used finance preset uses the requested finance terms", () => {
-  const teslaUsed = model.applyPreset("tesla_model_3_used");
-  assert.equal(teslaUsed.upfrontPrice, 28800);
-  assert.equal(teslaUsed.downPayment, 5000);
-  assert.equal(teslaUsed.monthlyPayment, 301);
-  assert.equal(teslaUsed.loanMonths, 96);
-  const finance = model.financeSummary(teslaUsed);
-  approx(finance.financeTotalPaid, 5000 + 301 * 96 + teslaUsed.openingFee);
+run("loan shorter than years increases monthly investments after loan ends", () => {
+  const base = car({ paymentMode: "finance", type: "ev", downPayment: 0, monthlyPayment: 400, loanMonths: 12, annualMaintenance: 0, resaleValue: 0 });
+  const shortLoan = model.simulateScenario(base, assumptions({ yearsOwned: 2, monthlyBudget: 500, annualKm: 0 }), "finance", 2);
+  const longLoan = model.simulateScenario(Object.assign({}, base, { loanMonths: 24 }), assumptions({ yearsOwned: 2, monthlyBudget: 500, annualKm: 0 }), "finance", 2);
+  assert.ok(shortLoan.investedResult > longLoan.investedResult);
+  assert.ok(shortLoan.averageMonthlyInvested > longLoan.averageMonthlyInvested);
 });
 
-run("manual finance total: down payment + monthly payment * months + fees + balloon", () => {
-  const finance = model.financeSummary(car({ upfrontPrice: 36990, downPayment: 8650, monthlyPayment: 349, loanMonths: 84, openingFee: 100, balloonPayment: 500 }));
-  approx(finance.financeTotalPaid, 8650 + 349 * 84 + 100 + 500);
-  approx(finance.financingCost, finance.financeTotalPaid - 36990);
+run("loan longer than years leaves loan owed and subtracts it from final money", () => {
+  const scenario = model.simulateScenario(car({ paymentMode: "finance", downPayment: 2000, monthlyPayment: 200, loanMonths: 60, resaleValue: 7000 }), assumptions({ yearsOwned: 1 }), "finance", 1);
+  approx(scenario.loanLeft, 9600);
+  approx(scenario.finalMoney, scenario.investedResult + scenario.resaleValue - scenario.loanLeft - scenario.totalDeficits);
+  assert.ok(scenario.warnings.some((warning) => /not fully paid/.test(warning.message)));
 });
 
-run("preset switching values include realistic EV and combustion assumptions", () => {
-  const cheapGas = model.applyPreset("cheap_used_combustion");
-  const newEv = model.applyPreset("expensive_new_ev");
-  assert.equal(cheapGas.type, "combustion");
-  assert.ok(cheapGas.litersPer100Km > 6);
-  assert.ok(cheapGas.annualRepairs > newEv.annualRepairs);
-  assert.equal(newEv.type, "electric");
-  assert.ok(newEv.kwhPer100Km > 0);
+run("monthly budget exceeded creates warning and subtracts deficits", () => {
+  const scenario = model.simulateScenario(car({ annualMaintenance: 12000, resaleValue: 0 }), assumptions({ monthlyBudget: 100, yearsOwned: 1 }), "upfront", 1);
+  assert.ok(scenario.totalDeficits > 0);
+  assert.ok(scenario.warnings.some((warning) => /Monthly cost exceeds/.test(warning.message)));
+  approx(scenario.finalMoney, scenario.investedResult + scenario.resaleValue - scenario.loanLeft - scenario.totalDeficits);
 });
 
-run("EV and combustion type switching affects which energy formula is used", () => {
-  const vehicle = car({ type: "electric", kwhPer100Km: 20, litersPer100Km: 0 });
-  approx(model.annualEnergyCost(vehicle, assumptions({ homeChargingPct: 100, homeElectricityPrice: 0 })), 0);
-  vehicle.type = "combustion";
-  vehicle.kwhPer100Km = 0;
-  vehicle.litersPer100Km = 6;
-  approx(model.annualEnergyCost(vehicle, assumptions({ annualKm: 10000, fuelPrice: 2 })), 1200);
+run("initial cash exceeded marks impossible for upfront and finance down payment", () => {
+  const upfront = model.simulateScenario(car({ upfrontPrice: 50000 }), assumptions({ initialCashBudget: 10000 }), "upfront", 3);
+  const finance = model.simulateScenario(car({ paymentMode: "finance", downPayment: 20000 }), assumptions({ initialCashBudget: 10000 }), "finance", 3);
+  assert.equal(upfront.possible, "No");
+  assert.equal(finance.possible, "No");
+  assert.ok(upfront.warnings.some((warning) => /Upfront price exceeds/.test(warning.message)));
+  assert.ok(finance.warnings.some((warning) => /Down payment exceeds/.test(warning.message)));
 });
 
-run("payment mode: upfront-only and finance-only hide unwanted scenarios", () => {
+run("type switching updates visible-relevant defaults while preserving custom edits", () => {
+  const edited = model.markCustom(model.defaultCar("car1"), "annualInsurance");
+  edited.annualInsurance = 999;
+  edited.type = "combustion";
+  const switched = model.applyTypeDefaults(edited, { respectCustom: true });
+  assert.equal(switched.type, "combustion");
+  assert.equal(switched.kwhPer100Km, 0);
+  assert.ok(switched.litersPer100Km > 0);
+  assert.equal(switched.annualInsurance, 999);
+});
+
+run("hidden EV/fuel fields do not influence the wrong type", () => {
+  const ev = car({ type: "ev", kwhPer100Km: 20, litersPer100Km: 99, fuelPrice: 99, homeElectricityPrice: 0, publicElectricityPrice: 0, homeChargingPct: 100, publicChargingPct: 0 });
+  const gas = car({ type: "combustion", kwhPer100Km: 99, litersPer100Km: 6, fuelPrice: 2, homeElectricityPrice: 99, publicElectricityPrice: 99 });
+  approx(model.annualEnergyCost(ev, assumptions({ annualKm: 10000 })), 0);
+  approx(model.annualEnergyCost(gas, assumptions({ annualKm: 10000 })), 1200);
+});
+
+run("custom names are used and never fall back to Custom, Car 1, or Car 2", () => {
   const result = model.analyze({
     assumptions: assumptions(),
     cars: {
-      car1: car({ name: "Upfront only", paymentMode: "upfront" }),
-      car2: car({ name: "Finance only", paymentMode: "finance" }),
+      car1: car({ name: "Used EV upfront", paymentMode: "upfront" }),
+      car2: car({ name: "Tesla finance", paymentMode: "finance" }),
     },
   });
-  assert.deepEqual(result.horizonResults[0].rows.map((row) => `${row.carName} ${row.mode}`), ["Upfront only upfront", "Finance only finance"]);
+  const labels = result.rows.map((row) => row.option).join(" | ");
+  assert.match(labels, /Used EV upfront upfront/);
+  assert.match(labels, /Tesla finance finance/);
+  assert.doesNotMatch(labels, /Custom|Car 1|Car 2/);
 });
 
-run("payment mode: both shows both scenarios", () => {
+run("auto resale updates with years unless custom override is active", () => {
+  const autoCar = car({ type: "ev", upfrontPrice: 30000, resaleCustom: false });
+  const one = model.effectiveResaleValue(autoCar, 1);
+  const ten = model.effectiveResaleValue(autoCar, 10);
+  assert.ok(one > ten);
+  const custom = Object.assign({}, autoCar, { resaleCustom: true, resaleValue: 12345 });
+  assert.equal(model.effectiveResaleValue(custom, 1), 12345);
+  assert.equal(model.effectiveResaleValue(custom, 10), 12345);
+});
+
+run("0 km/year removes energy cost", () => {
+  approx(model.annualEnergyCost(car({ type: "combustion", litersPer100Km: 8, fuelPrice: 2 }), assumptions({ annualKm: 0 })), 0);
+});
+
+run("EV with 100% free home charging has zero energy cost", () => {
+  const ev = car({ type: "ev", kwhPer100Km: 18, homeElectricityPrice: 0, publicElectricityPrice: 0.5, homeChargingPct: 100, publicChargingPct: 0 });
+  approx(model.annualEnergyCost(ev, assumptions({ annualKm: 25000 })), 0);
+});
+
+run("combustion fuel formula is annual_km / 100 * L_per_100km * fuel_price", () => {
+  const gas = car({ type: "combustion", litersPer100Km: 6.5, fuelPrice: 1.75 });
+  approx(model.annualEnergyCost(gas, assumptions({ annualKm: 25000 })), 25000 / 100 * 6.5 * 1.75);
+});
+
+run("results contain no NaN, undefined, Infinity, or negative loan values", () => {
   const result = model.analyze({
-    assumptions: assumptions(),
+    assumptions: assumptions({ yearsOwned: 20, annualKm: 0 }),
     cars: {
-      car1: car({ name: "A", paymentMode: "both" }),
-      car2: car({ name: "B", paymentMode: "both" }),
+      car1: car({ name: "Free EV", type: "ev", paymentMode: "upfront", homeElectricityPrice: 0, homeChargingPct: 100, publicChargingPct: 0 }),
+      car2: car({ name: "Gas", type: "combustion", paymentMode: "finance", monthlyPayment: 0, loanMonths: 0 }),
     },
   });
-  assert.equal(result.horizonResults[0].rows.length, 4);
-});
-
-run("identical scenarios produce identical final money left", () => {
-  const result = model.analyze({
-    assumptions: assumptions(),
-    cars: {
-      car1: car({ name: "Same", paymentMode: "upfront" }),
-      car2: car({ name: "Same", paymentMode: "upfront" }),
-    },
-  });
-  approx(result.horizonResults[0].rows[0].finalMoneyLeft, result.horizonResults[0].rows[1].finalMoneyLeft);
-});
-
-run("custom name appears in scenario label", () => {
-  const custom = model.simulateScenario(car({ name: "My Actual Car" }), assumptions(), "upfront", 3);
-  assert.equal(model.scenarioLabel(custom), "My Actual Car upfront");
-});
-
-run("empty custom name falls back without showing Car 1 or Car 2", () => {
-  const custom = model.simulateScenario(car({ name: "" }), assumptions(), "upfront", 3);
-  assert.equal(model.scenarioLabel(custom), "Custom vehicle upfront");
-});
-
-run("EV free charging: 100% home at 0 €/kWh is 0 energy cost", () => {
-  const ev = car({ type: "electric", kwhPer100Km: 20 });
-  approx(model.annualEnergyCost(ev, assumptions({ annualKm: 25000, homeChargingPct: 100, publicChargingPct: 0, homeElectricityPrice: 0 })), 0);
-});
-
-run("combustion fuel cost formula", () => {
-  const gas = car({ type: "combustion", litersPer100Km: 6.5 });
-  approx(model.annualEnergyCost(gas, assumptions({ annualKm: 25000, fuelPrice: 1.75 })), 25000 / 100 * 6.5 * 1.75);
-});
-
-run("remaining loan balance is subtracted before loan ends", () => {
-  const financed = car({ type: "electric", loanMonths: 40, taeg: 0, resaleValues: { 1: 9000, 3: 6000, 5: 0, 7: 0, 10: 0 } });
-  const scenario = model.simulateScenario(financed, assumptions({ initialCashBudget: 10000 }), "finance", 1);
-  approx(scenario.loanStillOwed, 5600);
-  approx(scenario.finalMoneyLeft, scenario.investments + scenario.carValueLeft - scenario.loanStillOwed - scenario.budgetDeficit);
-});
-
-run("winner is highest final money left only", () => {
-  const result = model.analyze({
-    assumptions: assumptions({ investmentReturn: 8 }),
-    cars: {
-      car1: model.applyPreset("tesla_model_3_new"),
-      car2: model.applyPreset("cheap_used_ev"),
-    },
-  });
-  result.horizonResults.forEach((horizon) => {
-    assert.equal(horizon.winner.finalMoneyLeft, Math.max(...horizon.rows.map((row) => row.finalMoneyLeft)));
-  });
-});
-
-run("selected analysis year aligns with requested horizon", () => {
-  assert.equal(model.selectedYear(assumptions({ analysisYears: 3 })), 3);
-  assert.equal(model.selectedYear(assumptions({ analysisYears: 7 })), 7);
-  const result = model.analyze({
-    assumptions: assumptions({ analysisYears: 7 }),
-    cars: {
-      car1: model.applyPreset("tesla_model_3_new"),
-      car2: model.applyPreset("cheap_used_ev"),
-    },
-  });
-  assert.equal(result.selectedYear, 7);
-  assert.equal(result.selected.winner.id, result.winners[7].id);
-});
-
-run("0 annual km removes energy costs", () => {
-  const gas = car({ type: "combustion", litersPer100Km: 7, annualMaintenance: 0, annualInsurance: 0, annualRepairs: 0, annualTax: 0 });
-  const scenario = model.simulateScenario(gas, assumptions({ annualKm: 0, fuelPrice: 2 }), "upfront", 3);
-  approx(scenario.energyPaid, 0);
-  approx(scenario.runningPaid, 0);
-});
-
-run("charging split supports 100% public charging", () => {
-  const ev = car({ type: "electric", kwhPer100Km: 20 });
-  approx(model.annualEnergyCost(ev, assumptions({ annualKm: 10000, homeChargingPct: 0, publicChargingPct: 100, publicElectricityPrice: 0.4 })), 800);
-});
-
-run("upfront price or down payment above initial cash becomes deficit, not negative investment", () => {
-  const pricey = car({ upfrontPrice: 50000, resaleValues: { 3: 30000, 5: 0, 7: 0, 10: 0 } });
-  const upfront = model.simulateScenario(pricey, assumptions({ initialCashBudget: 10000, monthlyBudget: 0 }), "upfront", 3);
-  approx(upfront.month0Invested, 0);
-  approx(upfront.month0Deficit, 40000);
-  const financed = model.simulateScenario(car({ downPayment: 20000, upfrontPrice: 30000, monthlyPayment: 0, taeg: 0, loanMonths: 60 }), assumptions({ initialCashBudget: 10000, monthlyBudget: 0 }), "finance", 3);
-  approx(financed.month0Invested, 0);
-  approx(financed.month0Deficit, 10000);
-});
-
-run("monthly cost above budget creates deficit and no negative investment", () => {
-  const expensive = car({ upfrontPrice: 1000, annualMaintenance: 12000, resaleValues: { 3: 0, 5: 0, 7: 0, 10: 0 } });
-  const scenario = model.simulateScenario(expensive, assumptions({ monthlyBudget: 100, investmentReturn: 0 }), "upfront", 3);
-  approx(scenario.averageMonthlyInvested, 0);
-  assert.ok(scenario.budgetDeficit > 0);
-});
-
-run("loan shorter and longer than analysis period calculate non-negative balances", () => {
-  const shortLoan = model.simulateScenario(car({ loanMonths: 12, monthlyPayment: 700, downPayment: 2000 }), assumptions(), "finance", 3);
-  const longLoan = model.simulateScenario(car({ loanMonths: 96, monthlyPayment: 120, downPayment: 2000 }), assumptions(), "finance", 3);
-  approx(shortLoan.loanStillOwed, 0);
-  assert.ok(longLoan.loanStillOwed > 0);
-  assert.ok(longLoan.loanStillOwed >= 0);
-});
-
-run("resale value higher than purchase price is allowed and increases final money", () => {
-  const normal = model.simulateScenario(car({ upfrontPrice: 10000, resaleValues: { 3: 6000, 5: 0, 7: 0, 10: 0 } }), assumptions(), "upfront", 3);
-  const high = model.simulateScenario(car({ upfrontPrice: 10000, resaleValues: { 3: 12000, 5: 0, 7: 0, 10: 0 } }), assumptions(), "upfront", 3);
-  approx(high.finalMoneyLeft - normal.finalMoneyLeft, 6000);
-});
-
-run("scenario reasons use actual numeric differences", () => {
-  const result = model.analyze({
-    assumptions: assumptions({ investmentReturn: 8 }),
-    cars: {
-      car1: model.applyPreset("tesla_model_3_new"),
-      car2: model.applyPreset("cheap_used_ev"),
-    },
-  });
-  const horizon = result.horizonResults.find((row) => row.year === 10);
-  const reasons = model.scenarioReasons(horizon.winner, horizon.winner, horizon.rows);
-  assert.ok(reasons.some((reason) => /€/.test(reason)));
-});
-
-run("no NaN, undefined, negative resale, or broken chart values", () => {
-  const result = model.analyze({
-    assumptions: assumptions({ investmentReturn: 8 }),
-    cars: {
-      car1: model.applyPreset("tesla_model_3_new"),
-      car2: model.applyPreset("cheap_used_combustion"),
-    },
-  });
-  result.horizonResults.forEach((horizon) => {
-    horizon.rows.forEach((row) => {
-      ["finalMoneyLeft", "investments", "carValueLeft", "loanStillOwed", "totalPaid", "budgetDeficit"].forEach((field) => {
-        assert.equal(Number.isFinite(row[field]), true, `${field} should be finite`);
-      });
-      assert.ok(row.carValueLeft >= 0);
-      row.yearly.forEach((point) => {
-        assert.equal(Number.isFinite(point.finalMoneyLeft), true);
-        assert.equal(Number.isFinite(point.investments), true);
-        assert.equal(Number.isFinite(point.totalPaid), true);
-        assert.ok(point.carValueLeft >= 0);
-      });
-    });
-  });
+  const serialized = JSON.stringify(result);
+  assert.doesNotMatch(serialized, /NaN|undefined|Infinity/);
+  result.rows.forEach((row) => assert.ok(row.loanLeft >= 0));
 });

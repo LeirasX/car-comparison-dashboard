@@ -1,14 +1,14 @@
 # Car Comparison Dashboard
 
-Compare two car decisions by one financial question:
+Compare two car options by one question:
 
-Which option leaves the most final money after investments, resale value, loans, and deficits?
+Which option leaves the most money after the selected number of years?
 
-The dashboard is a static, single-page financial model. It has no backend and no framework.
+The dashboard is a static, single-page model. It has no backend and no framework.
 
 ## Open Locally
 
-Open [index.html](/Users/leirasx/Documents/life/car/index.html) in a browser.
+Open [index.html](/Users/leirasx/Developer/car/index.html) in a browser.
 
 You can also run a local static server:
 
@@ -26,130 +26,82 @@ http://127.0.0.1:8765/
 
 - `index.html` is the GitHub Pages entry point.
 - `dashboard.html` is the same dashboard kept for direct local use.
-- `outputs/car_comparison_model.xlsx` is the Excel mirror.
 - `src/model.js` contains the financial calculations.
 - `src/dashboard.template.html` contains the UI template.
 - `scripts/build_dashboard.js` rebuilds `index.html` and `dashboard.html`.
-- `scripts/build_workbook.mjs` rebuilds the Excel workbook.
 - `test/model.test.js` contains formula and edge-case tests.
-- `test/dashboard_smoke.test.js` checks UI wiring, selected-year alignment, charts, and input reactivity.
-- `QA_CHECKLIST.md` lists the manual and automated audit coverage.
+- `test/dashboard_smoke.test.js` checks UI wiring and reactivity.
 
 ## Core Formula
 
-Final money left is:
+Final money is:
 
 ```text
-investments left
-+ car resale value
-- loan still owed
-- extra budget deficits
+investment balance
++ resale value
+- loan left
+- deficits
 ```
 
-Best financially means highest final money left, not lowest ownership cost.
+The winner is the option with the highest final money for the selected `Years owned`.
 
-## Budget Logic
+## Fixed Return
 
-Defaults:
+Stock market return is fixed internally:
 
 ```text
-initial cash available = EUR 37,975
-monthly car budget = EUR 500
-stock return = 8% yearly
-annual km = 25,000
-home electricity = EUR 0/kWh
-home charging = 100%
+8% yearly
+monthly rate = (1 + 0.08)^(1/12) - 1
 ```
+
+There is no stock-return input in the UI.
+
+## Payment Logic
 
 For upfront payment:
 
 ```text
-month 0 investment = initial cash available - upfront price
+initial spent = upfront price
 ```
 
-For financing:
+For finance:
 
 ```text
-month 0 investment = initial cash available - down payment - opening/admin fee
+initial spent = down payment
+finance total = down payment + monthly payment * loan months
+financing cost = finance total - cash price
 ```
 
-Each month:
+If the finance term is longer than `Years owned`, the remaining loan is subtracted from final money.
+
+## Month-by-Month Model
+
+For every month:
 
 ```text
-monthly car cost =
-loan payment
-+ energy/fuel
-+ maintenance
-+ insurance
-+ repairs
-+ taxes
-
-monthly investment = max(0, monthly budget - monthly car cost)
-monthly deficit = max(0, monthly car cost - monthly budget)
+monthly car payment = monthly payment if the loan is still active, otherwise 0
+monthly running cost = energy/fuel + maintenance + insurance + repairs + tax
+monthly invested = max(0, monthly budget - monthly car payment - monthly running cost)
+monthly deficit = max(0, monthly car payment + monthly running cost - monthly budget)
 ```
 
-Negative money is never invested. Deficits are tracked separately and subtracted from final money left.
-
-## Investment Formula
-
-Stock return is annual and converted to a monthly rate:
-
-```text
-monthly investment rate = (1 + annual return)^(1/12) - 1
-```
-
-With EUR 37,975 invested immediately, EUR 500/month invested, and 8% annual return for 10 years, the investment balance is about EUR 172k, not EUR 900k.
-
-## Loan Formula
-
-Manual monthly payment is used if entered. Otherwise:
-
-```text
-principal = upfront price - down payment + opening/admin fee
-monthly rate = TAEG / 12
-payment = P * r / (1 - (1 + r)^(-n))
-```
-
-If the rate is zero:
-
-```text
-payment = principal / months
-```
-
-Finance total is calculated internally:
-
-```text
-finance total paid =
-down payment + monthly payment * loan months + opening fee + balloon payment
-
-financing cost = finance total paid - upfront price
-```
-
-Remaining loan balance is subtracted at each horizon.
+When a loan ends before the selected year, the freed-up monthly payment is invested.
 
 ## Energy Formula
 
 EV:
 
 ```text
-annual energy cost =
-annual km / 100 * kWh per 100km * weighted electricity price
+annual energy = annual km / 100 * kWh/100km * weighted electricity price
 ```
 
-Combustion:
+Hybrid and combustion:
 
 ```text
-annual fuel cost =
-annual km / 100 * L per 100km * fuel price
+annual fuel = annual km / 100 * L/100km * fuel price
 ```
 
-Weighted electricity:
-
-```text
-home charging % * home price + public charging % * public price
-```
-
-If home charging is 100% and home electricity is EUR 0/kWh, EV energy cost is EUR 0.
+Hidden energy fields do not affect the result for the wrong type.
 
 ## Tests
 
@@ -162,33 +114,12 @@ Rebuild outputs:
 
 ```bash
 node scripts/build_dashboard.js
-/Users/leirasx/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node scripts/build_workbook.mjs
 ```
 
-## Deploy To GitHub Pages
-
-This repo is ready to publish from the `main` branch root.
-
-```bash
-git init
-git add .
-git commit -m "Initial car comparison dashboard"
-gh repo create leirasx/car-comparison-dashboard --public --source=. --remote=origin --push
-gh api --method POST repos/leirasx/car-comparison-dashboard/pages -f "source[branch]=main" -f "source[path]=/"
-```
-
-Final URL:
-
-```text
-https://leirasx.github.io/car-comparison-dashboard/
-```
-
-## Assumptions And Limitations
+## Assumptions
 
 - The model compares two cars only.
-- Analysis horizons are 3, 5, 7, and 10 years.
-- Resale values are editable assumptions, not forecasts.
-- Sensitivity checks are simple one-factor checks, not Monte Carlo analysis.
-- Taxes, insurance, maintenance, and repairs are annual estimates.
-- The Excel file mirrors the default model snapshot; the HTML dashboard is the primary interactive tool.
+- Defaults are Portugal-like ownership assumptions around 25,000 km/year.
+- Resale is estimated from cash price, type, and years owned unless the user overrides it.
+- Type changes update untouched defaults only; manually edited fields stay custom.
 - This is not financial advice.

@@ -7,64 +7,59 @@
   <style>
     :root {
       --bg:#f4f1ec;
-      --bg-soft:#faf8f4;
-      --panel:rgba(255,255,255,.86);
-      --panel-solid:#fffdfa;
+      --panel:rgba(255,255,255,.88);
+      --solid:#fffdfa;
       --ink:#171a1d;
-      --muted:#66706d;
-      --muted-2:#89918d;
-      --line:rgba(31,38,35,.12);
-      --line-strong:rgba(31,38,35,.2);
+      --muted:#65706c;
+      --line:rgba(31,38,35,.13);
+      --line-strong:rgba(31,38,35,.22);
       --accent:#315f52;
-      --accent-soft:#e8f0ec;
+      --accent-soft:#e7efeb;
       --good:#14714f;
-      --good-soft:#e7f4ee;
-      --amber:#9a650c;
-      --amber-soft:#fff5dc;
-      --red:#b13a32;
+      --good-soft:#e8f4ee;
+      --amber:#98610d;
+      --amber-soft:#fff4dc;
+      --red:#a93a32;
       --red-soft:#fff0ee;
-      --shadow:0 18px 50px rgba(28,31,30,.08);
-      --shadow-soft:0 8px 24px rgba(28,31,30,.06);
-      --radius:18px;
-      --radius-sm:12px;
-      --max:1180px;
-      --font:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --shadow:0 18px 54px rgba(28,31,30,.08);
+      --shadow-soft:0 9px 26px rgba(28,31,30,.06);
+      --radius:20px;
+      --max:1160px;
       color:var(--ink);
       background:var(--bg);
-      font-family:var(--font);
+      font-family:Avenir Next, Optima, Candara, Segoe UI, sans-serif;
     }
     * { box-sizing:border-box; }
     html { background:var(--bg); scroll-behavior:smooth; }
     body {
       margin:0;
       min-width:320px;
-      background:
-        radial-gradient(circle at top left, rgba(255,255,255,.95), transparent 38rem),
-        linear-gradient(180deg, #fbfaf7 0%, var(--bg) 46%, #f7f5f0 100%);
       color:var(--ink);
       font-size:15px;
       line-height:1.45;
+      background:
+        radial-gradient(circle at 8% -8%, rgba(255,255,255,.96), transparent 36rem),
+        radial-gradient(circle at 90% 8%, rgba(231,239,235,.9), transparent 28rem),
+        linear-gradient(180deg, #fbfaf7 0%, var(--bg) 52%, #f8f5ef 100%);
     }
     body::before {
       content:"";
       position:fixed;
       inset:0;
       pointer-events:none;
-      background-image:linear-gradient(rgba(23,26,29,.035) 1px, transparent 1px);
+      background-image:linear-gradient(rgba(23,26,29,.028) 1px, transparent 1px);
       background-size:100% 34px;
-      mask-image:linear-gradient(to bottom, rgba(0,0,0,.8), transparent 420px);
+      mask-image:linear-gradient(to bottom, rgba(0,0,0,.7), transparent 430px);
     }
-    header, main { width:min(var(--max), calc(100% - clamp(28px,5vw,72px))); margin:0 auto; }
-    header { padding:34px 0 22px; }
+    header, main { width:min(var(--max), calc(100% - clamp(24px,5vw,72px))); margin:0 auto; }
+    header { padding:34px 0 20px; }
     main { padding:0 0 54px; }
-    h1 { margin:0; max-width:820px; font-size:clamp(34px,6vw,64px); line-height:.98; letter-spacing:-.03em; font-weight:760; }
-    h2 { margin:0 0 14px; font-size:20px; letter-spacing:-.01em; }
-    h3 { margin:0 0 10px; font-size:15px; letter-spacing:-.005em; }
-    p { margin:0; color:var(--muted); }
+    h1 { margin:0; max-width:780px; font-size:clamp(34px,6vw,64px); line-height:.98; letter-spacing:-.035em; font-weight:760; }
+    h2, h3, p { margin:0; }
     button, input, select { font:inherit; }
     .hero {
       display:grid;
-      grid-template-columns:minmax(0,1.45fr) minmax(280px,.8fr);
+      grid-template-columns:minmax(0,1.35fr) minmax(280px,.75fr);
       gap:22px;
       align-items:stretch;
       margin-bottom:22px;
@@ -76,18 +71,20 @@
       backdrop-filter:blur(18px);
       -webkit-backdrop-filter:blur(18px);
     }
-    .hero-copy { border-radius:28px; padding:clamp(24px,4vw,42px); min-height:300px; display:flex; flex-direction:column; justify-content:space-between; }
-    .eyebrow { display:inline-flex; align-items:center; gap:8px; margin-bottom:18px; color:var(--accent); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
-    .hero-copy p { max-width:700px; margin-top:18px; font-size:clamp(16px,2vw,19px); color:#4f5955; }
-    .hero-card { border-radius:28px; padding:22px; display:flex; flex-direction:column; gap:16px; }
-    .hero-card h2 { font-size:16px; margin:0; }
-    .hero-metric { padding:16px; border-radius:16px; background:linear-gradient(180deg, #fff, #f8faf8); border:1px solid var(--line); }
-    .hero-metric span { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
-    .hero-metric strong { display:block; margin-top:7px; font-size:clamp(22px,3vw,34px); letter-spacing:-.02em; }
-    .hero-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:24px; }
-    .button {
+    .hero-copy {
+      min-height:280px;
+      border-radius:30px;
+      padding:clamp(24px,4vw,42px);
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+    .eyebrow { display:inline-flex; align-items:center; gap:8px; margin-bottom:18px; color:var(--accent); font-size:12px; font-weight:850; text-transform:uppercase; letter-spacing:.08em; }
+    .hero-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:26px; }
+    .button, .small-button {
       display:inline-flex;
       align-items:center;
+      justify-content:center;
       gap:8px;
       min-height:42px;
       padding:10px 14px;
@@ -96,30 +93,38 @@
       background:#fff;
       color:var(--ink);
       text-decoration:none;
-      font-weight:800;
+      font-weight:820;
       cursor:pointer;
       transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease;
     }
-    .button:hover { transform:translateY(-1px); box-shadow:var(--shadow-soft); border-color:rgba(49,95,82,.36); }
+    .button:hover, .small-button:hover { transform:translateY(-1px); box-shadow:var(--shadow-soft); border-color:rgba(49,95,82,.36); }
     .button.primary { background:var(--ink); border-color:var(--ink); color:#fff; }
-    .panel { border-radius:var(--radius); padding:18px; }
-    .group { margin-bottom:18px; overflow:hidden; animation:rise .34s ease both; }
-    .group > summary {
+    .small-button { min-height:34px; padding:7px 11px; font-size:12px; }
+    .hero-card { border-radius:30px; padding:22px; display:flex; flex-direction:column; gap:14px; }
+    .hero-metric { padding:16px; border-radius:17px; background:linear-gradient(180deg,#fff,#f8faf8); border:1px solid var(--line); }
+    .hero-metric span { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px; font-weight:850; text-transform:uppercase; letter-spacing:.04em; }
+    .hero-metric strong { display:block; margin-top:7px; font-size:clamp(22px,3vw,34px); letter-spacing:-.025em; }
+    .badge { display:inline-flex; align-items:center; gap:6px; align-self:flex-start; border-radius:999px; padding:7px 10px; background:var(--good-soft); color:var(--good); font-size:12px; font-weight:850; }
+    .badge.warn { background:var(--amber-soft); color:var(--amber); }
+    .badge.no { background:var(--red-soft); color:var(--red); }
+    .panel { border-radius:var(--radius); padding:18px; margin-bottom:18px; overflow:hidden; animation:rise .34s ease both; }
+    .panel > summary {
       display:flex;
       align-items:center;
       gap:10px;
       min-height:46px;
       list-style:none;
       cursor:pointer;
-      font-weight:820;
       font-size:18px;
+      font-weight:850;
       margin:-4px -4px 16px;
       padding:4px;
       border-radius:14px;
       outline:none;
+      transition:background .16s ease, transform .16s ease;
     }
-    .group > summary::-webkit-details-marker { display:none; }
-    .group > summary::after {
+    .panel > summary::-webkit-details-marker { display:none; }
+    .panel > summary::after {
       content:"";
       width:9px;
       height:9px;
@@ -129,48 +134,50 @@
       transform:rotate(45deg);
       transition:transform .18s ease;
     }
-    .group[open] > summary::after { transform:rotate(225deg); }
-    .group > summary:hover { background:rgba(49,95,82,.06); }
-    .section-icon, .icon {
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      flex:0 0 auto;
-    }
-    .section-icon {
-      width:32px;
-      height:32px;
-      border-radius:10px;
-      background:var(--accent-soft);
-      color:var(--accent);
-    }
+    .panel[open] > summary::after { transform:rotate(225deg); }
+    .panel > summary:hover, .help-target:hover { background:rgba(49,95,82,.06); }
+    .panel > summary:hover + .help-panel { display:block; }
+    .section-icon, .icon { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; }
+    .section-icon { width:32px; height:32px; border-radius:11px; background:var(--accent-soft); color:var(--accent); }
     .icon svg, .section-icon svg, [data-icon] > svg { width:18px; height:18px; stroke:currentColor; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; display:block; }
     .grid { display:grid; gap:16px; }
     .two { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; align-items:start; }
     .car-panel {
-      background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(253,251,247,.9));
+      background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(253,251,247,.9));
       border:1px solid var(--line);
-      border-radius:16px;
+      border-radius:17px;
       padding:16px;
       box-shadow:0 1px 0 rgba(255,255,255,.7) inset;
     }
-    .car-panel h3 { display:flex; align-items:center; gap:8px; margin-bottom:14px; font-size:16px; }
-    label { display:grid; gap:6px; color:#303835; font-size:13px; font-weight:760; }
-    .field-label { display:flex; align-items:center; gap:6px; color:#303835; font-size:13px; font-weight:760; }
-    .field-row { display:grid; grid-template-columns:minmax(170px,1fr) minmax(120px,170px); gap:10px; align-items:start; margin-bottom:12px; }
+    .car-panel h3 { display:flex; align-items:center; gap:8px; margin-bottom:14px; font-size:16px; letter-spacing:-.01em; }
+    label { display:grid; gap:6px; color:#303835; font-size:13px; font-weight:780; }
+    .field-label {
+      display:flex;
+      align-items:center;
+      gap:6px;
+      color:#303835;
+      font-size:13px;
+      font-weight:780;
+      border-radius:10px;
+      padding:2px 4px;
+      margin-left:-4px;
+      cursor:help;
+    }
+    .field-row { display:grid; grid-template-columns:minmax(150px,1fr) minmax(120px,180px); gap:10px; align-items:start; margin-bottom:12px; }
     input, select {
       width:100%;
       min-height:42px;
       border:1px solid var(--line-strong);
       border-radius:12px;
       padding:10px 12px;
-      background:rgba(255,255,255,.92);
+      background:rgba(255,255,255,.94);
       color:var(--ink);
       box-shadow:0 1px 0 rgba(255,255,255,.75) inset;
       transition:border-color .16s ease, box-shadow .16s ease, transform .16s ease, background .16s ease;
     }
-    select { appearance:auto; }
+    select { appearance:auto; color-scheme:light; }
+    option { color:var(--ink); background:#fffdfa; }
     input:hover, select:hover { border-color:rgba(49,95,82,.34); background:#fff; }
     input:focus, select:focus, button:focus-visible, summary:focus-visible, a:focus-visible {
       outline:3px solid rgba(49,95,82,.2);
@@ -178,154 +185,63 @@
       border-color:var(--accent);
       box-shadow:0 0 0 4px rgba(49,95,82,.09);
     }
-    .field-help { margin-top:6px; color:var(--muted); font-size:12px; line-height:1.35; font-weight:500; }
-    .help {
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      width:17px;
-      height:17px;
-      border:1px solid rgba(49,95,82,.22);
-      border-radius:50%;
-      color:var(--accent);
-      background:#fff;
-      font-size:11px;
-      font-weight:900;
-      cursor:help;
-      vertical-align:middle;
+    .hint { color:var(--muted); font-size:12px; line-height:1.35; font-weight:520; }
+    .help-panel {
+      display:none;
+      margin:-4px 0 14px;
+      padding:11px 13px;
+      border:1px solid rgba(49,95,82,.2);
+      border-radius:14px;
+      background:rgba(255,255,255,.78);
+      color:#45514d;
+      font-size:13px;
     }
-    .subtle { color:var(--muted); font-size:12px; }
-    .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
-    .kpi {
-      position:relative;
-      border:1px solid var(--line);
-      border-radius:18px;
-      background:linear-gradient(180deg, #fff, #fbfaf6);
-      padding:16px;
-      box-shadow:var(--shadow-soft);
-      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
-    }
-    .kpi:hover { transform:translateY(-2px); box-shadow:var(--shadow); }
-    .kpi span { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px; font-weight:820; text-transform:uppercase; letter-spacing:.04em; }
-    .kpi strong { display:block; margin-top:8px; font-size:18px; line-height:1.2; }
-    .kpi p { margin-top:7px; font-weight:760; color:var(--accent); }
-    .selected-card {
-      border-color:rgba(20,113,79,.42);
-      background:linear-gradient(180deg, #fbfffc, var(--good-soft));
-      box-shadow:0 18px 40px rgba(20,113,79,.12);
-      animation:winnerPulse .9s ease both;
-    }
-    .selected-card::before {
-      content:"";
-      position:absolute;
-      inset:0;
-      border-radius:18px;
-      pointer-events:none;
-      box-shadow:0 0 0 1px rgba(20,113,79,.12) inset;
-    }
-    .reason-card {
-      margin-top:14px;
-      background:linear-gradient(180deg, #fff, #fbfaf6);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:16px;
-    }
-    .reason-card h3 { display:flex; align-items:center; gap:8px; }
-    .table-wrap {
-      overflow-x:auto;
-      border:1px solid var(--line);
-      border-radius:16px;
-      background:var(--panel-solid);
-      box-shadow:0 1px 0 rgba(255,255,255,.7) inset;
-      -webkit-overflow-scrolling:touch;
-    }
-    table { width:100%; min-width:920px; border-collapse:separate; border-spacing:0; }
-    th,td { padding:12px 14px; border-bottom:1px solid var(--line); text-align:right; font-size:13px; vertical-align:top; }
-    th:first-child,td:first-child { text-align:left; position:sticky; left:0; z-index:1; background:var(--panel-solid); }
-    th {
-      background:#f0eee8;
-      color:#3e4643;
-      font-size:12px;
-      font-weight:820;
-      text-transform:uppercase;
-      letter-spacing:.035em;
-      white-space:nowrap;
-    }
+    .help-panel.show { display:block; }
+    .warnings { display:grid; gap:8px; margin-bottom:14px; }
+    .notice { display:flex; gap:9px; align-items:flex-start; padding:10px 12px; border-radius:14px; border:1px solid rgba(154,101,12,.25); background:var(--amber-soft); color:#5f4108; font-size:13px; }
+    .notice.no { border-color:rgba(169,58,50,.24); background:var(--red-soft); color:#74241f; }
+    .table-wrap { overflow-x:auto; border:1px solid var(--line); border-radius:16px; background:var(--solid); box-shadow:0 1px 0 rgba(255,255,255,.7) inset; -webkit-overflow-scrolling:touch; }
+    table { width:100%; min-width:1080px; border-collapse:separate; border-spacing:0; }
+    th, td { padding:12px 13px; border-bottom:1px solid var(--line); text-align:right; font-size:13px; vertical-align:top; }
+    th:first-child, td:first-child { text-align:left; position:sticky; left:0; z-index:1; background:var(--solid); }
+    th { background:#f0eee8; color:#3e4643; font-size:12px; font-weight:850; text-transform:uppercase; letter-spacing:.035em; white-space:nowrap; }
     th:first-child { background:#f0eee8; z-index:2; }
     tbody tr:hover td { background:#fbfaf6; }
     tbody tr:last-child td { border-bottom:0; }
     .winner { color:var(--good); font-weight:900; }
-    .charts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
-    .chart-card {
-      background:linear-gradient(180deg, #fff, #fbfaf6);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:16px;
-      min-height:330px;
-      box-shadow:var(--shadow-soft);
-      transition:transform .16s ease, box-shadow .16s ease;
-    }
-    .chart-card:hover { transform:translateY(-2px); box-shadow:var(--shadow); }
-    .chart-card h3 { display:flex; align-items:center; gap:8px; }
-    svg { width:100%; height:250px; display:block; overflow:visible; }
-    path, circle, line { transition:all .22s ease; }
-    .legend { display:flex; flex-wrap:wrap; gap:8px 12px; margin-top:8px; color:#43504b; font-size:12px; }
-    .legend span { display:inline-flex; align-items:center; max-width:100%; }
-    .swatch { display:inline-block; width:10px; height:10px; border-radius:999px; margin-right:6px; box-shadow:0 0 0 2px rgba(255,255,255,.8); }
-    details.inline { border-top:1px solid var(--line); padding-top:12px; margin-top:12px; }
-    summary { cursor:pointer; font-weight:800; }
-    ul { margin:8px 0 0; padding-left:18px; color:var(--muted); line-height:1.55; }
-    ol { margin:8px 0 0; padding-left:20px; color:var(--muted); line-height:1.58; }
-    li + li { margin-top:4px; }
-    .notice {
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
-      margin-top:12px;
-      padding:12px 14px;
-      border:1px solid rgba(154,101,12,.25);
-      background:var(--amber-soft);
-      color:#5f4108;
-      border-radius:14px;
-    }
-    .deficit { color:var(--red); }
-    .section-note { margin:-4px 0 16px; color:var(--muted); font-size:14px; }
+    .status-yes { color:var(--good); font-weight:900; }
+    .status-warning { color:var(--amber); font-weight:900; }
+    .status-no { color:var(--red); font-weight:900; }
     .mobile-card-list { display:none; }
-    .assumption-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:12px; }
-    .mini-card { border:1px solid var(--line); border-radius:14px; padding:13px; background:rgba(255,255,255,.72); }
-    .mini-card strong { display:block; margin-bottom:4px; }
+    .meta { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .pill { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:6px 9px; background:#fff; color:var(--muted); font-size:12px; font-weight:780; }
     .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
     @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-    @keyframes winnerPulse { from { transform:translateY(2px); } to { transform:translateY(0); } }
     @media (prefers-reduced-motion:reduce) {
       *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.001ms !important; }
     }
-    @media (max-width:1080px) {
+    @media (max-width:980px) {
       .hero { grid-template-columns:1fr; }
-      .two, .charts { grid-template-columns:1fr; }
+      .two { grid-template-columns:1fr; }
       .field-row { grid-template-columns:1fr; }
-      th:first-child,td:first-child { position:static; }
-      table { min-width:760px; }
+      th:first-child, td:first-child { position:static; }
+      table { min-width:960px; }
     }
     @media (max-width:680px) {
       header, main { width:min(100% - 24px, var(--max)); }
       header { padding-top:18px; }
-      .hero-copy, .hero-card, .panel { border-radius:18px; }
+      .hero-copy, .hero-card, .panel { border-radius:19px; }
       .hero-copy { min-height:auto; padding:22px; }
-      .hero-card { padding:16px; }
-      .panel { padding:14px; }
+      .hero-card, .panel { padding:15px; }
       .controls { grid-template-columns:1fr; }
-      .group > summary { font-size:16px; }
-      .field-row { gap:6px; }
+      .panel > summary { font-size:16px; }
       input, select { min-height:46px; font-size:16px; }
-      .kpis { grid-template-columns:1fr; }
-      .charts { gap:12px; }
-      .chart-card { min-height:300px; padding:13px; }
-      svg { height:220px; }
-      table { min-width:700px; }
-      th,td { padding:10px; font-size:12px; }
-      .desktop-table-note { display:none; }
+      .table-wrap { border-radius:14px; }
+      table { min-width:920px; }
+      th, td { padding:10px; font-size:12px; }
       .mobile-card-list { display:grid; gap:10px; margin-bottom:12px; }
+      .mobile-card { border:1px solid var(--line); border-radius:16px; padding:13px; background:linear-gradient(180deg,#fff,#fbfaf6); box-shadow:var(--shadow-soft); }
+      .mobile-card strong { display:block; margin-top:5px; font-size:20px; }
     }
   </style>
 </head>
@@ -334,99 +250,49 @@
     <section class="hero" aria-labelledby="pageTitle">
       <div class="hero-copy">
         <div>
-          <div class="eyebrow"><span class="section-icon" data-icon="settings"></span>Car money model</div>
-          <h1 id="pageTitle">Which option leaves the most money?</h1>
-          <p>Compare two cars by final money left after investments, resale value, loans, and deficits.</p>
+          <div class="eyebrow"><span class="section-icon" data-icon="car"></span>Car money model</div>
+          <h1 id="pageTitle">Which car leaves more money?</h1>
         </div>
         <div class="hero-actions">
-          <a class="button primary" href="#results"><span data-icon="winner"></span>See winner</a>
-          <a class="button" href="#setup"><span data-icon="budget"></span>Edit assumptions</a>
+          <a class="button primary" href="#results"><span data-icon="winner"></span>Winner</a>
+          <a class="button" href="#setup"><span data-icon="budget"></span>Inputs</a>
         </div>
       </div>
-      <aside class="hero-card" id="heroSummary" aria-label="Selected-year decision summary"></aside>
+      <aside class="hero-card" id="heroSummary" aria-label="Winner summary"></aside>
     </section>
   </header>
 
   <main>
-    <section id="results" aria-labelledby="resultsTitle">
-      <h2 id="resultsTitle" class="sr-only">Winner cards</h2>
-      <div id="winnerCards" class="kpis"></div>
-      <div id="winnerReasons"></div>
-      <div id="warningBox"></div>
-    </section>
-
-    <details id="setup" class="panel group" open>
-      <summary><span class="section-icon" data-icon="settings"></span>Setup</summary>
-      <p class="section-note">Start here. These values drive every card, table, chart, and summary below.</p>
+    <details id="setup" class="panel" open>
+      <summary class="help-target" data-help-key="setup"><span class="section-icon" data-icon="settings"></span>Setup</summary>
+      <div class="help-panel" data-help-for="setup"></div>
       <div id="setupInputs" class="controls"></div>
-      <h3 style="margin-top:18px"><span data-icon="investment"></span>No Car Baseline</h3>
-      <div id="baselineTable" class="table-wrap"></div>
     </details>
 
-    <details class="panel group" open>
-      <summary><span class="section-icon" data-icon="car"></span>Car Comparison Inputs</summary>
-      <p class="section-note">Choose the two cars and which payment paths should appear in the results.</p>
+    <details id="cars" class="panel" open>
+      <summary class="help-target" data-help-key="cars"><span class="section-icon" data-icon="car"></span>Cars</summary>
+      <div class="help-panel" data-help-for="cars"></div>
       <div id="choiceInputs" class="grid two"></div>
     </details>
 
-    <details class="panel group" open>
-      <summary><span class="section-icon" data-icon="loan"></span>Purchase And Finance</summary>
-      <p class="section-note">Financing total is calculated internally from down payment, monthly payment, fees, term, and balloon payment.</p>
+    <details id="payment" class="panel" open>
+      <summary class="help-target" data-help-key="payment"><span class="section-icon" data-icon="loan"></span>Payment</summary>
+      <div class="help-panel" data-help-for="payment"></div>
       <div id="financeInputs" class="grid two"></div>
     </details>
 
-    <details class="panel group" open>
-      <summary><span class="section-icon" data-icon="fuel"></span>Energy And Running Costs</summary>
-      <p class="section-note">Only the fields relevant to the selected car type are shown.</p>
+    <details id="costs" class="panel" open>
+      <summary class="help-target" data-help-key="costs"><span class="section-icon" data-icon="fuel"></span>Costs</summary>
+      <div class="help-panel" data-help-for="costs"></div>
       <div id="runningInputs" class="grid two"></div>
     </details>
 
-    <details class="panel group" open>
-      <summary><span class="section-icon" data-icon="resale"></span>Resale Values</summary>
-      <p class="section-note">These values are used directly at each horizon.</p>
-      <div id="resaleInputs" class="grid two"></div>
-    </details>
-
-    <details class="panel group">
-      <summary><span class="section-icon" data-icon="info"></span>Optional Quality Scores</summary>
-        <p style="margin:8px 0 12px">Quality scores do not affect the financial winner.</p>
-        <div id="qualityInputs" class="grid two"></div>
-    </details>
-
-    <details class="panel group" open>
-      <summary><span class="section-icon" data-icon="chart"></span>Results Table</summary>
-      <p class="section-note desktop-table-note">The table scrolls horizontally on small screens. The selected analysis year controls the detail columns.</p>
+    <details id="results" class="panel" open>
+      <summary class="help-target" data-help-key="results"><span class="section-icon" data-icon="winner"></span>Results</summary>
+      <div class="help-panel" data-help-for="results"></div>
+      <div id="warningBox" class="warnings"></div>
       <div id="mobileResultCards" class="mobile-card-list"></div>
-      <h3 style="margin-top:4px">Primary Table</h3>
       <div id="primaryTable" class="table-wrap"></div>
-      <h3 style="margin-top:16px">Secondary Table</h3>
-      <div id="secondaryTable" class="table-wrap"></div>
-    </details>
-
-    <details class="panel group" open>
-      <summary><span class="section-icon" data-icon="chart"></span>Charts</summary>
-      <div class="charts">
-        <div class="chart-card"><h3><span data-icon="winner"></span>Final money left over time</h3><svg id="moneyChart" role="img" aria-label="Final money left over time chart"></svg><div id="legend1" class="legend"></div></div>
-        <div class="chart-card"><h3><span data-icon="investment"></span>Investment balance over time</h3><svg id="investmentChart" role="img" aria-label="Investment balance over time chart"></svg><div id="legend2" class="legend"></div></div>
-        <div class="chart-card"><h3><span data-icon="budget"></span>Total paid over time</h3><svg id="paidChart" role="img" aria-label="Total paid over time chart"></svg><div id="legend3" class="legend"></div></div>
-      </div>
-    </details>
-
-    <details class="panel group" open>
-      <summary><span class="section-icon" data-icon="info"></span>Explanation And Sensitivity</summary>
-      <div id="summarySteps"></div>
-      <p style="margin-top:12px">final money left = investments + car resale value - loan still owed - deficits</p>
-      <h3 style="margin-top:16px">What Would Change The Winner?</h3>
-      <div id="sensitivityBox"></div>
-    </details>
-
-    <details class="panel group">
-      <summary><span class="section-icon" data-icon="warning"></span>Assumptions And Tests</summary>
-      <div class="assumption-grid">
-        <div class="mini-card"><strong>Not financial advice</strong><p>This is a decision model, not a recommendation to buy, finance, sell, or invest.</p></div>
-        <div class="mini-card"><strong>Default context</strong><p>Portugal-like 2026 assumptions, 25,000 km/year, €500 monthly car budget.</p></div>
-        <div class="mini-card"><strong>Validation</strong><p>Automated tests cover compounding, loans, energy costs, payment modes, and selected-year alignment.</p></div>
-      </div>
     </details>
   </main>
 
@@ -438,171 +304,96 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function buildModel() {
   "use strict";
 
-  const HORIZONS = [3, 5, 7, 10];
-  const PAYMENT_MODES = { upfront: "upfront", finance: "finance", both: "both" };
+  const STOCK_RETURN = 8;
+  const PAYMENT_MODES = { upfront: "upfront", finance: "finance" };
+  const VEHICLE_TYPES = { ev: "EV", hybrid: "Hybrid", combustion: "Combustion" };
 
   const DEFAULT_ASSUMPTIONS = {
     initialCashBudget: 37975,
     monthlyBudget: 500,
-    investmentReturn: 8,
+    yearsOwned: 10,
     annualKm: 25000,
-    fuelPrice: 1.75,
-    homeElectricityPrice: 0,
-    publicElectricityPrice: 0.35,
-    homeChargingPct: 100,
-    publicChargingPct: 0,
-    analysisYears: 10,
   };
 
-  const PRESETS = {
-    tesla_model_3_new: {
-      label: "Tesla Model 3 New",
-      name: "Tesla Model 3 New",
-      type: "electric",
-      paymentMode: PAYMENT_MODES.both,
-      upfrontPrice: 36990,
-      downPayment: 8650,
-      monthlyPayment: 349,
-      loanMonths: 84,
-      taeg: 0.71,
-      openingFee: 0,
-      balloonPayment: 0,
-      kwhPer100Km: 14.5,
-      litersPer100Km: 0,
-      annualMaintenance: 350,
-      annualInsurance: 750,
-      annualRepairs: 150,
-      annualTax: 0,
-      qualityScore: 8,
-      resaleValues: { 3: 25000, 5: 20500, 7: 16500, 10: 11500 },
-    },
-    tesla_model_3_used: {
-      label: "Tesla Model 3 Used",
-      name: "Tesla Model 3 Used",
-      type: "electric",
-      paymentMode: PAYMENT_MODES.both,
-      upfrontPrice: 28800,
+  const TYPE_DEFAULTS = {
+    ev: {
+      type: "ev",
+      upfrontPrice: 28000,
       downPayment: 5000,
-      monthlyPayment: 301,
-      loanMonths: 96,
-      taeg: 8,
-      openingFee: 250,
-      balloonPayment: 0,
-      kwhPer100Km: 15,
-      litersPer100Km: 0,
-      annualMaintenance: 450,
-      annualInsurance: 650,
-      annualRepairs: 450,
-      annualTax: 0,
-      qualityScore: 7,
-      resaleValues: { 3: 20500, 5: 17000, 7: 13000, 10: 8000 },
-    },
-    cheap_used_combustion: {
-      label: "Cheap used combustion",
-      name: "Cheap used combustion",
-      type: "combustion",
-      paymentMode: PAYMENT_MODES.both,
-      upfrontPrice: 10000,
-      downPayment: 2000,
-      monthlyPayment: 0,
-      loanMonths: 60,
-      taeg: 9,
-      openingFee: 250,
-      balloonPayment: 0,
-      kwhPer100Km: 0,
-      litersPer100Km: 6.5,
-      annualMaintenance: 750,
-      annualInsurance: 450,
-      annualRepairs: 800,
-      annualTax: 150,
-      qualityScore: 5,
-      resaleValues: { 3: 6500, 5: 4500, 7: 3000, 10: 1500 },
-    },
-    expensive_newer_combustion: {
-      label: "Expensive/newer combustion",
-      name: "Expensive/newer combustion",
-      type: "combustion",
-      paymentMode: PAYMENT_MODES.both,
-      upfrontPrice: 30000,
-      downPayment: 6000,
-      monthlyPayment: 0,
+      monthlyPayment: 325,
       loanMonths: 84,
-      taeg: 7,
-      openingFee: 350,
-      balloonPayment: 0,
+      kwhPer100Km: 16,
+      litersPer100Km: 0,
+      fuelPrice: 1.75,
+      homeElectricityPrice: 0.18,
+      publicElectricityPrice: 0.45,
+      homeChargingPct: 80,
+      publicChargingPct: 20,
+      annualMaintenance: 360,
+      annualInsurance: 680,
+      annualRepairs: 420,
+      annualTax: 0,
+    },
+    hybrid: {
+      type: "hybrid",
+      upfrontPrice: 22000,
+      downPayment: 4000,
+      monthlyPayment: 285,
+      loanMonths: 72,
       kwhPer100Km: 0,
-      litersPer100Km: 5.8,
-      annualMaintenance: 550,
-      annualInsurance: 650,
-      annualRepairs: 300,
-      annualTax: 160,
-      qualityScore: 7,
-      resaleValues: { 3: 22000, 5: 17500, 7: 13000, 10: 7500 },
+      litersPer100Km: 4.8,
+      fuelPrice: 1.75,
+      homeElectricityPrice: 0.18,
+      publicElectricityPrice: 0.45,
+      homeChargingPct: 0,
+      publicChargingPct: 0,
+      annualMaintenance: 560,
+      annualInsurance: 590,
+      annualRepairs: 560,
+      annualTax: 95,
     },
-    cheap_used_ev: {
-      label: "Cheap used EV",
-      name: "Cheap used EV",
-      type: "electric",
-      paymentMode: PAYMENT_MODES.both,
-      upfrontPrice: 18000,
-      downPayment: 3500,
-      monthlyPayment: 0,
-      loanMonths: 60,
-      taeg: 8,
-      openingFee: 250,
-      balloonPayment: 0,
-      kwhPer100Km: 15.5,
-      litersPer100Km: 0,
-      annualMaintenance: 400,
-      annualInsurance: 575,
-      annualRepairs: 500,
-      annualTax: 0,
-      qualityScore: 6,
-      resaleValues: { 3: 11500, 5: 8500, 7: 5800, 10: 3000 },
-    },
-    expensive_new_ev: {
-      label: "Expensive/new EV",
-      name: "Expensive/new EV",
-      type: "electric",
-      paymentMode: PAYMENT_MODES.both,
-      upfrontPrice: 36000,
-      downPayment: 8000,
-      monthlyPayment: 0,
-      loanMonths: 84,
-      taeg: 5.5,
-      openingFee: 350,
-      balloonPayment: 0,
-      kwhPer100Km: 15,
-      litersPer100Km: 0,
-      annualMaintenance: 350,
-      annualInsurance: 800,
-      annualRepairs: 150,
-      annualTax: 0,
-      qualityScore: 8,
-      resaleValues: { 3: 25000, 5: 20500, 7: 16000, 10: 9500 },
-    },
-    custom: {
-      label: "Custom",
-      name: "Custom",
+    combustion: {
       type: "combustion",
-      paymentMode: PAYMENT_MODES.both,
-      upfrontPrice: 10000,
-      downPayment: 0,
-      monthlyPayment: 0,
+      upfrontPrice: 16000,
+      downPayment: 3000,
+      monthlyPayment: 245,
       loanMonths: 60,
-      taeg: 0,
-      openingFee: 0,
-      balloonPayment: 0,
-      kwhPer100Km: 15,
-      litersPer100Km: 6,
-      annualMaintenance: 500,
-      annualInsurance: 500,
-      annualRepairs: 500,
-      annualTax: 100,
-      qualityScore: 5,
-      resaleValues: { 3: 7000, 5: 5000, 7: 3000, 10: 1000 },
+      kwhPer100Km: 0,
+      litersPer100Km: 6.4,
+      fuelPrice: 1.75,
+      homeElectricityPrice: 0.18,
+      publicElectricityPrice: 0.45,
+      homeChargingPct: 0,
+      publicChargingPct: 0,
+      annualMaintenance: 740,
+      annualInsurance: 520,
+      annualRepairs: 780,
+      annualTax: 175,
     },
   };
+
+  const DEFAULT_CARS = {
+    car1: Object.assign({ name: "Used EV", paymentMode: PAYMENT_MODES.upfront }, TYPE_DEFAULTS.ev),
+    car2: Object.assign({ name: "Hybrid finance", paymentMode: PAYMENT_MODES.finance }, TYPE_DEFAULTS.hybrid),
+  };
+
+  const TYPE_FIELDS = [
+    "upfrontPrice",
+    "downPayment",
+    "monthlyPayment",
+    "loanMonths",
+    "kwhPer100Km",
+    "litersPer100Km",
+    "fuelPrice",
+    "homeElectricityPrice",
+    "publicElectricityPrice",
+    "homeChargingPct",
+    "publicChargingPct",
+    "annualMaintenance",
+    "annualInsurance",
+    "annualRepairs",
+    "annualTax",
+  ];
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -617,109 +408,138 @@
     return Math.min(max, Math.max(min, num(value)));
   }
 
-  function applyPreset(key) {
-    return clone(PRESETS[key] || PRESETS.custom);
+  function cleanType(type) {
+    if (type === "electric") return "ev";
+    return Object.prototype.hasOwnProperty.call(TYPE_DEFAULTS, type) ? type : "combustion";
   }
 
-  function firstNumber(value, fallback) {
-    if (value === "" || value === null || typeof value === "undefined") return num(fallback);
-    return num(value, fallback);
+  function monthlyInvestmentRate() {
+    return Math.pow(1 + STOCK_RETURN / 100, 1 / 12) - 1;
   }
 
-  function monthlyInvestmentRate(annualReturnPercent) {
-    return Math.pow(1 + num(annualReturnPercent) / 100, 1 / 12) - 1;
+  function normalizeYears(years) {
+    return Math.max(1 / 12, num(years, DEFAULT_ASSUMPTIONS.yearsOwned));
   }
 
-  function selectedYear(assumptionsInput) {
-    const assumptions = Object.assign({}, DEFAULT_ASSUMPTIONS, assumptionsInput || {});
-    const requested = num(assumptions.analysisYears, DEFAULT_ASSUMPTIONS.analysisYears);
-    return HORIZONS.reduce((closest, year) => (
-      Math.abs(year - requested) < Math.abs(closest - requested) ? year : closest
-    ), HORIZONS[0]);
+  function analysisMonths(years) {
+    return Math.max(1, Math.round(normalizeYears(years) * 12));
   }
 
-  function loanMonthlyRate(taegPercent) {
-    return num(taegPercent) / 100 / 12;
+  function defaultCar(carKey) {
+    return clone(DEFAULT_CARS[carKey] || DEFAULT_CARS.car1);
   }
 
-  function futureValue(amount, monthlyRate, months) {
-    return num(amount) * Math.pow(1 + monthlyRate, Math.max(0, months));
+  function customSet(car) {
+    return new Set(Array.isArray(car && car.customFields) ? car.customFields : []);
   }
 
-  function futureValueMonthlyContribution(payment, monthlyRate, months) {
-    const n = Math.max(0, Math.round(months));
-    const pmt = num(payment);
-    if (n === 0) return 0;
-    if (Math.abs(monthlyRate) < 1e-12) return pmt * n;
-    return pmt * ((Math.pow(1 + monthlyRate, n) - 1) / monthlyRate);
+  function applyTypeDefaults(carInput, options) {
+    const car = Object.assign({}, carInput || {});
+    const nextType = cleanType(car.type);
+    const defaults = TYPE_DEFAULTS[nextType];
+    const respectCustom = !options || options.respectCustom !== false;
+    const custom = customSet(car);
+    TYPE_FIELDS.forEach((field) => {
+      if (!respectCustom || !custom.has(field) || field === "kwhPer100Km" || field === "litersPer100Km") {
+        if (!respectCustom || !custom.has(field)) car[field] = defaults[field];
+      }
+    });
+    car.type = nextType;
+    car.customFields = Array.from(custom);
+    if (!car.name) car.name = VEHICLE_TYPES[nextType];
+    return car;
   }
 
-  function loanPayment(principal, annualRatePercent, months) {
-    const p = Math.max(0, num(principal));
-    const n = Math.max(0, Math.round(num(months)));
-    if (n === 0) return 0;
-    const r = loanMonthlyRate(annualRatePercent);
-    if (Math.abs(r) < 1e-12) return p / n;
-    return (p * r) / (1 - Math.pow(1 + r, -n));
+  function withCarDefaults(carInput, carKey) {
+    const base = defaultCar(carKey);
+    const merged = Object.assign({}, base, clone(carInput || {}));
+    merged.type = cleanType(merged.type);
+    merged.paymentMode = merged.paymentMode === PAYMENT_MODES.finance ? PAYMENT_MODES.finance : PAYMENT_MODES.upfront;
+    merged.customFields = Array.isArray(merged.customFields) ? merged.customFields.slice() : [];
+    return merged;
   }
 
-  function financePrincipal(car) {
-    return Math.max(0, num(car.upfrontPrice) - num(car.downPayment) + num(car.openingFee));
+  function markCustom(car, field) {
+    const custom = customSet(car);
+    custom.add(field);
+    car.customFields = Array.from(custom);
+    return car;
   }
 
-  function financeSummary(car) {
-    const principal = financePrincipal(car);
+  function clearCustom(car, fields) {
+    const custom = customSet(car);
+    fields.forEach((field) => custom.delete(field));
+    car.customFields = Array.from(custom);
+    return car;
+  }
+
+  function retentionRate(typeInput, yearsInput) {
+    const type = cleanType(typeInput);
+    const years = normalizeYears(yearsInput);
+    const firstYearDrop = { ev: 0.78, hybrid: 0.82, combustion: 0.80 }[type];
+    const yearlyRetention = { ev: 0.905, hybrid: 0.915, combustion: 0.90 }[type];
+    if (years <= 1) return Math.min(0.92, firstYearDrop + (1 - years) * 0.08);
+    return clamp(firstYearDrop * Math.pow(yearlyRetention, years - 1), 0.08, 0.92);
+  }
+
+  function estimatedResaleValue(carInput, yearsInput) {
+    const car = withCarDefaults(carInput);
+    return Math.round(Math.max(0, num(car.upfrontPrice) * retentionRate(car.type, yearsInput) / 100) * 100);
+  }
+
+  function effectiveResaleValue(carInput, yearsInput) {
+    const car = withCarDefaults(carInput);
+    if (car.resaleCustom) return Math.max(0, num(car.resaleValue));
+    return estimatedResaleValue(car, yearsInput);
+  }
+
+  function financeSummary(carInput) {
+    const car = withCarDefaults(carInput);
     const months = Math.max(0, Math.round(num(car.loanMonths)));
-    const calculatedPayment = loanPayment(principal, car.taeg, months);
-    const manualPayment = num(car.monthlyPayment);
-    const monthlyPayment = manualPayment > 0 ? manualPayment : calculatedPayment;
-    const financeTotalPaid = num(car.downPayment) + monthlyPayment * months + num(car.openingFee) + num(car.balloonPayment);
+    const monthlyPayment = Math.max(0, num(car.monthlyPayment));
+    const downPayment = Math.max(0, num(car.downPayment));
+    const financeTotal = downPayment + monthlyPayment * months;
     return {
-      principal,
+      downPayment,
       monthlyPayment,
-      calculatedPayment,
-      manualPaymentUsed: manualPayment > 0,
-      monthlyRate: loanMonthlyRate(car.taeg),
-      financeTotalPaid,
-      financingCost: financeTotalPaid - num(car.upfrontPrice),
+      loanMonths: months,
+      financeTotal,
+      financeTotalPaid: financeTotal,
+      financingCost: financeTotal - num(car.upfrontPrice),
     };
   }
 
-  function loanBalance(car, monthsPaid) {
+  function loanBalance(carInput, monthsPaidInput) {
+    const car = withCarDefaults(carInput);
     const finance = financeSummary(car);
-    const totalMonths = Math.max(0, Math.round(num(car.loanMonths)));
-    const paidMonths = Math.max(0, Math.min(totalMonths, Math.round(num(monthsPaid))));
-    let balance = finance.principal;
-    for (let month = 1; month <= paidMonths; month += 1) {
-      balance = balance * (1 + finance.monthlyRate) - finance.monthlyPayment;
-      if (month === totalMonths) balance -= num(car.balloonPayment);
-      if (balance < 0.01) balance = 0;
-    }
-    return Math.max(0, balance);
+    const totalMonths = finance.loanMonths;
+    if (totalMonths <= 0) return 0;
+    const paidMonths = clamp(Math.round(num(monthsPaidInput)), 0, totalMonths);
+    const principal = Math.max(0, finance.financeTotal - finance.downPayment);
+    const owed = principal - finance.monthlyPayment * paidMonths;
+    return Math.max(0, owed);
   }
 
-  function weightedElectricityPrice(car, assumptionsInput) {
-    const assumptions = Object.assign({}, DEFAULT_ASSUMPTIONS, assumptionsInput || {});
-    const homePct = clamp(firstNumber(car.homeChargingPct, assumptions.homeChargingPct), 0, 100) / 100;
-    const publicPct = clamp(firstNumber(car.publicChargingPct, assumptions.publicChargingPct), 0, 100) / 100;
+  function weightedElectricityPrice(carInput) {
+    const car = withCarDefaults(carInput);
+    const homePct = clamp(car.homeChargingPct, 0, 100) / 100;
+    const publicPct = clamp(car.publicChargingPct, 0, 100) / 100;
     const total = homePct + publicPct;
     const homeShare = total > 0 ? homePct / total : 1;
     const publicShare = total > 0 ? publicPct / total : 0;
-    const homePrice = firstNumber(car.homeElectricityPrice, assumptions.homeElectricityPrice);
-    const publicPrice = firstNumber(car.publicElectricityPrice, assumptions.publicElectricityPrice);
-    return homeShare * homePrice + publicShare * publicPrice;
+    return homeShare * Math.max(0, num(car.homeElectricityPrice)) + publicShare * Math.max(0, num(car.publicElectricityPrice));
   }
 
-  function annualEnergyCost(car, assumptionsInput) {
+  function annualEnergyCost(carInput, assumptionsInput) {
+    const car = withCarDefaults(carInput);
     const assumptions = Object.assign({}, DEFAULT_ASSUMPTIONS, assumptionsInput || {});
-    const km = firstNumber(car.annualKm, assumptions.annualKm);
-    if (car.type === "electric") {
-      return km / 100 * num(car.kwhPer100Km) * weightedElectricityPrice(car, assumptions);
-    }
-    return km / 100 * num(car.litersPer100Km) * firstNumber(car.fuelPrice, assumptions.fuelPrice);
+    const km = Math.max(0, num(assumptions.annualKm));
+    if (car.type === "ev") return km / 100 * Math.max(0, num(car.kwhPer100Km)) * weightedElectricityPrice(car);
+    return km / 100 * Math.max(0, num(car.litersPer100Km)) * Math.max(0, num(car.fuelPrice));
   }
 
-  function annualRunningBreakdown(car, assumptions) {
+  function annualRunningBreakdown(carInput, assumptions) {
+    const car = withCarDefaults(carInput);
     const energy = annualEnergyCost(car, assumptions);
     const maintenance = Math.max(0, num(car.annualMaintenance));
     const insurance = Math.max(0, num(car.annualInsurance));
@@ -735,787 +555,582 @@
     };
   }
 
-  function resaleValue(car, year) {
-    return Math.max(0, num(car.resaleValues && car.resaleValues[year]));
+  function scenarioLabel(row) {
+    const name = String(row && row.carName ? row.carName : row && row.name ? row.name : "").trim() || "Unnamed option";
+    const mode = row && row.mode === PAYMENT_MODES.finance ? "finance" : "upfront";
+    return `${name} ${mode}`;
   }
 
-  function modesForCar(car) {
-    if (car.paymentMode === PAYMENT_MODES.upfront) return [PAYMENT_MODES.upfront];
-    if (car.paymentMode === PAYMENT_MODES.finance) return [PAYMENT_MODES.finance];
-    return [PAYMENT_MODES.upfront, PAYMENT_MODES.finance];
+  function possibleStatus(warnings) {
+    if (warnings.some((warning) => warning.severity === "no")) return "No";
+    if (warnings.length) return "Warning";
+    return "Yes";
   }
 
-  function noCarBaseline(assumptionsInput) {
+  function shortSummary(row, winner) {
+    if (row.possible === "No") return "Impossible: upfront exceeds cash";
+    if (row.loanStillOwed > 0) return "Warning: loan not paid";
+    if (row.budgetDeficit > 0) return "Loses: high monthly cost";
+    if (winner && row.id === winner.id) {
+      if (row.averageMonthlyInvested > 0 && row.resaleValue > row.upfrontPrice * 0.35) return "Strong: low cost + resale";
+      return "Wins: more invested";
+    }
+    if (row.resaleRisk) return "Risk: resale assumption high";
+    return row.averageMonthlyInvested < (winner ? winner.averageMonthlyInvested : row.averageMonthlyInvested) ? "Loses: high monthly cost" : "Loses: less invested";
+  }
+
+  function warning(id, severity, message, carKey, option) {
+    return { id, severity, message, carKey, option };
+  }
+
+  function buildWarnings(row, car, assumptions, months) {
+    const warnings = [];
+    if (!String(car.name || "").trim()) warnings.push(warning("missing-name", "warning", "Car name is missing.", row.carKey, row.option));
+    if (num(car.upfrontPrice) <= 0) warnings.push(warning("missing-price", "no", "Cash price is missing.", row.carKey, row.option));
+    if (row.mode === PAYMENT_MODES.upfront && num(car.upfrontPrice) > num(assumptions.initialCashBudget)) {
+      warnings.push(warning("upfront-cash", "no", "Upfront price exceeds initial cash.", row.carKey, row.option));
+    }
+    if (row.mode === PAYMENT_MODES.finance && num(car.downPayment) > num(assumptions.initialCashBudget)) {
+      warnings.push(warning("down-cash", "no", "Down payment exceeds initial cash.", row.carKey, row.option));
+    }
+    if (row.maxMonthlyCarCost > num(assumptions.monthlyBudget)) {
+      warnings.push(warning("monthly-budget", "warning", "Monthly cost exceeds monthly budget.", row.carKey, row.option));
+    }
+    if (row.mode === PAYMENT_MODES.finance && num(car.loanMonths) > months) {
+      warnings.push(warning("loan-long", "warning", "Loan is not fully paid by the selected year.", row.carKey, row.option));
+    }
+    if (row.mode === PAYMENT_MODES.finance && row.loanStillOwed > 0) {
+      warnings.push(warning("loan-left", "warning", "Car is not fully paid by the selected end year.", row.carKey, row.option));
+    }
+    if (row.resaleValue < 0 || !Number.isFinite(row.resaleValue)) {
+      warnings.push(warning("resale-invalid", "no", "Resale value is missing or negative.", row.carKey, row.option));
+    }
+    if (row.resaleValue > num(car.upfrontPrice) * 0.9 && normalizeYears(assumptions.yearsOwned) >= 2) {
+      warnings.push(warning("resale-high", "warning", "Resale value looks suspiciously high.", row.carKey, row.option));
+    }
+    return warnings;
+  }
+
+  function simulateScenario(carInput, assumptionsInput, modeInput, yearsInput, carKeyInput) {
     const assumptions = Object.assign({}, DEFAULT_ASSUMPTIONS, assumptionsInput || {});
-    const monthlyRate = monthlyInvestmentRate(assumptions.investmentReturn);
-    return HORIZONS.map((year) => {
-      const months = year * 12;
-      const initialCashInvested = futureValue(assumptions.initialCashBudget, monthlyRate, months);
-      const monthlyBudgetInvested = futureValueMonthlyContribution(assumptions.monthlyBudget, monthlyRate, months);
-      return {
-        year,
-        initialCashInvested,
-        monthlyBudgetInvested,
-        finalBaselineWealth: initialCashInvested + monthlyBudgetInvested,
-      };
-    });
-  }
-
-  function simulateScenario(carInput, assumptionsInput, mode, years) {
-    const car = Object.assign({}, applyPreset("custom"), clone(carInput));
-    const assumptions = Object.assign({}, DEFAULT_ASSUMPTIONS, assumptionsInput || {});
-    const months = Math.max(0, Math.round(num(years) * 12));
-    const monthlyRate = monthlyInvestmentRate(assumptions.investmentReturn);
+    const years = normalizeYears(yearsInput === undefined ? assumptions.yearsOwned : yearsInput);
+    const months = analysisMonths(years);
+    const monthlyRate = monthlyInvestmentRate();
+    const car = withCarDefaults(carInput, carKeyInput);
+    const mode = modeInput === PAYMENT_MODES.finance ? PAYMENT_MODES.finance : PAYMENT_MODES.upfront;
     const finance = financeSummary(car);
     const isFinance = mode === PAYMENT_MODES.finance;
-    const month0Paid = isFinance ? num(car.downPayment) + num(car.openingFee) : num(car.upfrontPrice);
-    let investments = Math.max(0, num(assumptions.initialCashBudget) - month0Paid);
-    let budgetDeficit = Math.max(0, month0Paid - num(assumptions.initialCashBudget));
-    let totalPaid = month0Paid;
-    let purchasePaid = month0Paid;
+    const initialSpent = isFinance ? finance.downPayment : Math.max(0, num(car.upfrontPrice));
+    let investmentBalance = Math.max(0, num(assumptions.initialCashBudget) - initialSpent);
+    let totalDeficits = Math.max(0, initialSpent - num(assumptions.initialCashBudget));
+    let monthlyInvestedTotal = 0;
+    let carPaymentsPaid = initialSpent;
     let runningPaid = 0;
-    let loanPaid = isFinance ? month0Paid : 0;
-    let monthlyInvestmentContributed = 0;
+    let maxMonthlyCarCost = 0;
     const running = annualRunningBreakdown(car, assumptions);
     const monthlyRunning = running.total / 12;
-    const loanMonths = Math.max(0, Math.round(num(car.loanMonths)));
-    let energyPaid = 0;
-    let maintenancePaid = 0;
-    let insurancePaid = 0;
-    let repairsPaid = 0;
-    let taxPaid = 0;
     const yearly = [];
 
     for (let month = 1; month <= months; month += 1) {
-      investments *= 1 + monthlyRate;
-      const loanPaymentThisMonth = isFinance && month <= loanMonths ? finance.monthlyPayment : 0;
-      const balloonThisMonth = isFinance && month === loanMonths ? num(car.balloonPayment) : 0;
-      const monthlyCarCost = monthlyRunning + loanPaymentThisMonth + balloonThisMonth;
-      const monthlyInvestment = Math.max(0, num(assumptions.monthlyBudget) - monthlyCarCost);
-      const monthlyDeficit = Math.max(0, monthlyCarCost - num(assumptions.monthlyBudget));
-      investments += monthlyInvestment;
-      monthlyInvestmentContributed += monthlyInvestment;
-      budgetDeficit += monthlyDeficit;
-      totalPaid += monthlyCarCost;
+      investmentBalance *= 1 + monthlyRate;
+      const monthlyCarPayment = isFinance && month <= finance.loanMonths ? finance.monthlyPayment : 0;
+      const monthlyTotalCarCost = monthlyCarPayment + monthlyRunning;
+      const monthlyInvested = Math.max(0, num(assumptions.monthlyBudget) - monthlyTotalCarCost);
+      const monthlyDeficit = Math.max(0, monthlyTotalCarCost - num(assumptions.monthlyBudget));
+      investmentBalance += monthlyInvested;
+      monthlyInvestedTotal += monthlyInvested;
+      totalDeficits += monthlyDeficit;
+      carPaymentsPaid += monthlyCarPayment;
       runningPaid += monthlyRunning;
-      loanPaid += loanPaymentThisMonth + balloonThisMonth;
-      purchasePaid += loanPaymentThisMonth + balloonThisMonth;
-      energyPaid += running.energy / 12;
-      maintenancePaid += running.maintenance / 12;
-      insurancePaid += running.insurance / 12;
-      repairsPaid += running.repairs / 12;
-      taxPaid += running.tax / 12;
+      maxMonthlyCarCost = Math.max(maxMonthlyCarCost, monthlyTotalCarCost);
 
       if (month % 12 === 0) {
         const year = month / 12;
-        const carValueLeft = resaleValue(car, year);
-        const loanStillOwed = isFinance ? loanBalance(car, month) : 0;
+        const resaleAtYear = effectiveResaleValue(car, year);
+        const loanAtYear = isFinance ? loanBalance(car, month) : 0;
         yearly.push({
           year,
-          finalMoneyLeft: investments + carValueLeft - loanStillOwed - budgetDeficit,
-          investments,
-          carValueLeft,
-          loanStillOwed,
-          totalPaid,
-          budgetDeficit,
-          averageMonthlyCarCost: month > 0 ? (totalPaid - month0Paid) / month : 0,
-          averageMonthlyInvested: month > 0 ? monthlyInvestmentContributed / month : 0,
+          finalMoney: investmentBalance + resaleAtYear - loanAtYear - totalDeficits,
+          investmentBalance,
+          resaleValue: resaleAtYear,
+          loanLeft: loanAtYear,
+          totalDeficits,
+          runningPaid,
+          carPaymentsPaid,
         });
       }
     }
 
-    const carValueLeft = resaleValue(car, years);
+    const resaleValue = effectiveResaleValue(car, years);
     const loanStillOwed = isFinance ? loanBalance(car, months) : 0;
-    const finalMoneyLeft = investments + carValueLeft - loanStillOwed - budgetDeficit;
-    const totalKm = firstNumber(car.annualKm, assumptions.annualKm) * years;
-    return {
+    const finalMoney = investmentBalance + resaleValue - loanStillOwed - totalDeficits;
+    const totalRunningCost = runningPaid;
+    const totalPaid = carPaymentsPaid + totalRunningCost + totalDeficits;
+    const paidByEnd = isFinance ? carPaymentsPaid : num(car.upfrontPrice);
+    const row = {
       id: "",
-      carKey: "",
+      carKey: carKeyInput || "",
       carName: car.name,
+      option: "",
       mode,
-      year: years,
+      type: car.type,
       years,
-      month0Paid,
-      month0Invested: Math.max(0, num(assumptions.initialCashBudget) - month0Paid),
-      month0Deficit: Math.max(0, month0Paid - num(assumptions.initialCashBudget)),
-      finalMoneyLeft,
-      investments,
-      carValueLeft,
-      loanStillOwed,
-      totalPaid,
-      budgetDeficit,
-      averageMonthlyCarCost: months > 0 ? (totalPaid - month0Paid) / months : 0,
-      averageMonthlyInvested: months > 0 ? monthlyInvestmentContributed / months : 0,
-      purchasePaid,
-      runningPaid,
+      months,
+      possible: "Yes",
+      warnings: [],
+      upfrontPrice: num(car.upfrontPrice),
+      initialSpent,
+      carPaidDisplay: isFinance && finance.loanMonths > months ? paidByEnd : (isFinance ? finance.financeTotal : num(car.upfrontPrice)),
+      carPaidNote: isFinance && finance.loanMonths > months ? "paid by selected year" : (isFinance ? "full finance term" : "paid upfront"),
+      financeTotal: finance.financeTotal,
       financingCost: isFinance ? finance.financingCost : 0,
-      resaleValue: carValueLeft,
-      ownershipCost: totalPaid + loanStillOwed - carValueLeft,
-      costPerKm: totalKm > 0 ? (totalPaid + loanStillOwed - carValueLeft) / totalKm : 0,
-      energyPaid,
-      maintenancePaid,
-      insurancePaid,
-      repairsPaid,
-      taxPaid,
-      monthlyPaymentUsed: isFinance ? finance.monthlyPayment : 0,
-      financeTotalPaid: isFinance ? finance.financeTotalPaid : 0,
-      finance,
+      monthlyRunningCost: monthlyRunning,
+      extraMonth: monthlyRunning,
+      extraTotal: totalRunningCost,
+      totalPaid,
+      investedResult: investmentBalance,
+      investmentBalance,
+      resaleValue,
+      resaleSource: car.resaleCustom ? "custom" : "estimated",
+      loanLeft: loanStillOwed,
+      loanStillOwed,
+      finalMoney,
+      finalMoneyLeft: finalMoney,
+      totalDeficits,
+      budgetDeficit: totalDeficits,
+      averageMonthlyInvested: months > 0 ? monthlyInvestedTotal / months : 0,
+      averageMonthlyCarCost: months > 0 ? (carPaymentsPaid - initialSpent + totalRunningCost) / months : 0,
+      maxMonthlyCarCost,
       running,
+      runningPaid,
+      energyPaid: running.energy / 12 * months,
+      maintenancePaid: running.maintenance / 12 * months,
+      insurancePaid: running.insurance / 12 * months,
+      repairsPaid: running.repairs / 12 * months,
+      taxPaid: running.tax / 12 * months,
+      monthlyPaymentUsed: isFinance ? finance.monthlyPayment : 0,
+      finance,
       yearly,
+      resaleRisk: resaleValue > num(car.upfrontPrice) * 0.9 && years >= 2,
     };
+    row.option = scenarioLabel(row);
+    row.warnings = buildWarnings(row, car, assumptions, months);
+    row.possible = possibleStatus(row.warnings);
+    row.summary = shortSummary(row, null);
+    return row;
   }
 
-  function scenarioLabel(row) {
-    const name = String(row.carName || "").trim() || "Custom vehicle";
-    return `${name} ${row.mode === PAYMENT_MODES.upfront ? "upfront" : "finance"}`;
+  function compareRows(a, b) {
+    return a.finalMoney - b.finalMoney;
   }
 
-  function bestByMoney(rows) {
-    return rows.reduce((best, row) => (best && best.finalMoneyLeft >= row.finalMoneyLeft ? best : row), null);
-  }
-
-  function takeaway(row, winner, competitors) {
-    const reasons = scenarioReasons(row, winner, competitors);
-    if (reasons.length) return reasons[0];
-    if (winner && row.id === winner.id) {
-      if (row.mode === PAYMENT_MODES.finance && row.month0Invested > 0) return "Wins because cheap financing lets cash compound.";
-      if (row.purchasePaid < Math.min(...competitors.filter((x) => x.id !== row.id).map((x) => x.purchasePaid))) return "Wins because low upfront leaves more invested.";
-      return "Wins because it leaves the most money.";
-    }
-    const best = winner || row;
-    if (row.energyPaid + row.repairsPaid > best.energyPaid + best.repairsPaid) return "Loses because fuel and repairs eat monthly budget.";
-    if (row.ownershipCost < best.ownershipCost && row.finalMoneyLeft < best.finalMoneyLeft) return "Lower ownership cost, but worse net worth.";
-    if (row.totalPaid > best.totalPaid) return "Loses because total paid is higher.";
-    return "Leaves less money after investments, car value, and loan.";
-  }
-
-  function reasonForWinner(winner, rows) {
-    if (!winner) return [];
-    const rivals = rows.filter((row) => row.id !== winner.id);
-    const nextBest = rivals.slice().sort((a, b) => b.finalMoneyLeft - a.finalMoneyLeft)[0];
-    const reasons = [];
-    if (winner.month0Invested > 0) reasons.push(`${formatEuro(winner.month0Invested)} invested at month 0`);
-    if (winner.budgetDeficit === 0) reasons.push("monthly car cost stays inside the budget");
-    if (nextBest && winner.investments > nextBest.investments) reasons.push("more investments left at the end");
-    if (nextBest && winner.totalPaid < nextBest.totalPaid) reasons.push("lower total paid");
-    if (nextBest && winner.carValueLeft > nextBest.carValueLeft) reasons.push("higher car value left");
-    return reasons.slice(0, 4);
-  }
-
-  function scenarioReasons(row, winner, rows) {
-    if (!row || !winner) return [];
-    const rivals = (rows || []).filter((candidate) => candidate.id !== row.id);
-    const benchmark = row.id === winner.id
-      ? rivals.slice().sort((a, b) => b.finalMoneyLeft - a.finalMoneyLeft)[0]
-      : winner;
-    if (!benchmark) {
-      return [`Leaves ${formatEuro(row.finalMoneyLeft)} after investments, car value, loan, and deficits.`];
-    }
-
-    const reasons = [];
-    const isWinner = row.id === winner.id;
-    const moneyDiff = row.finalMoneyLeft - benchmark.finalMoneyLeft;
-    const pushMore = (field, label) => {
-      const diff = row[field] - benchmark[field];
-      if (Math.abs(diff) >= 1) reasons.push(`${label} ${formatEuro(Math.abs(diff))} ${diff > 0 ? "higher" : "lower"} than ${scenarioLabel(benchmark)}.`);
+  function analyze(input) {
+    const assumptions = Object.assign({}, DEFAULT_ASSUMPTIONS, input && input.assumptions ? input.assumptions : {});
+    assumptions.yearsOwned = normalizeYears(assumptions.yearsOwned);
+    const cars = {
+      car1: withCarDefaults(input && input.cars && input.cars.car1, "car1"),
+      car2: withCarDefaults(input && input.cars && input.cars.car2, "car2"),
     };
-    const pushLessCost = (field, label) => {
-      const diff = benchmark[field] - row[field];
-      if (Math.abs(diff) >= 1) reasons.push(`${label} ${formatEuro(Math.abs(diff))} ${diff > 0 ? "lower" : "higher"} than ${scenarioLabel(benchmark)}.`);
+    Object.values(cars).forEach((car) => {
+      if (!car.resaleCustom) car.resaleValue = estimatedResaleValue(car, assumptions.yearsOwned);
+    });
+    const rows = Object.entries(cars).map(([carKey, car]) => {
+      const row = simulateScenario(car, assumptions, car.paymentMode, assumptions.yearsOwned, carKey);
+      row.id = `${carKey}_${row.mode}`;
+      row.option = scenarioLabel(row);
+      return row;
+    });
+    const winner = rows.slice().sort((a, b) => compareRows(b, a))[0] || null;
+    rows.forEach((row) => {
+      row.isWinner = Boolean(winner && row.id === winner.id);
+      row.summary = shortSummary(row, winner);
+    });
+    const runnerUp = winner ? rows.filter((row) => row.id !== winner.id).sort((a, b) => compareRows(b, a))[0] : null;
+    const warnings = rows.flatMap((row) => row.warnings);
+    return {
+      assumptions,
+      cars,
+      rows,
+      scenarios: rows,
+      winner,
+      runnerUp,
+      difference: winner && runnerUp ? winner.finalMoney - runnerUp.finalMoney : 0,
+      warnings,
+      stockReturn: STOCK_RETURN,
     };
-
-    if (isWinner) {
-      if (moneyDiff >= 1) reasons.push(`Leaves ${formatEuro(moneyDiff)} more final money than ${scenarioLabel(benchmark)}.`);
-      if (row.month0Invested - benchmark.month0Invested >= 1) reasons.push(`Invests ${formatEuro(row.month0Invested - benchmark.month0Invested)} more at month 0.`);
-      if (row.averageMonthlyInvested - benchmark.averageMonthlyInvested >= 1) reasons.push(`Invests about ${formatEuro(row.averageMonthlyInvested - benchmark.averageMonthlyInvested)} more each month.`);
-      if (benchmark.energyPaid - row.energyPaid >= 1) reasons.push(`Fuel/energy is ${formatEuro(benchmark.energyPaid - row.energyPaid)} lower.`);
-      if (benchmark.repairsPaid - row.repairsPaid >= 1) reasons.push(`Repairs are ${formatEuro(benchmark.repairsPaid - row.repairsPaid)} lower.`);
-      if (row.carValueLeft - benchmark.carValueLeft >= 1) reasons.push(`Car value left is ${formatEuro(row.carValueLeft - benchmark.carValueLeft)} higher.`);
-      if (benchmark.totalPaid - row.totalPaid >= 1) reasons.push(`Total paid is ${formatEuro(benchmark.totalPaid - row.totalPaid)} lower.`);
-      if (benchmark.financingCost - row.financingCost >= 1) reasons.push(`Financing cost is ${formatEuro(benchmark.financingCost - row.financingCost)} lower.`);
-      if (row.loanStillOwed === 0 && benchmark.loanStillOwed > 0) reasons.push("No loan remains at the selected year.");
-      if (row.budgetDeficit === 0) reasons.push("Stays inside the monthly budget.");
-      return reasons.slice(0, 5);
-    }
-
-    if (benchmark.finalMoneyLeft - row.finalMoneyLeft >= 1) reasons.push(`Leaves ${formatEuro(benchmark.finalMoneyLeft - row.finalMoneyLeft)} less final money than ${scenarioLabel(benchmark)}.`);
-    if (benchmark.month0Invested - row.month0Invested >= 1) reasons.push(`Invests ${formatEuro(benchmark.month0Invested - row.month0Invested)} less at month 0.`);
-    if (row.averageMonthlyCarCost - benchmark.averageMonthlyCarCost >= 1) reasons.push(`Monthly car cost is about ${formatEuro(row.averageMonthlyCarCost - benchmark.averageMonthlyCarCost)} higher.`);
-    if (row.energyPaid - benchmark.energyPaid >= 1) reasons.push(`Fuel/energy costs ${formatEuro(row.energyPaid - benchmark.energyPaid)} more.`);
-    if (row.repairsPaid - benchmark.repairsPaid >= 1) reasons.push(`Repairs cost ${formatEuro(row.repairsPaid - benchmark.repairsPaid)} more.`);
-    if (benchmark.carValueLeft - row.carValueLeft >= 1) reasons.push(`Car value left is ${formatEuro(benchmark.carValueLeft - row.carValueLeft)} lower.`);
-    if (row.totalPaid - benchmark.totalPaid >= 1) reasons.push(`Total paid is ${formatEuro(row.totalPaid - benchmark.totalPaid)} higher.`);
-    if (row.financingCost - benchmark.financingCost >= 1) reasons.push(`Financing cost is ${formatEuro(row.financingCost - benchmark.financingCost)} higher.`);
-    if (row.loanStillOwed - benchmark.loanStillOwed >= 1) reasons.push(`Loan still owed is ${formatEuro(row.loanStillOwed - benchmark.loanStillOwed)} higher.`);
-    if (row.budgetDeficit - benchmark.budgetDeficit >= 1) reasons.push(`Budget deficits are ${formatEuro(row.budgetDeficit - benchmark.budgetDeficit)} higher.`);
-    return reasons.slice(0, 5);
   }
 
   function formatEuro(value) {
     return `€${Math.round(num(value)).toLocaleString("en-IE")}`;
   }
 
-  function analyze(input) {
-    const assumptions = Object.assign({}, DEFAULT_ASSUMPTIONS, input && input.assumptions ? input.assumptions : {});
-    const activeYear = selectedYear(assumptions);
-    const cars = {
-      car1: Object.assign({}, applyPreset("tesla_model_3_new"), clone(input && input.cars && input.cars.car1 ? input.cars.car1 : {})),
-      car2: Object.assign({}, applyPreset("cheap_used_ev"), clone(input && input.cars && input.cars.car2 ? input.cars.car2 : {})),
-    };
-    const horizonResults = HORIZONS.map((year) => {
-      const rows = [];
-      Object.entries(cars).forEach(([carKey, car]) => {
-        modesForCar(car).forEach((mode) => {
-          const row = simulateScenario(car, assumptions, mode, year);
-          row.carKey = carKey;
-          row.id = `${carKey}_${mode}`;
-          rows.push(row);
-        });
-      });
-      const winner = bestByMoney(rows);
-      rows.forEach((row) => {
-        row.isWinner = winner && winner.id === row.id;
-        row.takeaway = takeaway(row, winner, rows);
-      });
-      return { year, rows, winner, reason: reasonForWinner(winner, rows) };
-    });
-    const scenarios = {};
-    horizonResults.forEach((horizon) => {
-      horizon.rows.forEach((row) => {
-        scenarios[row.id] = scenarios[row.id] || {
-          id: row.id,
-          carKey: row.carKey,
-          carName: row.carName,
-          mode: row.mode,
-          horizons: {},
-        };
-        scenarios[row.id].horizons[horizon.year] = row;
-      });
-    });
-    return {
-      assumptions,
-      cars,
-      selectedYear: activeYear,
-      selected: horizonResults.find((horizon) => horizon.year === activeYear),
-      baseline: noCarBaseline(assumptions),
-      scenarios: Object.values(scenarios),
-      horizonResults,
-      winners: Object.fromEntries(horizonResults.map((horizon) => [horizon.year, horizon.winner])),
-    };
-  }
-
   return {
-    HORIZONS,
+    STOCK_RETURN,
     PAYMENT_MODES,
+    VEHICLE_TYPES,
     DEFAULT_ASSUMPTIONS,
-    PRESETS,
-    applyPreset,
+    TYPE_DEFAULTS,
+    DEFAULT_CARS,
+    TYPE_FIELDS,
+    clone,
+    num,
+    defaultCar,
+    applyTypeDefaults,
+    markCustom,
+    clearCustom,
     monthlyInvestmentRate,
-    selectedYear,
-    futureValue,
-    futureValueMonthlyContribution,
-    noCarBaseline,
-    loanPayment,
+    retentionRate,
+    estimatedResaleValue,
+    effectiveResaleValue,
     financeSummary,
     loanBalance,
-    annualEnergyCost,
     weightedElectricityPrice,
+    annualEnergyCost,
     annualRunningBreakdown,
-    resaleValue,
-    modesForCar,
     simulateScenario,
     analyze,
     scenarioLabel,
-    scenarioReasons,
+    formatEuro,
   };
 });
 
   </script>
   <script>
     const M = window.CarCompareModel;
-    const colors = ["#176b87", "#b65f35", "#1f7a4d", "#6f5aa8"];
     const state = {
       assumptions: structuredClone(M.DEFAULT_ASSUMPTIONS),
-      cars: { car1: M.applyPreset("tesla_model_3_new"), car2: M.applyPreset("cheap_used_ev") },
+      cars: { car1: M.defaultCar("car1"), car2: M.defaultCar("car2") },
+    };
+
+    const HELP = {
+      setup: "Initial cash is spent first. Unused cash and monthly budget are invested at a fixed 8% yearly return, compounded monthly.",
+      cars: "Each option has one payment mode. Changing type updates untouched defaults only; fields you edited stay custom.",
+      payment: "Upfront pays cash price now. Finance pays down payment now and monthly payments until the loan term ends.",
+      costs: "Running costs are monthly energy/fuel plus annual maintenance, insurance, repairs, and tax divided by 12. Resale is estimated unless you override it.",
+      results: "Final money = investment balance + resale - loan left - deficits. Highest final money wins.",
+      initialCashBudget: "Cash available at month 0 before buying or financing.",
+      monthlyBudget: "Each month, leftover budget after car costs is invested. If costs exceed budget, the deficit is subtracted at the end.",
+      yearsOwned: "Any number of years. The simulation runs month by month for years owned x 12 months.",
+      annualKm: "Used only for fuel or electricity cost. 0 km makes energy cost 0.",
+      name: "Used as the option name in the hero and results.",
+      type: "EV uses electricity. Hybrid and combustion use fuel. Hidden energy fields do not affect results.",
+      paymentMode: "Upfront shows cash price only. Finance shows cash price, down payment, monthly payment, and months.",
+      upfrontPrice: "Cash price / car value. Used for upfront payment, finance cost comparison, and default resale estimate.",
+      downPayment: "Cash paid at month 0 for finance.",
+      monthlyPayment: "Monthly finance payment. Finance total = down payment + monthly payment x months.",
+      loanMonths: "If this is longer than years owned, loan left is subtracted from final money.",
+      kwhPer100Km: "EV electricity use. Annual energy = annual km / 100 x kWh/100km x weighted electricity price.",
+      litersPer100Km: "Fuel use. Annual fuel = annual km / 100 x L/100km x fuel price.",
+      fuelPrice: "Used for hybrid and combustion fuel cost only.",
+      homeElectricityPrice: "Home charging price per kWh. Set to 0 for free home charging.",
+      publicElectricityPrice: "Public charging price per kWh.",
+      homeChargingPct: "Home charging share. Home and public shares are normalized if they do not total 100.",
+      publicChargingPct: "Public charging share. Home and public shares are normalized if they do not total 100.",
+      annualMaintenance: "Annual maintenance estimate, divided monthly in the simulation.",
+      annualInsurance: "Annual insurance estimate, divided monthly in the simulation.",
+      annualRepairs: "Annual repair reserve, divided monthly in the simulation.",
+      annualTax: "Annual road tax, divided monthly in the simulation.",
+      resaleValue: "Estimated from cash price, vehicle type, and years owned unless marked custom.",
+    };
+
+    const ICON_PATHS = {
+      budget: '<path d="M3 7h18v10H3z"/><path d="M7 7V5h10v2"/><path d="M7 12h.01M17 12h.01M12 12a2 2 0 1 0 0 .01"/>',
+      car: '<path d="M5 17h14"/><path d="M6 17l1-5 3-4h4l3 4 1 5"/><path d="M8 17v1"/><path d="M16 17v1"/><path d="M8 12h8"/>',
+      fuel: '<path d="M5 21V4h9v17"/><path d="M5 9h9"/><path d="M14 7h2l3 3v8a2 2 0 0 1-4 0v-5h-1"/>',
+      loan: '<path d="M4 7h16v12H4z"/><path d="M4 11h16"/><path d="M8 15h4"/><path d="M16 15h.01"/>',
+      winner: '<path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 3"/><path d="M17 6h3a3 3 0 0 1-3 3"/>',
+      warning: '<path d="M12 3 2.5 20h19z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+      settings: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a8 8 0 0 0-1.7-1L15.5 3h-4l-.3 3a8 8 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a8 8 0 0 0 1.7 1l.3 3h4l.3-3a8 8 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5c.1-.3.1-.7.1-1z"/>',
     };
 
     const setupFields = [
-      ["initialCashBudget", "Initial cash available (€)", 0, 200000, 100],
-      ["monthlyBudget", "Monthly car budget (€)", 0, 3000, 10],
-      ["investmentReturn", "Stock return % yearly", 0, 12, 0.25],
-      ["analysisYears", "Analysis years", 3, 10, 1],
+      ["initialCashBudget", "Initial cash", 0, 300000, 100],
+      ["monthlyBudget", "Monthly budget", 0, 5000, 10],
+      ["yearsOwned", "Years owned", 1, 40, 1],
       ["annualKm", "Annual km", 0, 100000, 1000],
     ];
-    const financeFields = [
-      ["upfrontPrice", "Upfront price (€)", 100],
-      ["downPayment", "Down payment (€)", 100],
-      ["monthlyPayment", "Monthly payment (€)", 1],
-      ["loanMonths", "Loan months", 1],
-      ["openingFee", "Opening fee (€)", 100],
-      ["balloonPayment", "Balloon payment (€)", 100],
-    ];
-    const runningFields = [
-      ["kwhPer100Km", "kWh/100km if EV", 0.1],
-      ["litersPer100Km", "L/100km if combustion", 0.1],
-      ["fuelPrice", "Fuel price €/L", 0.01],
-      ["homeElectricityPrice", "Home electricity €/kWh", 0.01],
-      ["publicElectricityPrice", "Public electricity €/kWh", 0.01],
-      ["homeChargingPct", "Home charging %", 5],
-      ["publicChargingPct", "Public charging %", 5],
-      ["annualMaintenance", "Maintenance/year (€)", 100],
-      ["annualInsurance", "Insurance/year (€)", 100],
-      ["annualRepairs", "Repairs/year (€)", 100],
-      ["annualTax", "Tax/year (€)", 100],
-    ];
-    const HELP = {
-      finalMoneyLeft: "Investments + resale value - loan owed - deficits.",
-      investments: "Money left in the investment account at this year.",
-      carValueLeft: "Estimated resale value at this year.",
-      loanStillOwed: "Remaining loan balance subtracted from money left.",
-      totalPaid: "Cash paid for purchase, loan, running costs, and deficits.",
-      budgetDeficit: "Costs above the monthly budget. Not invested.",
-      financingCost: "Finance total paid minus upfront price.",
-      resaleValue: "Expected car value if sold at this year.",
-      initialCashBudget: "Cash available at month 0 for this decision.",
-      monthlyBudget: "Monthly car budget. Unused money is invested.",
-      investmentReturn: "Annual return converted to a monthly compound rate.",
-      analysisYears: "The headline year used for cards, detail columns, charts, and summary.",
-      annualKm: "Driving distance used for fuel or electricity.",
-      runningCost: "Energy, maintenance, insurance, repairs, and tax.",
-      paymentMode: "Controls which scenarios are shown for this car.",
-      winner: "Highest final money left. Not lowest ownership cost.",
-      upfrontPrice: "Cash price paid at month 0 for upfront scenarios.",
-      downPayment: "Cash paid at month 0 for finance scenarios.",
-      monthlyPayment: "Manual payment used if greater than zero.",
-      loanMonths: "Number of monthly loan payments.",
-      openingFee: "Paid at month 0 and included in finance total.",
-      balloonPayment: "Final payment due at the last loan month.",
-      kwhPer100Km: "EV electricity use per 100 km.",
-      litersPer100Km: "Combustion fuel use per 100 km.",
-      fuelPrice: "Used only for combustion scenarios.",
-      homeElectricityPrice: "Home charging price per kWh.",
-      publicElectricityPrice: "Public charging price per kWh.",
-      chargingSplit: "Home/public shares are normalized if they do not total 100.",
-      maintenance: "Annual maintenance estimate.",
-      insurance: "Annual insurance estimate.",
-      repairs: "Annual repair reserve.",
-      tax: "Annual road tax estimate.",
+    const paymentFields = {
+      upfront: [["upfrontPrice", "Upfront price", 100]],
+      finance: [["upfrontPrice", "Cash price / car value", 100], ["downPayment", "Down payment", 100], ["monthlyPayment", "Monthly payment", 1], ["loanMonths", "Months", 1]],
     };
-    const FIELD_HELP = {
-      initialCashBudget: "Cash available at month 0 before buying or financing.",
-      monthlyBudget: "Unused monthly budget is invested. Deficits are tracked separately.",
-      investmentReturn: "Used to compound unused cash and monthly leftover budget.",
-      analysisYears: "Controls the headline winner, detail columns, charts, and summary.",
-      annualKm: "Higher distance makes fuel and efficiency matter more.",
-      paymentMode: "Only enabled payment paths appear in results.",
-      upfrontPrice: "Paid immediately in upfront scenarios.",
-      downPayment: "Paid immediately in finance scenarios.",
-      monthlyPayment: "Used directly when filled; otherwise the model calculates a payment.",
-      loanMonths: "Loan balance is subtracted if the loan is not finished.",
-      openingFee: "Paid at month 0 and included in financing cost.",
-      balloonPayment: "Paid at the final loan month if applicable.",
-      kwhPer100Km: "Used only for EV energy cost.",
-      litersPer100Km: "Used only for combustion fuel cost.",
-      fuelPrice: "Combustion energy cost uses this price.",
-      homeElectricityPrice: "Set to 0 for free home charging.",
-      publicElectricityPrice: "Used with the public charging share.",
-      homeChargingPct: "The model normalizes home and public shares.",
-      publicChargingPct: "The model normalizes home and public shares.",
-      annualMaintenance: "Annual estimate divided monthly.",
-      annualInsurance: "Annual estimate divided monthly.",
-      annualRepairs: "Annual repair reserve divided monthly.",
-      annualTax: "Annual tax estimate divided monthly.",
+    const costFields = {
+      ev: [["kwhPer100Km", "kWh/100km", 0.1], ["homeElectricityPrice", "Home €/kWh", 0.01], ["publicElectricityPrice", "Public €/kWh", 0.01], ["homeChargingPct", "Home %", 5], ["publicChargingPct", "Public %", 5]],
+      hybrid: [["litersPer100Km", "L/100km", 0.1], ["fuelPrice", "Fuel €/L", 0.01]],
+      combustion: [["litersPer100Km", "L/100km", 0.1], ["fuelPrice", "Fuel €/L", 0.01]],
     };
-    const ICON_PATHS = {
-      budget: '<path d="M3 7h18v10H3z"/><path d="M7 7V5h10v2"/><path d="M7 12h.01M17 12h.01M12 12a2 2 0 1 0 0 .01"/>',
-      investment: '<path d="M4 19V5"/><path d="M4 19h16"/><path d="m7 15 4-4 3 3 5-7"/><path d="M15 7h4v4"/>',
-      car: '<path d="M5 17h14"/><path d="M6 17l1-5 3-4h4l3 4 1 5"/><path d="M8 17v1"/><path d="M16 17v1"/><path d="M8 12h8"/>',
-      fuel: '<path d="M5 21V4h9v17"/><path d="M5 9h9"/><path d="M14 7h2l3 3v8a2 2 0 0 1-4 0v-5h-1"/>',
-      electricity: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
-      loan: '<path d="M4 7h16v12H4z"/><path d="M4 11h16"/><path d="M8 15h4"/><path d="M16 15h.01"/>',
-      resale: '<path d="M7 7h10v10H7z"/><path d="M9 3h6v4H9z"/><path d="M9 17v4"/><path d="M15 17v4"/><path d="M5 21h14"/>',
-      winner: '<path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 3"/><path d="M17 6h3a3 3 0 0 1-3 3"/>',
-      warning: '<path d="M12 3 2.5 20h19z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
-      info: '<path d="M12 17v-5"/><path d="M12 8h.01"/><circle cx="12" cy="12" r="9"/>',
-      chart: '<path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M12 16V8"/><path d="M16 16v-3"/>',
-      settings: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2 3.4-.2-.1a1.7 1.7 0 0 0-1.9.3 1.7 1.7 0 0 0-.8 1.7V22H9v-.3a1.7 1.7 0 0 0-.8-1.7 1.7 1.7 0 0 0-1.9-.3l-.2.1-2-3.4.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3V9h.3a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1 2-3.4.2.1a1.7 1.7 0 0 0 1.9-.3A1.7 1.7 0 0 0 9.3 1H15v.3a1.7 1.7 0 0 0 .8 1.7 1.7 1.7 0 0 0 1.9.3l.2-.1 2 3.4-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.3v4h-.3a1.7 1.7 0 0 0-1.6 1.4z"/>',
-    };
+    const commonCostFields = [["annualMaintenance", "Maintenance/year", 50], ["annualInsurance", "Insurance/year", 50], ["annualRepairs", "Repairs/year", 50], ["annualTax", "Tax/year", 25], ["resaleValue", "Resale after years", 100]];
 
     function euro(value) {
-      return new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(finite(value));
+      return new Intl.NumberFormat("en-IE", { style:"currency", currency:"EUR", maximumFractionDigits:0 }).format(finite(value));
     }
     function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : 0; }
-    function number(value, digits = 1) { return finite(value).toLocaleString("en-IE", { maximumFractionDigits: digits }); }
+    function number(value, digits = 1) { return finite(value).toLocaleString("en-IE", { maximumFractionDigits:digits }); }
     function escapeHtml(value) {
-      return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+      return String(value).replace(/[&<>"']/g, (char) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[char]));
     }
-    function scenarioName(row) { return M.scenarioLabel(row); }
-    function rowAt(scenario, year) { return scenario.horizons[year]; }
-    function selectedYear(result) { return M.selectedYear(result.assumptions); }
-    function help(key) {
-      const text = HELP[key] || "";
-      return text ? `<span class="help" title="${escapeHtml(text)}" aria-label="${escapeHtml(text)}">i</span>` : "";
-    }
-    function labelWithHelp(label, key) { return `${escapeHtml(label)}${help(key)}`; }
     function icon(name) {
-      return `<span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24">${ICON_PATHS[name] || ICON_PATHS.info}</svg></span>`;
+      return `<span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24">${ICON_PATHS[name] || ICON_PATHS.car}</svg></span>`;
     }
     function iconOnly(name) {
-      return `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[name] || ICON_PATHS.info}</svg>`;
+      return `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[name] || ICON_PATHS.car}</svg>`;
     }
     function renderStaticIcons() {
       if (!document.querySelectorAll) return;
-      document.querySelectorAll("[data-icon]").forEach((node) => {
-        node.innerHTML = iconOnly(node.dataset.icon);
-      });
+      document.querySelectorAll("[data-icon]").forEach((node) => { node.innerHTML = iconOnly(node.dataset.icon); });
     }
-    function helperText(field) {
-      const text = FIELD_HELP[field];
-      return text ? `<span class="field-help">${escapeHtml(text)}</span>` : "";
+    function helpText(key) { return HELP[key] || ""; }
+    function helpAttrs(key) {
+      const text = helpText(key);
+      return text ? ` data-help-key="${key}" title="${escapeHtml(text)}"` : "";
+    }
+    function fieldLabel(carKey, field, label) {
+      const id = `${carKey}-${field}`;
+      return `<label class="field-label help-target" for="${id}"${helpAttrs(field)}>${escapeHtml(label)}</label>`;
+    }
+    function carTitle(carKey) {
+      return escapeHtml(state.cars[carKey].name || "Unnamed option");
     }
 
     function init() {
       renderStaticIcons();
+      renderHelpPanels();
       renderSetup();
       renderAllInputs();
+      bindHelp();
       update();
     }
 
+    function renderHelpPanels() {
+      Object.entries(HELP).forEach(([key, text]) => {
+        const panel = document.querySelector ? document.querySelector(`[data-help-for="${key}"]`) : null;
+        if (panel) panel.textContent = text;
+      });
+    }
+
     function renderSetup() {
-      document.getElementById("setupInputs").innerHTML = setupFields.map(([field, label, min, max, step]) => {
-        if (field === "analysisYears") {
-          return `<label>${labelWithHelp(label, field)}<select data-assumption="${field}">${M.HORIZONS.map((year) => `<option value="${year}" ${Number(state.assumptions[field]) === year ? "selected" : ""}>${year} years</option>`).join("")}</select>${helperText(field)}</label>`;
-        }
-        return `<label>${labelWithHelp(label, field)}<input data-assumption="${field}" type="number" min="${min}" max="${max}" step="${step}" value="${state.assumptions[field]}">${helperText(field)}</label>`;
-      }).join("");
-      document.querySelectorAll ? null : null;
+      document.getElementById("setupInputs").innerHTML = setupFields.map(([field, label, min, max, step]) => `
+        <label class="help-target"${helpAttrs(field)}>${escapeHtml(label)}
+          <input data-assumption="${field}" type="number" min="${min}" max="${max}" step="${step}" value="${state.assumptions[field]}">
+          ${field === "yearsOwned" ? '<span class="hint">8% stock return fixed internally</span>' : ""}
+        </label>
+      `).join("");
       document.getElementById("setupInputs").querySelectorAll("[data-assumption]").forEach((input) => {
         input.addEventListener("input", () => {
           state.assumptions[input.dataset.assumption] = input.value === "" ? "" : Number(input.value);
+          refreshAutoResale();
+          renderCosts();
           update();
         });
       });
     }
 
     function renderAllInputs() {
-      renderChoice();
-      renderFinance();
-      renderRunning();
-      renderResale();
-      renderQuality();
+      renderCars();
+      renderPayment();
+      renderCosts();
     }
 
     function carPanel(carKey, html) {
-      return `<div class="car-panel"><h3>${icon("car")}${escapeHtml(state.cars[carKey].name || "Custom vehicle")}</h3>${html}</div>`;
+      return `<div class="car-panel"><h3>${icon("car")}${carTitle(carKey)}</h3>${html}</div>`;
     }
 
-    function renderChoice() {
+    function renderCars() {
       document.getElementById("choiceInputs").innerHTML = ["car1", "car2"].map((carKey) => {
         const car = state.cars[carKey];
-        const presetOptions = Object.entries(M.PRESETS).map(([key, preset]) => `<option value="${key}">${escapeHtml(preset.label)}</option>`).join("");
         const html = `
-          ${selectRow(carKey, "preset", "Preset", `<select data-preset="${carKey}">${presetOptions}</select>`, "runningCost")}
-          ${inputRow(carKey, "name", "Name", `<input id="${carKey}-name" data-car="${carKey}" data-field="name" type="text" value="${escapeHtml(car.name)}">`, "winner")}
-          ${inputRow(carKey, "type", "Type", `<select id="${carKey}-type" data-car="${carKey}" data-field="type"><option value="electric" ${car.type === "electric" ? "selected" : ""}>EV</option><option value="combustion" ${car.type === "combustion" ? "selected" : ""}>Combustion</option></select>`, "runningCost")}
-          ${inputRow(carKey, "paymentMode", "Payment mode", `<select id="${carKey}-paymentMode" data-car="${carKey}" data-field="paymentMode"><option value="upfront" ${car.paymentMode === "upfront" ? "selected" : ""}>Upfront</option><option value="finance" ${car.paymentMode === "finance" ? "selected" : ""}>Finance</option><option value="both" ${car.paymentMode === "both" ? "selected" : ""}>Both</option></select>`, "paymentMode")}`;
+          ${inputRow(carKey, "name", "Name", `<input id="${carKey}-name" data-car="${carKey}" data-field="name" type="text" value="${escapeHtml(car.name || "")}">`)}
+          ${inputRow(carKey, "type", "Type", `<select id="${carKey}-type" data-car="${carKey}" data-field="type"><option value="ev" ${car.type === "ev" ? "selected" : ""}>EV</option><option value="hybrid" ${car.type === "hybrid" ? "selected" : ""}>Hybrid</option><option value="combustion" ${car.type === "combustion" ? "selected" : ""}>Combustion</option></select>`)}
+          ${inputRow(carKey, "paymentMode", "Payment", `<select id="${carKey}-paymentMode" data-car="${carKey}" data-field="paymentMode"><option value="upfront" ${car.paymentMode === "upfront" ? "selected" : ""}>Upfront</option><option value="finance" ${car.paymentMode === "finance" ? "selected" : ""}>Finance</option></select>`)}
+          <button class="small-button" type="button" data-reset-defaults="${carKey}">${icon("settings")}Reset type defaults</button>
+        `;
         return carPanel(carKey, html);
       }).join("");
-      document.querySelectorAll ? null : null;
-      ["car1", "car2"].forEach((carKey) => {
-        const selects = document.getElementById("choiceInputs").querySelectorAll(`[data-preset="${carKey}"]`);
-        selects.forEach((select) => {
-          select.value = presetKeyFor(state.cars[carKey]);
-          select.addEventListener("input", () => {
-            state.cars[carKey] = M.applyPreset(select.value);
-            renderAllInputs();
-            update();
-          });
+      bindCarInputs("choiceInputs");
+      document.getElementById("choiceInputs").querySelectorAll("[data-reset-defaults]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const carKey = button.dataset.resetDefaults;
+          state.cars[carKey] = M.applyTypeDefaults(M.clearCustom(state.cars[carKey], M.TYPE_FIELDS), { respectCustom:false });
+          refreshAutoResale();
+          renderAllInputs();
+          bindHelp();
+          update();
         });
       });
-      bindCarInputs("choiceInputs");
     }
 
-    function presetKeyFor(car) {
-      const found = Object.entries(M.PRESETS).find(([, preset]) => preset.label === car.label || preset.name === car.name);
-      return found ? found[0] : "custom";
-    }
-
-    function renderFinance() {
-      document.getElementById("financeInputs").innerHTML = ["car1", "car2"].map((carKey) => carPanel(carKey, financeFields.map(([field, label, step]) => numberInput(carKey, field, label, step)).join(""))).join("");
+    function renderPayment() {
+      document.getElementById("financeInputs").innerHTML = ["car1", "car2"].map((carKey) => {
+        const car = state.cars[carKey];
+        const fields = paymentFields[car.paymentMode] || paymentFields.upfront;
+        const rows = fields.map(([field, label, step]) => numberInput(carKey, field, label, step)).join("");
+        const finance = M.financeSummary(car);
+        const meta = car.paymentMode === "finance"
+          ? `<div class="meta"><span class="pill">${icon("loan")}Finance total ${euro(finance.financeTotal)}</span><span class="pill">Cost ${euro(finance.financingCost)}</span></div>`
+          : "";
+        return carPanel(carKey, rows + meta);
+      }).join("");
       bindCarInputs("financeInputs");
     }
 
-    function renderRunning() {
-      document.getElementById("runningInputs").innerHTML = ["car1", "car2"].map((carKey) => carPanel(carKey, runningFields.filter(([field]) => visibleRunningField(state.cars[carKey], field)).map(([field, label, step]) => {
-        const value = state.cars[carKey][field] ?? state.assumptions[field] ?? "";
-        return inputRow(carKey, field, label, `<input id="${carKey}-${field}" data-car="${carKey}" data-field="${field}" type="number" step="${step}" value="${value}">`, helpKeyForField(field));
-      }).join(""))).join("");
+    function renderCosts() {
+      refreshAutoResale();
+      document.getElementById("runningInputs").innerHTML = ["car1", "car2"].map((carKey) => {
+        const car = state.cars[carKey];
+        const fields = (costFields[car.type] || costFields.combustion).concat(commonCostFields);
+        const rows = fields.map(([field, label, step]) => numberInput(carKey, field, label, step)).join("");
+        const source = car.resaleCustom ? "custom" : "estimated";
+        return carPanel(carKey, `${rows}<div class="meta"><span class="pill">${icon("fuel")}Resale ${source}</span></div>`);
+      }).join("");
       bindCarInputs("runningInputs");
     }
 
-    function visibleRunningField(car, field) {
-      if (car.type === "electric") return !["litersPer100Km", "fuelPrice"].includes(field);
-      return !["kwhPer100Km", "homeElectricityPrice", "publicElectricityPrice", "homeChargingPct", "publicChargingPct"].includes(field);
-    }
-
-    function renderResale() {
-      document.getElementById("resaleInputs").innerHTML = ["car1", "car2"].map((carKey) => {
+    function refreshAutoResale() {
+      ["car1", "car2"].forEach((carKey) => {
         const car = state.cars[carKey];
-        const html = M.HORIZONS.map((year) => inputRow(carKey, `resale-${year}`, `Year ${year} resale (€)`, `<input id="${carKey}-resale-${year}" data-car="${carKey}" data-resale="${year}" type="number" step="100" min="0" value="${car.resaleValues[year]}">`, "resaleValue")).join("");
-        return carPanel(carKey, html);
-      }).join("");
-      bindCarInputs("resaleInputs");
-    }
-
-    function renderQuality() {
-      document.getElementById("qualityInputs").innerHTML = ["car1", "car2"].map((carKey) => carPanel(carKey, numberInput(carKey, "qualityScore", "Quality score 0-10", 0.5))).join("");
-      bindCarInputs("qualityInputs");
+        if (!car.resaleCustom) car.resaleValue = M.estimatedResaleValue(car, state.assumptions.yearsOwned);
+      });
     }
 
     function numberInput(carKey, field, label, step) {
-      return inputRow(carKey, field, label, `<input id="${carKey}-${field}" data-car="${carKey}" data-field="${field}" type="number" step="${step}" value="${state.cars[carKey][field] ?? ""}">`, helpKeyForField(field));
+      return inputRow(carKey, field, label, `<input id="${carKey}-${field}" data-car="${carKey}" data-field="${field}" type="number" step="${step}" value="${state.cars[carKey][field] ?? ""}">`);
     }
 
-    function inputRow(carKey, field, label, control, helpKey) {
-      const id = `${carKey}-${field}`;
-      return `<div class="field-row"><label class="field-label" for="${id}">${labelWithHelp(label, helpKey)}</label><div>${control}${helperText(field)}</div></div>`;
-    }
-
-    function selectRow(carKey, field, label, control, helpKey) {
-      return `<div class="field-row"><label class="field-label">${labelWithHelp(label, helpKey)}</label><div>${control}${helperText(field)}</div></div>`;
-    }
-
-    function helpKeyForField(field) {
-      const map = {
-        upfrontPrice: "upfrontPrice",
-        downPayment: "downPayment",
-        monthlyPayment: "monthlyPayment",
-        loanMonths: "loanMonths",
-        openingFee: "openingFee",
-        balloonPayment: "balloonPayment",
-        kwhPer100Km: "kwhPer100Km",
-        litersPer100Km: "litersPer100Km",
-        fuelPrice: "fuelPrice",
-        homeElectricityPrice: "homeElectricityPrice",
-        publicElectricityPrice: "publicElectricityPrice",
-        homeChargingPct: "chargingSplit",
-        publicChargingPct: "chargingSplit",
-        annualMaintenance: "maintenance",
-        annualInsurance: "insurance",
-        annualRepairs: "repairs",
-        annualTax: "tax",
-      };
-      return map[field] || "runningCost";
+    function inputRow(carKey, field, label, control) {
+      return `<div class="field-row">${fieldLabel(carKey, field, label)}<div>${control}</div></div>`;
     }
 
     function bindCarInputs(rootId) {
       document.getElementById(rootId).querySelectorAll("[data-car]").forEach((input) => {
         input.addEventListener("input", () => {
-          const car = state.cars[input.dataset.car];
-          if (input.dataset.resale) {
-            car.resaleValues[input.dataset.resale] = Math.max(0, Number(input.value) || 0);
-          } else if (input.tagName === "SELECT" || input.type === "text") {
-            car[input.dataset.field] = input.value;
-            if (input.dataset.field === "type") {
-              if (input.value === "electric") {
-                car.litersPer100Km = 0;
-                if (!car.kwhPer100Km) car.kwhPer100Km = 15;
-              } else {
-                car.kwhPer100Km = 0;
-                if (!car.litersPer100Km) car.litersPer100Km = 6;
-              }
-              renderRunning();
+          const carKey = input.dataset.car;
+          const car = state.cars[carKey];
+          const field = input.dataset.field;
+          if (input.tagName === "SELECT" || input.type === "text") {
+            car[field] = input.value;
+            if (field === "type") {
+              state.cars[carKey] = M.applyTypeDefaults(car, { respectCustom:true });
+              refreshAutoResale();
+              renderAllInputs();
+              bindHelp();
+            } else if (field === "paymentMode") {
+              renderPayment();
+              bindHelp();
+            } else {
+              renderCars();
+              bindHelp();
             }
           } else {
-            car[input.dataset.field] = input.value === "" ? "" : Number(input.value);
+            car[field] = input.value === "" ? "" : Number(input.value);
+            if (field === "resaleValue") car.resaleCustom = true;
+            else M.markCustom(car, field);
+            if (field === "upfrontPrice" && !car.resaleCustom) refreshAutoResale();
+            if (["upfrontPrice", "downPayment", "monthlyPayment", "loanMonths"].includes(field)) renderPayment();
+            if (field === "upfrontPrice" || field === "resaleValue") renderCosts();
+            bindHelp();
           }
           update();
         });
       });
     }
 
+    function bindHelp() {
+      if (!document.querySelectorAll) return;
+      document.querySelectorAll(".help-target").forEach((node) => {
+        if (node.dataset.helpBound) return;
+        node.dataset.helpBound = "1";
+        node.addEventListener("click", (event) => {
+          const key = node.dataset.helpKey;
+          if (!key) return;
+          const local = document.querySelector(`[data-help-for="${key}"]`);
+          if (local) {
+            if (node.tagName === "SUMMARY") {
+              setTimeout(() => {
+                if (node.parentElement && node.parentElement.open) local.classList.add("show");
+              }, 0);
+            } else {
+              local.classList.toggle("show");
+            }
+            return;
+          }
+          const existing = document.getElementById("floatingHelp");
+          if (existing) existing.remove();
+          const bubble = document.createElement("div");
+          bubble.id = "floatingHelp";
+          bubble.className = "help-panel show";
+          bubble.textContent = helpText(key);
+          node.parentNode.appendChild(bubble);
+          event.preventDefault();
+        });
+      });
+    }
+
     function update() {
+      refreshAutoResale();
       const result = M.analyze(state);
       renderHero(result);
-      renderBaseline(result);
-      renderWinners(result);
-      renderPrimary(result);
-      renderSecondary(result);
+      renderWarnings(result);
       renderMobileResults(result);
-      renderCharts(result);
-      renderSummary(result);
-      renderSensitivity(result);
+      renderTable(result);
     }
 
     function renderHero(result) {
-      const activeYear = selectedYear(result);
-      const selected = result.horizonResults.find((horizon) => horizon.year === activeYear);
-      const winner = selected.winner;
-      const runnerUp = selected.rows.filter((row) => row.id !== winner.id).sort((a, b) => b.finalMoneyLeft - a.finalMoneyLeft)[0];
-      const gap = runnerUp ? winner.finalMoneyLeft - runnerUp.finalMoneyLeft : 0;
-      document.getElementById("heroSummary").innerHTML = `
-        <h2>${icon("winner")}Selected ${activeYear}-year winner</h2>
-        <div class="hero-metric"><span>${icon("winner")}Winner</span><strong>${escapeHtml(scenarioName(winner))}</strong></div>
-        <div class="hero-metric"><span>${icon("investment")}Final money left</span><strong>${euro(winner.finalMoneyLeft)}</strong></div>
-        <div class="hero-metric"><span>${icon("chart")}Lead over next option</span><strong>${runnerUp ? euro(gap) : euro(0)}</strong></div>
-      `;
+      const winner = result.winner;
+      const runnerUp = result.runnerUp;
+      const status = result.warnings.some((w) => w.severity === "no") ? "no" : (result.warnings.length ? "warn" : "");
+      document.getElementById("heroSummary").innerHTML = winner ? `
+        <span class="badge ${status}">${icon(status === "no" ? "warning" : "winner")}${status === "no" ? "Check inputs" : status ? "Warnings" : "Clean run"}</span>
+        <div class="hero-metric"><span>${icon("winner")}Winner</span><strong>${escapeHtml(winner.option)}</strong></div>
+        <div class="hero-metric"><span>${icon("budget")}Final money</span><strong>${euro(winner.finalMoney)}</strong></div>
+        <div class="hero-metric"><span>${icon("car")}Difference</span><strong>${runnerUp ? `+${euro(result.difference)} vs ${escapeHtml(runnerUp.option)}` : euro(0)}</strong></div>
+      ` : "";
     }
 
-    function renderBaseline(result) {
-      const activeYear = selectedYear(result);
-      document.getElementById("baselineTable").innerHTML = `<table><thead><tr><th>Year</th><th>Initial cash invested ${help("initialCashBudget")}</th><th>Monthly budget invested ${help("monthlyBudget")}</th><th>Final baseline wealth ${help("finalMoneyLeft")}</th></tr></thead><tbody>${result.baseline.map((row) => `<tr class="${row.year === activeYear ? "winner" : ""}"><td>${row.year}</td><td>${euro(row.initialCashInvested)}</td><td>${euro(row.monthlyBudgetInvested)}</td><td>${euro(row.finalBaselineWealth)}</td></tr>`).join("")}</tbody></table>`;
-    }
-
-    function renderWinners(result) {
-      const activeYear = selectedYear(result);
-      const active = result.horizonResults.find((horizon) => horizon.year === activeYear);
-      document.getElementById("winnerCards").innerHTML = M.HORIZONS.map((year) => {
-        const winner = result.winners[year];
-        return `<div class="kpi ${year === activeYear ? "selected-card" : ""}"><span>${icon("winner")}${year === activeYear ? "Selected winner" : `${year} year winner`} ${help("winner")}</span><strong>${escapeHtml(scenarioName(winner))}</strong><p>${euro(winner.finalMoneyLeft)} final money left</p></div>`;
-      }).join("");
-      const winnerReasons = active ? M.scenarioReasons(active.winner, active.winner, active.rows) : [];
-      const loserReasons = active ? active.rows.filter((row) => row.id !== active.winner.id).map((row) => `<li><strong>${escapeHtml(scenarioName(row))}:</strong> ${escapeHtml(M.scenarioReasons(row, active.winner, active.rows)[0] || row.takeaway)}</li>`).join("") : "";
-      document.getElementById("winnerReasons").innerHTML = active ? `<div class="reason-card"><h3>${icon("winner")}${escapeHtml(scenarioName(active.winner))} wins at ${activeYear} years because</h3><ul>${winnerReasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>${loserReasons ? `<h3 style="margin-top:14px">${icon("info")}Why the others lose</h3><ul>${loserReasons}</ul>` : ""}</div>` : "";
-      const deficits = result.horizonResults.flatMap((h) => h.rows).filter((row) => row.budgetDeficit > 0);
-      document.getElementById("warningBox").innerHTML = deficits.length ? `<div class="notice">${icon("warning")}<span>At least one scenario exceeds the monthly budget. Deficits are subtracted from final money left.</span></div>` : "";
-    }
-
-    function renderPrimary(result) {
-      const activeYear = selectedYear(result);
-      document.getElementById("primaryTable").innerHTML = `<table><thead><tr><th>Scenario</th><th>3y money left ${help("finalMoneyLeft")}</th><th>5y money left ${help("finalMoneyLeft")}</th><th>7y money left ${help("finalMoneyLeft")}</th><th>10y money left ${help("finalMoneyLeft")}</th><th>Investments (${activeYear}y) ${help("investments")}</th><th>Car value (${activeYear}y) ${help("carValueLeft")}</th><th>Loan owed (${activeYear}y) ${help("loanStillOwed")}</th><th>Total paid (${activeYear}y) ${help("totalPaid")}</th><th>Takeaway</th></tr></thead><tbody>${result.scenarios.map((scenario) => {
-        const selected = rowAt(scenario, activeYear);
-        return `<tr><td><strong>${escapeHtml(scenarioName(scenario))}</strong></td>${M.HORIZONS.map((year) => `<td class="${result.winners[year].id === scenario.id ? "winner" : ""}">${euro(rowAt(scenario, year).finalMoneyLeft)}</td>`).join("")}<td>${euro(selected.investments)}</td><td>${euro(selected.carValueLeft)}</td><td>${euro(selected.loanStillOwed)}</td><td>${euro(selected.totalPaid)}</td><td>${escapeHtml(selected.takeaway)}</td></tr>`;
-      }).join("")}</tbody></table>`;
-    }
-
-    function renderSecondary(result) {
-      const activeYear = selectedYear(result);
-      document.getElementById("secondaryTable").innerHTML = `<table><thead><tr><th>Scenario</th><th>Purchase paid</th><th>Running paid ${help("runningCost")}</th><th>Financing cost ${help("financingCost")}</th><th>Resale value ${help("resaleValue")}</th><th>Total paid ${help("totalPaid")}</th><th>Takeaway</th></tr></thead><tbody>${result.scenarios.map((scenario) => {
-        const selected = rowAt(scenario, activeYear);
-        return `<tr><td><strong>${escapeHtml(scenarioName(scenario))}</strong></td><td>${euro(selected.purchasePaid)}</td><td>${euro(selected.runningPaid)}</td><td>${euro(selected.financingCost)}</td><td>${euro(selected.resaleValue)}</td><td>${euro(selected.totalPaid)}</td><td>${escapeHtml(selected.takeaway)}</td></tr>`;
-      }).join("")}</tbody></table>`;
+    function renderWarnings(result) {
+      const warnings = result.warnings;
+      document.getElementById("warningBox").innerHTML = warnings.length ? warnings.map((item) => `
+        <div class="notice ${item.severity === "no" ? "no" : ""}">${icon("warning")}<span><strong>${escapeHtml(item.option || "Option")}:</strong> ${escapeHtml(item.message)}</span></div>
+      `).join("") : "";
     }
 
     function renderMobileResults(result) {
-      const activeYear = selectedYear(result);
-      document.getElementById("mobileResultCards").innerHTML = result.scenarios.map((scenario) => {
-        const selected = rowAt(scenario, activeYear);
-        const winnerClass = result.winners[activeYear].id === scenario.id ? " selected-card" : "";
-        return `<article class="kpi${winnerClass}">
-          <span>${icon("car")}${escapeHtml(scenarioName(scenario))}</span>
-          <strong>${euro(selected.finalMoneyLeft)}</strong>
-          <p>${activeYear}y final money left</p>
-          <p class="subtle">${euro(selected.investments)} investments · ${euro(selected.carValueLeft)} car value · ${euro(selected.loanStillOwed)} loan</p>
-        </article>`;
-      }).join("");
+      document.getElementById("mobileResultCards").innerHTML = result.rows.map((row) => `
+        <article class="mobile-card">
+          <span class="status-${row.possible.toLowerCase()}">${escapeHtml(row.possible)}</span>
+          <strong class="${row.isWinner ? "winner" : ""}">${escapeHtml(row.option)}</strong>
+          <p>${euro(row.finalMoney)} final</p>
+          <p class="hint">${escapeHtml(row.summary)}</p>
+        </article>
+      `).join("");
     }
 
-    function renderCharts(result) {
-      const series = result.scenarios.map((scenario, index) => ({ name: scenarioName(scenario), color: colors[index % colors.length], values: M.HORIZONS.map((year) => scenario.horizons[year]) }));
-      const activeYear = selectedYear(result);
-      lineChart("moneyChart", series, "finalMoneyLeft", "legend1", activeYear);
-      lineChart("investmentChart", series, "investments", "legend2", activeYear);
-      lineChart("paidChart", series, "totalPaid", "legend3", activeYear);
-    }
-
-    function lineChart(id, series, field, legendId, activeYear) {
-      const svg = document.getElementById(id);
-      const width = 620, height = 245, pad = 44;
-      const all = series.flatMap((s) => s.values.map((v) => finite(v[field])));
-      const maxY = Math.max(1, ...all) * 1.08;
-      const minY = Math.min(0, ...all);
-      const x = (year) => pad + (year - 3) / 7 * (width - pad * 1.4);
-      const y = (value) => height - pad - (value - minY) / (maxY - minY || 1) * (height - pad * 1.45);
-      const grid = [0, 0.25, 0.5, 0.75, 1].map((tick) => {
-        const gy = pad * 0.5 + tick * (height - pad * 1.45);
-        const value = maxY - tick * (maxY - minY);
-        return `<line x1="${pad}" x2="${width - 18}" y1="${gy}" y2="${gy}" stroke="#e6eaf0"/><text x="3" y="${gy + 4}" font-size="10" fill="#667180">${euro(value)}</text>`;
-      }).join("");
-      const activeX = x(activeYear);
-      const axis = `<line x1="${pad}" x2="${width - 18}" y1="${height - pad}" y2="${height - pad}" stroke="#aeb7c3"/><line x1="${activeX}" x2="${activeX}" y1="${pad * 0.5}" y2="${height - pad}" stroke="#176b87" stroke-dasharray="4 4"/>${M.HORIZONS.map((year) => `<text x="${x(year) - 6}" y="${height - 18}" font-size="11" fill="#667180">${year}</text>`).join("")}`;
-      const paths = series.map((s) => `<path d="${s.values.map((point, index) => `${index === 0 ? "M" : "L"} ${x(point.year).toFixed(1)} ${y(point[field]).toFixed(1)}`).join(" ")}" fill="none" stroke="${s.color}" stroke-width="2.5"/>`).join("");
-      const markers = series.map((s) => {
-        const point = s.values.find((value) => value.year === activeYear);
-        return point ? `<circle cx="${x(point.year).toFixed(1)}" cy="${y(point[field]).toFixed(1)}" r="4" fill="${s.color}" stroke="#fff" stroke-width="1.5"/>` : "";
-      }).join("");
-      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-      svg.innerHTML = `${grid}${axis}${paths}${markers}`;
-      document.getElementById(legendId).innerHTML = series.map((item) => `<span><i class="swatch" style="background:${item.color}"></i>${escapeHtml(item.name)}</span>`).join("");
-    }
-
-    function renderSummary(result) {
-      const activeYear = selectedYear(result);
-      const selected = result.horizonResults.find((horizon) => horizon.year === activeYear);
-      const winner = selected.winner;
-      const runnerUp = selected.rows.filter((row) => row.id !== winner.id).sort((a, b) => b.finalMoneyLeft - a.finalMoneyLeft)[0];
-      const gap = runnerUp ? winner.finalMoneyLeft - runnerUp.finalMoneyLeft : 0;
-      document.getElementById("summarySteps").innerHTML = `<ol>
-        <li>You start with ${euro(result.assumptions.initialCashBudget)}.</li>
-        <li>${escapeHtml(scenarioName(winner))} pays ${euro(winner.month0Paid)} at month 0, so ${euro(winner.month0Invested)} is invested immediately.</li>
-        <li>Its average monthly car cost is ${euro(winner.averageMonthlyCarCost)}, leaving about ${euro(winner.averageMonthlyInvested)} per month to invest from the ${euro(result.assumptions.monthlyBudget)} budget.</li>
-        <li>The monthly investment rate is (1 + annual return)^(1/12) - 1.</li>
-        <li>At ${activeYear} years it has ${euro(winner.investments)} in investments, ${euro(winner.carValueLeft)} car value, ${euro(winner.loanStillOwed)} loan owed, and ${euro(winner.budgetDeficit)} deficits.</li>
-        <li>Final money left = investments + car resale value - loan still owed - deficits.</li>
-        <li>The ${activeYear} year winner is ${escapeHtml(scenarioName(winner))} with ${euro(winner.finalMoneyLeft)}${runnerUp ? `, ${euro(gap)} ahead of ${escapeHtml(scenarioName(runnerUp))}` : ""}.</li>
-      </ol>`;
-    }
-
-    function renderSensitivity(result) {
-      const activeYear = selectedYear(result);
-      const baseWinner = result.winners[activeYear];
-      const baseRows = result.horizonResults.find((horizon) => horizon.year === activeYear).rows;
-      const insights = [];
-      const runVariant = (mutate) => {
-        const draft = structuredClone(state);
-        draft.assumptions.analysisYears = activeYear;
-        mutate(draft);
-        return M.analyze(draft);
-      };
-      const winnerName = (variant) => scenarioName(variant.winners[activeYear]);
-      const stockWinners = [0, 5, 8, 10].map((rate) => {
-        const variant = runVariant((draft) => { draft.assumptions.investmentReturn = rate; });
-        return { rate, name: winnerName(variant) };
-      });
-      const changedStock = stockWinners.find((item) => item.name !== scenarioName(baseWinner));
-      insights.push(changedStock
-        ? `At ${changedStock.rate}% stock return, the winner changes to ${changedStock.name}.`
-        : `Winner is stable across 0%, 5%, 8%, and 10% stock return checks.`);
-
-      const kmWinners = [10000, 15000, 25000, 35000].map((km) => {
-        const variant = runVariant((draft) => { draft.assumptions.annualKm = km; });
-        return { km, name: winnerName(variant) };
-      });
-      const changedKm = kmWinners.find((item) => item.name !== scenarioName(baseWinner));
-      insights.push(changedKm
-        ? `At ${number(changedKm.km, 0)} km/year, the winner changes to ${changedKm.name}.`
-        : `Winner is stable from 10k to 35k km/year.`);
-
-      const fuelUp = runVariant((draft) => {
-        draft.assumptions.fuelPrice = finite(draft.assumptions.fuelPrice) * 1.2;
-        Object.values(draft.cars).forEach((car) => { if (typeof car.fuelPrice !== "undefined") car.fuelPrice = finite(car.fuelPrice) * 1.2; });
-      });
-      insights.push(winnerName(fuelUp) !== scenarioName(baseWinner)
-        ? `With fuel 20% higher, the winner changes to ${winnerName(fuelUp)}.`
-        : `Fuel +20% does not change the ${activeYear} year winner.`);
-
-      const resaleDown = runVariant((draft) => {
-        Object.values(draft.cars).forEach((car) => {
-          Object.keys(car.resaleValues).forEach((year) => { car.resaleValues[year] = Math.max(0, finite(car.resaleValues[year]) * 0.8); });
-        });
-      });
-      insights.push(winnerName(resaleDown) !== scenarioName(baseWinner)
-        ? `With resale values 20% lower, the winner changes to ${winnerName(resaleDown)}.`
-        : `Resale -20% does not change the ${activeYear} year winner.`);
-
-      const repairsUp = runVariant((draft) => {
-        Object.values(draft.cars).forEach((car) => { car.annualRepairs = finite(car.annualRepairs) * 1.2; });
-      });
-      const repairWinner = winnerName(repairsUp);
-      if (repairWinner !== scenarioName(baseWinner)) insights.push(`With repairs 20% higher, the winner changes to ${repairWinner}.`);
-      const margin = baseRows.slice().sort((a, b) => b.finalMoneyLeft - a.finalMoneyLeft);
-      if (margin[1]) insights.push(`Current ${activeYear} year margin is ${euro(margin[0].finalMoneyLeft - margin[1].finalMoneyLeft)} over ${scenarioName(margin[1])}.`);
-
-      document.getElementById("sensitivityBox").innerHTML = `<ul>${insights.slice(0, 4).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+    function renderTable(result) {
+      document.getElementById("primaryTable").innerHTML = `<table><thead><tr>
+        <th>Option</th>
+        <th>Possible?</th>
+        <th>Car paid</th>
+        <th>Extra/month</th>
+        <th>Extra total</th>
+        <th>Total paid</th>
+        <th>Invested result</th>
+        <th>Resale</th>
+        <th>Loan left</th>
+        <th>Final money</th>
+        <th>Summary</th>
+      </tr></thead><tbody>${result.rows.map((row) => `
+        <tr>
+          <td><strong class="${row.isWinner ? "winner" : ""}">${escapeHtml(row.option)}</strong></td>
+          <td class="status-${row.possible.toLowerCase()}">${escapeHtml(row.possible)}</td>
+          <td>${euro(row.carPaidDisplay)}<br><span class="hint">${escapeHtml(row.carPaidNote)}</span></td>
+          <td>${euro(row.extraMonth)}</td>
+          <td>${euro(row.extraTotal)}</td>
+          <td>${euro(row.totalPaid)}</td>
+          <td>${euro(row.investedResult)}</td>
+          <td>${euro(row.resaleValue)}<br><span class="hint">${escapeHtml(row.resaleSource)}</span></td>
+          <td>${euro(row.loanLeft)}</td>
+          <td class="${row.isWinner ? "winner" : ""}">${euro(row.finalMoney)}</td>
+          <td>${escapeHtml(row.summary)}</td>
+        </tr>
+      `).join("")}</tbody></table>`;
     }
 
     init();
