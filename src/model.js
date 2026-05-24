@@ -10,16 +10,16 @@
   const VEHICLE_TYPES = { ev: "EV", hybrid: "Hybrid", combustion: "Combustion" };
 
   const DEFAULT_ASSUMPTIONS = {
-    initialCashBudget: 37975,
-    monthlyBudget: 500,
-    yearsOwned: 10,
-    annualKm: 25000,
+    initialCashBudget: 20000,
+    monthlyBudget: 300,
+    yearsOwned: 7,
+    annualKm: 15000,
   };
 
   const TYPE_DEFAULTS = {
     ev: {
       type: "ev",
-      upfrontPrice: 28000,
+      upfrontPrice: 20000,
       downPayment: 5000,
       monthlyPayment: 325,
       loanMonths: 84,
@@ -30,9 +30,9 @@
       publicElectricityPrice: 0.45,
       homeChargingPct: 80,
       publicChargingPct: 20,
-      annualMaintenance: 360,
-      annualInsurance: 680,
-      annualRepairs: 420,
+      annualMaintenance: 450,
+      annualInsurance: 700,
+      annualRepairs: 500,
       annualTax: 0,
     },
     hybrid: {
@@ -55,27 +55,27 @@
     },
     combustion: {
       type: "combustion",
-      upfrontPrice: 16000,
+      upfrontPrice: 10000,
       downPayment: 3000,
       monthlyPayment: 245,
       loanMonths: 60,
       kwhPer100Km: 0,
-      litersPer100Km: 6.4,
+      litersPer100Km: 6.7,
       fuelPrice: 1.75,
       homeElectricityPrice: 0.18,
       publicElectricityPrice: 0.45,
       homeChargingPct: 0,
       publicChargingPct: 0,
-      annualMaintenance: 740,
+      annualMaintenance: 700,
       annualInsurance: 520,
-      annualRepairs: 780,
-      annualTax: 175,
+      annualRepairs: 800,
+      annualTax: 180,
     },
   };
 
   const DEFAULT_CARS = {
-    car1: Object.assign({ name: "Used EV", paymentMode: PAYMENT_MODES.upfront }, TYPE_DEFAULTS.ev),
-    car2: Object.assign({ name: "Hybrid finance", paymentMode: PAYMENT_MODES.finance }, TYPE_DEFAULTS.hybrid),
+    car1: Object.assign({ name: "Used Tesla", paymentMode: PAYMENT_MODES.upfront }, TYPE_DEFAULTS.ev),
+    car2: Object.assign({ name: "Used Combustion", paymentMode: PAYMENT_MODES.upfront }, TYPE_DEFAULTS.combustion),
   };
 
   const TYPE_FIELDS = [

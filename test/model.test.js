@@ -54,6 +54,23 @@ run("stock return is fixed at 8% yearly and compounded monthly", () => {
   approx(model.monthlyInvestmentRate(), Math.pow(1.08, 1 / 12) - 1, 1e-12);
 });
 
+run("default comparison uses requested cash Tesla vs combustion setup", () => {
+  assert.equal(model.DEFAULT_ASSUMPTIONS.initialCashBudget, 20000);
+  assert.equal(model.DEFAULT_ASSUMPTIONS.monthlyBudget, 300);
+  assert.equal(model.DEFAULT_ASSUMPTIONS.yearsOwned, 7);
+  assert.equal(model.DEFAULT_ASSUMPTIONS.annualKm, 15000);
+  const tesla = model.defaultCar("car1");
+  const combustion = model.defaultCar("car2");
+  assert.equal(tesla.name, "Used Tesla");
+  assert.equal(tesla.type, "ev");
+  assert.equal(tesla.paymentMode, "upfront");
+  assert.equal(tesla.upfrontPrice, 20000);
+  assert.equal(combustion.name, "Used Combustion");
+  assert.equal(combustion.type, "combustion");
+  assert.equal(combustion.paymentMode, "upfront");
+  assert.equal(combustion.upfrontPrice, 10000);
+});
+
 run("changing years updates winner, final money, resale estimate, loan left, summary, and warnings", () => {
   const short = model.analyze({
     assumptions: assumptions({ initialCashBudget: 40000, yearsOwned: 1 }),

@@ -249,7 +249,6 @@
     }
     .pill.warn { border-color:rgba(152,97,13,.22); background:var(--amber-soft); color:var(--amber); }
     .pill.no { border-color:rgba(169,58,50,.2); background:var(--red-soft); color:var(--red); }
-    .summary-line { margin-top:4px; color:var(--muted); font-size:13px; }
     .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
     @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
     @media (prefers-reduced-motion:reduce) {
@@ -340,16 +339,16 @@
   const VEHICLE_TYPES = { ev: "EV", hybrid: "Hybrid", combustion: "Combustion" };
 
   const DEFAULT_ASSUMPTIONS = {
-    initialCashBudget: 37975,
-    monthlyBudget: 500,
-    yearsOwned: 10,
-    annualKm: 25000,
+    initialCashBudget: 20000,
+    monthlyBudget: 300,
+    yearsOwned: 7,
+    annualKm: 15000,
   };
 
   const TYPE_DEFAULTS = {
     ev: {
       type: "ev",
-      upfrontPrice: 28000,
+      upfrontPrice: 20000,
       downPayment: 5000,
       monthlyPayment: 325,
       loanMonths: 84,
@@ -360,9 +359,9 @@
       publicElectricityPrice: 0.45,
       homeChargingPct: 80,
       publicChargingPct: 20,
-      annualMaintenance: 360,
-      annualInsurance: 680,
-      annualRepairs: 420,
+      annualMaintenance: 450,
+      annualInsurance: 700,
+      annualRepairs: 500,
       annualTax: 0,
     },
     hybrid: {
@@ -385,27 +384,27 @@
     },
     combustion: {
       type: "combustion",
-      upfrontPrice: 16000,
+      upfrontPrice: 10000,
       downPayment: 3000,
       monthlyPayment: 245,
       loanMonths: 60,
       kwhPer100Km: 0,
-      litersPer100Km: 6.4,
+      litersPer100Km: 6.7,
       fuelPrice: 1.75,
       homeElectricityPrice: 0.18,
       publicElectricityPrice: 0.45,
       homeChargingPct: 0,
       publicChargingPct: 0,
-      annualMaintenance: 740,
+      annualMaintenance: 700,
       annualInsurance: 520,
-      annualRepairs: 780,
-      annualTax: 175,
+      annualRepairs: 800,
+      annualTax: 180,
     },
   };
 
   const DEFAULT_CARS = {
-    car1: Object.assign({ name: "Used EV", paymentMode: PAYMENT_MODES.upfront }, TYPE_DEFAULTS.ev),
-    car2: Object.assign({ name: "Hybrid finance", paymentMode: PAYMENT_MODES.finance }, TYPE_DEFAULTS.hybrid),
+    car1: Object.assign({ name: "Used Tesla", paymentMode: PAYMENT_MODES.upfront }, TYPE_DEFAULTS.ev),
+    car2: Object.assign({ name: "Used Combustion", paymentMode: PAYMENT_MODES.upfront }, TYPE_DEFAULTS.combustion),
   };
 
   const TYPE_FIELDS = [
@@ -837,7 +836,7 @@
       setup: "Initial cash is spent first. Unused cash and monthly leftovers stay working in the background.",
       cars: "Each option has one payment mode. Changing type updates untouched defaults only; fields you edited stay custom.",
       payment: "Upfront pays cash price now. Finance pays down payment now and monthly payments until the loan term ends.",
-      costs: "Running costs are monthly energy/fuel plus annual maintenance, insurance, repairs, and tax divided by 12. Resale is estimated unless you override it.",
+      costs: "Running costs are monthly energy/fuel plus annual maintenance, insurance, repairs, and tax divided by 12. Resale can be adjusted manually.",
       results: "Final money = investment balance + resale - loan left - deficits. Highest final money wins.",
       initialCashBudget: "Cash available at month 0 before buying or financing.",
       monthlyBudget: "Each month, leftover budget after car costs is invested. If costs exceed budget, the deficit is subtracted at the end.",
@@ -988,10 +987,7 @@
       document.getElementById("runningInputs").innerHTML = ["car1", "car2"].map((carKey) => {
         const car = state.cars[carKey];
         const fields = (costFields[car.type] || costFields.combustion).concat(commonCostFields);
-        const rows = fields.map(([field, label, step]) => {
-          const chips = field === "resaleValue" ? resaleChips(car) : "";
-          return numberInput(carKey, field, label, step, chips);
-        }).join("");
+        const rows = fields.map(([field, label, step]) => numberInput(carKey, field, label, step)).join("");
         return carPanel(carKey, `${rows}<div class="meta">${runningChips(car)}</div>`);
       }).join("");
       bindCarInputs("runningInputs");
@@ -1014,13 +1010,6 @@
 
     function chip(text, tone = "") {
       return `<span class="pill ${tone}">${escapeHtml(text)}</span>`;
-    }
-
-    function resaleChips(car) {
-      const retention = M.retentionRate(car.type, state.assumptions.yearsOwned);
-      const resale = finite(car.resaleValue);
-      const depreciation = Math.max(0, finite(car.upfrontPrice) - resale);
-      return `<div class="chip-row">${chip(car.resaleCustom ? "Custom" : "Estimated")}${chip(`Retention: ${number(retention * 100, 0)}%`)}${chip(`Depreciation: ${euro(depreciation)}`)}</div>`;
     }
 
     function runningChips(car) {
@@ -1165,26 +1154,18 @@
     function renderHero(result) {
       const winner = result.winner;
       const runnerUp = result.runnerUp;
-      const status = result.warnings.some((w) => w.severity === "no") ? "no" : (result.warnings.length ? "warn" : "");
       document.getElementById("heroSummary").innerHTML = winner ? `
-        <span class="badge ${status}">${icon(status === "no" ? "warning" : "winner")}${status === "no" ? "Check inputs" : status ? "Warnings" : "Clean run"}</span>
         <div class="hero-metric"><span>${icon("winner")}Winner</span><strong>${escapeHtml(winner.option)}</strong></div>
         <div class="hero-metric"><span>${icon("budget")}Final money</span><strong>${euro(winner.finalMoney)}</strong></div>
-        <div class="hero-metric"><span>${icon("car")}Difference</span><strong>${runnerUp ? `+${euro(result.difference)}` : euro(0)}</strong></div>
-        <p class="summary-line">${escapeHtml(summaryLine(result))}</p>
+        <div class="hero-metric"><span>${icon("car")}Difference</span><strong>${formatDifferencePct(winner, runnerUp)}</strong></div>
       ` : "";
     }
 
-    function summaryLine(result) {
-      const winner = result.winner;
-      if (!winner) return "";
-      const reason = winner.mode === "finance" && winner.averageMonthlyInvested > 0
-        ? "It keeps more cash available early"
-        : "It leaves the strongest ending balance";
-      const budget = winner.maxMonthlyCarCost <= finite(state.assumptions.monthlyBudget)
-        ? "and stays within the monthly budget."
-        : "but has budget warnings to check.";
-      return `${winner.option} wins with ${euro(winner.finalMoney)}. ${reason} ${budget}`;
+    function formatDifferencePct(winner, runnerUp) {
+      if (!winner || !runnerUp) return "+0.0%";
+      const base = Math.abs(finite(runnerUp.finalMoney));
+      const pct = base > 0 ? (finite(winner.finalMoney) - finite(runnerUp.finalMoney)) / base * 100 : 0;
+      return `${pct >= 0 ? "+" : ""}${number(pct, 1)}%`;
     }
 
     function renderWarnings(result) {
@@ -1196,7 +1177,7 @@
         return true;
       });
       document.getElementById("warningBox").innerHTML = warnings.length ? warnings.map((item) => `
-        <div class="notice ${item.severity === "no" ? "no" : ""}">${icon("warning")}<span>${escapeHtml(item.option || "Option")}: ${escapeHtml(item.message)}</span></div>
+        <div class="notice ${item.severity === "no" ? "no" : ""}">${icon("warning")}<span>${escapeHtml(item.message)}</span></div>
       `).join("") : "";
     }
 
@@ -1239,7 +1220,6 @@
       if (warningIds.has("upfront-cash") || warningIds.has("down-cash")) badges.push(chip("Initial cash not enough", "no"));
       if (warningIds.has("monthly-budget")) badges.push(chip("Monthly budget exceeded", "warn"));
       if (warningIds.has("loan-long")) badges.push(chip("Loan continues", "warn"));
-      if (row.resaleSource === "estimated") badges.push(chip("Resale estimated"));
       return badges.join("");
     }
 
