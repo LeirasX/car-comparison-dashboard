@@ -136,7 +136,6 @@
     }
     .panel[open] > summary::after { transform:rotate(225deg); }
     .panel > summary:hover, .help-target:hover { background:rgba(49,95,82,.06); }
-    .panel > summary:hover + .help-panel { display:block; }
     .section-icon, .icon { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; }
     .section-icon { width:32px; height:32px; border-radius:11px; background:var(--accent-soft); color:var(--accent); }
     .icon svg, .section-icon svg, [data-icon] > svg { width:18px; height:18px; stroke:currentColor; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; display:block; }
@@ -165,6 +164,7 @@
       cursor:help;
     }
     .field-row { display:grid; grid-template-columns:minmax(150px,1fr) minmax(120px,180px); gap:10px; align-items:start; margin-bottom:12px; }
+    .field-copy, .setup-field { display:grid; gap:7px; align-content:start; }
     input, select {
       width:100%;
       min-height:42px;
@@ -186,22 +186,39 @@
       box-shadow:0 0 0 4px rgba(49,95,82,.09);
     }
     .hint { color:var(--muted); font-size:12px; line-height:1.35; font-weight:520; }
-    .help-panel {
-      display:none;
-      margin:-4px 0 14px;
-      padding:11px 13px;
-      border:1px solid rgba(49,95,82,.2);
-      border-radius:14px;
-      background:rgba(255,255,255,.78);
+    .help-bubble {
+      position:fixed;
+      z-index:20;
+      width:min(260px,calc(100vw - 28px));
+      padding:10px 12px;
+      border:1px solid rgba(49,95,82,.18);
+      border-radius:12px;
+      background:rgba(255,253,250,.98);
+      box-shadow:var(--shadow-soft);
       color:#45514d;
-      font-size:13px;
+      font-size:12px;
+      line-height:1.35;
+      opacity:0;
+      pointer-events:none;
+      transform:translateY(4px);
+      transition:opacity .14s ease, transform .14s ease;
     }
-    .help-panel.show { display:block; }
-    .warnings { display:grid; gap:8px; margin-bottom:14px; }
-    .notice { display:flex; gap:9px; align-items:flex-start; padding:10px 12px; border-radius:14px; border:1px solid rgba(154,101,12,.25); background:var(--amber-soft); color:#5f4108; font-size:13px; }
-    .notice.no { border-color:rgba(169,58,50,.24); background:var(--red-soft); color:#74241f; }
+    .help-bubble.show { opacity:1; transform:translateY(0); pointer-events:auto; }
+    .warnings { display:grid; gap:7px; margin:0 0 18px; }
+    .notice {
+      display:flex;
+      gap:8px;
+      align-items:center;
+      min-height:32px;
+      padding:6px 2px 7px;
+      border-top:1px solid rgba(152,97,13,.28);
+      color:#704b0a;
+      font-size:12px;
+      font-weight:720;
+    }
+    .notice.no { border-top-color:rgba(169,58,50,.28); color:#7c2b25; }
     .table-wrap { overflow-x:auto; border:1px solid var(--line); border-radius:16px; background:var(--solid); box-shadow:0 1px 0 rgba(255,255,255,.7) inset; -webkit-overflow-scrolling:touch; }
-    table { width:100%; min-width:1080px; border-collapse:separate; border-spacing:0; }
+    table { width:100%; min-width:860px; border-collapse:separate; border-spacing:0; }
     th, td { padding:12px 13px; border-bottom:1px solid var(--line); text-align:right; font-size:13px; vertical-align:top; }
     th:first-child, td:first-child { text-align:left; position:sticky; left:0; z-index:1; background:var(--solid); }
     th { background:#f0eee8; color:#3e4643; font-size:12px; font-weight:850; text-transform:uppercase; letter-spacing:.035em; white-space:nowrap; }
@@ -213,8 +230,26 @@
     .status-warning { color:var(--amber); font-weight:900; }
     .status-no { color:var(--red); font-weight:900; }
     .mobile-card-list { display:none; }
-    .meta { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-    .pill { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:6px 9px; background:#fff; color:var(--muted); font-size:12px; font-weight:780; }
+    .meta, .chip-row { display:flex; flex-wrap:wrap; gap:6px; }
+    .meta { margin-top:10px; }
+    .pill {
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      min-height:24px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:4px 8px;
+      background:#fff;
+      color:var(--muted);
+      font-size:11px;
+      font-weight:780;
+      line-height:1;
+      white-space:nowrap;
+    }
+    .pill.warn { border-color:rgba(152,97,13,.22); background:var(--amber-soft); color:var(--amber); }
+    .pill.no { border-color:rgba(169,58,50,.2); background:var(--red-soft); color:var(--red); }
+    .summary-line { margin-top:4px; color:var(--muted); font-size:13px; }
     .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
     @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
     @media (prefers-reduced-motion:reduce) {
@@ -225,7 +260,7 @@
       .two { grid-template-columns:1fr; }
       .field-row { grid-template-columns:1fr; }
       th:first-child, td:first-child { position:static; }
-      table { min-width:960px; }
+      table { min-width:820px; }
     }
     @media (max-width:680px) {
       header, main { width:min(100% - 24px, var(--max)); }
@@ -237,7 +272,7 @@
       .panel > summary { font-size:16px; }
       input, select { min-height:46px; font-size:16px; }
       .table-wrap { border-radius:14px; }
-      table { min-width:920px; }
+      table { min-width:780px; }
       th, td { padding:10px; font-size:12px; }
       .mobile-card-list { display:grid; gap:10px; margin-bottom:12px; }
       .mobile-card { border:1px solid var(--line); border-radius:16px; padding:13px; background:linear-gradient(180deg,#fff,#fbfaf6); box-shadow:var(--shadow-soft); }
@@ -263,34 +298,30 @@
   </header>
 
   <main>
+    <div id="warningBox" class="warnings" aria-live="polite"></div>
+
     <details id="setup" class="panel" open>
       <summary class="help-target" data-help-key="setup"><span class="section-icon" data-icon="settings"></span>Setup</summary>
-      <div class="help-panel" data-help-for="setup"></div>
       <div id="setupInputs" class="controls"></div>
     </details>
 
     <details id="cars" class="panel" open>
       <summary class="help-target" data-help-key="cars"><span class="section-icon" data-icon="car"></span>Cars</summary>
-      <div class="help-panel" data-help-for="cars"></div>
       <div id="choiceInputs" class="grid two"></div>
     </details>
 
     <details id="payment" class="panel" open>
       <summary class="help-target" data-help-key="payment"><span class="section-icon" data-icon="loan"></span>Payment</summary>
-      <div class="help-panel" data-help-for="payment"></div>
       <div id="financeInputs" class="grid two"></div>
     </details>
 
     <details id="costs" class="panel" open>
       <summary class="help-target" data-help-key="costs"><span class="section-icon" data-icon="fuel"></span>Costs</summary>
-      <div class="help-panel" data-help-for="costs"></div>
       <div id="runningInputs" class="grid two"></div>
     </details>
 
     <details id="results" class="panel" open>
       <summary class="help-target" data-help-key="results"><span class="section-icon" data-icon="winner"></span>Results</summary>
-      <div class="help-panel" data-help-for="results"></div>
-      <div id="warningBox" class="warnings"></div>
       <div id="mobileResultCards" class="mobile-card-list"></div>
       <div id="primaryTable" class="table-wrap"></div>
     </details>
@@ -484,7 +515,7 @@
 
   function estimatedResaleValue(carInput, yearsInput) {
     const car = withCarDefaults(carInput);
-    return Math.round(Math.max(0, num(car.upfrontPrice) * retentionRate(car.type, yearsInput) / 100) * 100);
+    return Math.round(Math.max(0, num(car.upfrontPrice) * retentionRate(car.type, yearsInput)) / 100) * 100;
   }
 
   function effectiveResaleValue(carInput, yearsInput) {
@@ -596,11 +627,8 @@
     if (row.maxMonthlyCarCost > num(assumptions.monthlyBudget)) {
       warnings.push(warning("monthly-budget", "warning", "Monthly cost exceeds monthly budget.", row.carKey, row.option));
     }
-    if (row.mode === PAYMENT_MODES.finance && num(car.loanMonths) > months) {
-      warnings.push(warning("loan-long", "warning", "Loan is not fully paid by the selected year.", row.carKey, row.option));
-    }
     if (row.mode === PAYMENT_MODES.finance && row.loanStillOwed > 0) {
-      warnings.push(warning("loan-left", "warning", "Car is not fully paid by the selected end year.", row.carKey, row.option));
+      warnings.push(warning("loan-long", "warning", "Loan still active after selected years.", row.carKey, row.option));
     }
     if (row.resaleValue < 0 || !Number.isFinite(row.resaleValue)) {
       warnings.push(warning("resale-invalid", "no", "Resale value is missing or negative.", row.carKey, row.option));
@@ -665,7 +693,7 @@
     const loanStillOwed = isFinance ? loanBalance(car, months) : 0;
     const finalMoney = investmentBalance + resaleValue - loanStillOwed - totalDeficits;
     const totalRunningCost = runningPaid;
-    const totalPaid = carPaymentsPaid + totalRunningCost + totalDeficits;
+    const totalPaid = carPaymentsPaid + totalRunningCost;
     const paidByEnd = isFinance ? carPaymentsPaid : num(car.upfrontPrice);
     const row = {
       id: "",
@@ -682,6 +710,9 @@
       initialSpent,
       carPaidDisplay: isFinance && finance.loanMonths > months ? paidByEnd : (isFinance ? finance.financeTotal : num(car.upfrontPrice)),
       carPaidNote: isFinance && finance.loanMonths > months ? "paid by selected year" : (isFinance ? "full finance term" : "paid upfront"),
+      carMonthlyPaymentDisplay: isFinance ? finance.monthlyPayment : 0,
+      carTotalDisplay: isFinance ? finance.financeTotal : num(car.upfrontPrice),
+      carPaymentsPaid,
       financeTotal: finance.financeTotal,
       financingCost: isFinance ? finance.financingCost : 0,
       monthlyRunningCost: monthlyRunning,
@@ -803,7 +834,7 @@
     };
 
     const HELP = {
-      setup: "Initial cash is spent first. Unused cash and monthly budget are invested at a fixed 8% yearly return, compounded monthly.",
+      setup: "Initial cash is spent first. Unused cash and monthly leftovers stay working in the background.",
       cars: "Each option has one payment mode. Changing type updates untouched defaults only; fields you edited stay custom.",
       payment: "Upfront pays cash price now. Finance pays down payment now and monthly payments until the loan term ends.",
       costs: "Running costs are monthly energy/fuel plus annual maintenance, insurance, repairs, and tax divided by 12. Resale is estimated unless you override it.",
@@ -880,8 +911,7 @@
     }
     function helpText(key) { return HELP[key] || ""; }
     function helpAttrs(key) {
-      const text = helpText(key);
-      return text ? ` data-help-key="${key}" title="${escapeHtml(text)}"` : "";
+      return helpText(key) ? ` data-help-key="${key}"` : "";
     }
     function fieldLabel(carKey, field, label) {
       const id = `${carKey}-${field}`;
@@ -893,26 +923,18 @@
 
     function init() {
       renderStaticIcons();
-      renderHelpPanels();
       renderSetup();
       renderAllInputs();
       bindHelp();
       update();
     }
 
-    function renderHelpPanels() {
-      Object.entries(HELP).forEach(([key, text]) => {
-        const panel = document.querySelector ? document.querySelector(`[data-help-for="${key}"]`) : null;
-        if (panel) panel.textContent = text;
-      });
-    }
-
     function renderSetup() {
       document.getElementById("setupInputs").innerHTML = setupFields.map(([field, label, min, max, step]) => `
-        <label class="help-target"${helpAttrs(field)}>${escapeHtml(label)}
-          <input data-assumption="${field}" type="number" min="${min}" max="${max}" step="${step}" value="${state.assumptions[field]}">
-          ${field === "yearsOwned" ? '<span class="hint">8% stock return fixed internally</span>' : ""}
-        </label>
+        <div class="setup-field">
+          <label class="field-label help-target" for="setup-${field}"${helpAttrs(field)}>${escapeHtml(label)}</label>
+          <input id="setup-${field}" data-assumption="${field}" type="number" min="${min}" max="${max}" step="${step}" value="${state.assumptions[field]}">
+        </div>
       `).join("");
       document.getElementById("setupInputs").querySelectorAll("[data-assumption]").forEach((input) => {
         input.addEventListener("input", () => {
@@ -941,21 +963,10 @@
           ${inputRow(carKey, "name", "Name", `<input id="${carKey}-name" data-car="${carKey}" data-field="name" type="text" value="${escapeHtml(car.name || "")}">`)}
           ${inputRow(carKey, "type", "Type", `<select id="${carKey}-type" data-car="${carKey}" data-field="type"><option value="ev" ${car.type === "ev" ? "selected" : ""}>EV</option><option value="hybrid" ${car.type === "hybrid" ? "selected" : ""}>Hybrid</option><option value="combustion" ${car.type === "combustion" ? "selected" : ""}>Combustion</option></select>`)}
           ${inputRow(carKey, "paymentMode", "Payment", `<select id="${carKey}-paymentMode" data-car="${carKey}" data-field="paymentMode"><option value="upfront" ${car.paymentMode === "upfront" ? "selected" : ""}>Upfront</option><option value="finance" ${car.paymentMode === "finance" ? "selected" : ""}>Finance</option></select>`)}
-          <button class="small-button" type="button" data-reset-defaults="${carKey}">${icon("settings")}Reset type defaults</button>
         `;
         return carPanel(carKey, html);
       }).join("");
       bindCarInputs("choiceInputs");
-      document.getElementById("choiceInputs").querySelectorAll("[data-reset-defaults]").forEach((button) => {
-        button.addEventListener("click", () => {
-          const carKey = button.dataset.resetDefaults;
-          state.cars[carKey] = M.applyTypeDefaults(M.clearCustom(state.cars[carKey], M.TYPE_FIELDS), { respectCustom:false });
-          refreshAutoResale();
-          renderAllInputs();
-          bindHelp();
-          update();
-        });
-      });
     }
 
     function renderPayment() {
@@ -965,7 +976,7 @@
         const rows = fields.map(([field, label, step]) => numberInput(carKey, field, label, step)).join("");
         const finance = M.financeSummary(car);
         const meta = car.paymentMode === "finance"
-          ? `<div class="meta"><span class="pill">${icon("loan")}Finance total ${euro(finance.financeTotal)}</span><span class="pill">Cost ${euro(finance.financingCost)}</span></div>`
+          ? `<div class="meta"><span class="pill">${icon("loan")}Finance total ${euro(finance.financeTotal)}</span><span class="pill">Finance cost ${euro(finance.financingCost)}</span></div>`
           : "";
         return carPanel(carKey, rows + meta);
       }).join("");
@@ -977,9 +988,11 @@
       document.getElementById("runningInputs").innerHTML = ["car1", "car2"].map((carKey) => {
         const car = state.cars[carKey];
         const fields = (costFields[car.type] || costFields.combustion).concat(commonCostFields);
-        const rows = fields.map(([field, label, step]) => numberInput(carKey, field, label, step)).join("");
-        const source = car.resaleCustom ? "custom" : "estimated";
-        return carPanel(carKey, `${rows}<div class="meta"><span class="pill">${icon("fuel")}Resale ${source}</span></div>`);
+        const rows = fields.map(([field, label, step]) => {
+          const chips = field === "resaleValue" ? resaleChips(car) : "";
+          return numberInput(carKey, field, label, step, chips);
+        }).join("");
+        return carPanel(carKey, `${rows}<div class="meta">${runningChips(car)}</div>`);
       }).join("");
       bindCarInputs("runningInputs");
     }
@@ -991,12 +1004,33 @@
       });
     }
 
-    function numberInput(carKey, field, label, step) {
-      return inputRow(carKey, field, label, `<input id="${carKey}-${field}" data-car="${carKey}" data-field="${field}" type="number" step="${step}" value="${state.cars[carKey][field] ?? ""}">`);
+    function numberInput(carKey, field, label, step, chips = "") {
+      return inputRow(carKey, field, label, `<input id="${carKey}-${field}" data-car="${carKey}" data-field="${field}" type="number" step="${step}" value="${state.cars[carKey][field] ?? ""}">`, chips);
     }
 
-    function inputRow(carKey, field, label, control) {
-      return `<div class="field-row">${fieldLabel(carKey, field, label)}<div>${control}</div></div>`;
+    function inputRow(carKey, field, label, control, chips = "") {
+      return `<div class="field-row"><div class="field-copy">${fieldLabel(carKey, field, label)}${chips}</div><div>${control}</div></div>`;
+    }
+
+    function chip(text, tone = "") {
+      return `<span class="pill ${tone}">${escapeHtml(text)}</span>`;
+    }
+
+    function resaleChips(car) {
+      const retention = M.retentionRate(car.type, state.assumptions.yearsOwned);
+      const resale = finite(car.resaleValue);
+      const depreciation = Math.max(0, finite(car.upfrontPrice) - resale);
+      return `<div class="chip-row">${chip(car.resaleCustom ? "Custom" : "Estimated")}${chip(`Retention: ${number(retention * 100, 0)}%`)}${chip(`Depreciation: ${euro(depreciation)}`)}</div>`;
+    }
+
+    function runningChips(car) {
+      const running = M.annualRunningBreakdown(car, state.assumptions);
+      const energyLabel = car.type === "ev" ? "Electricity" : "Fuel";
+      return [
+        chip(`${energyLabel}: ${euro(running.energy / 12)}/mo`),
+        chip(`Monthly running: ${euro(running.total / 12)}`),
+        chip(`Annual running: ${euro(running.total)}`),
+      ].join("");
     }
 
     function bindCarInputs(rootId) {
@@ -1025,7 +1059,7 @@
             else M.markCustom(car, field);
             if (field === "upfrontPrice" && !car.resaleCustom) refreshAutoResale();
             if (["upfrontPrice", "downPayment", "monthlyPayment", "loanMonths"].includes(field)) renderPayment();
-            if (field === "upfrontPrice" || field === "resaleValue") renderCosts();
+            if (["upfrontPrice", "resaleValue", "kwhPer100Km", "litersPer100Km", "fuelPrice", "homeElectricityPrice", "publicElectricityPrice", "homeChargingPct", "publicChargingPct", "annualMaintenance", "annualInsurance", "annualRepairs", "annualTax"].includes(field)) renderCosts();
             bindHelp();
           }
           update();
@@ -1038,30 +1072,85 @@
       document.querySelectorAll(".help-target").forEach((node) => {
         if (node.dataset.helpBound) return;
         node.dataset.helpBound = "1";
-        node.addEventListener("click", (event) => {
+        const openOnHover = () => {
+          if (!helpPinned) showHelp(node, false);
+        };
+        const closeOnLeave = () => {
+          if (!helpPinned) hideHelp(true);
+        };
+        node.addEventListener("mouseenter", openOnHover);
+        node.addEventListener("mouseover", openOnHover);
+        node.addEventListener("mouseleave", closeOnLeave);
+        node.addEventListener("mouseout", closeOnLeave);
+        node.addEventListener("pointerdown", (event) => {
           const key = node.dataset.helpKey;
           if (!key) return;
-          const local = document.querySelector(`[data-help-for="${key}"]`);
-          if (local) {
-            if (node.tagName === "SUMMARY") {
-              setTimeout(() => {
-                if (node.parentElement && node.parentElement.open) local.classList.add("show");
-              }, 0);
-            } else {
-              local.classList.toggle("show");
-            }
-            return;
-          }
-          const existing = document.getElementById("floatingHelp");
-          if (existing) existing.remove();
-          const bubble = document.createElement("div");
-          bubble.id = "floatingHelp";
-          bubble.className = "help-panel show";
-          bubble.textContent = helpText(key);
-          node.parentNode.appendChild(bubble);
-          event.preventDefault();
+          if (helpPinned && activeHelpKey === key) hideHelp(true);
+          else showHelp(node, true);
+          event.stopPropagation();
         });
       });
+      if (document.body && !document.body.dataset.helpDismissBound) {
+        document.body.dataset.helpDismissBound = "1";
+        document.addEventListener("pointerdown", (event) => {
+          const bubble = document.getElementById("floatingHelp");
+          if (!bubble || !activeHelpTarget) return;
+          if (bubble.contains(event.target) || activeHelpTarget.contains(event.target)) return;
+          hideHelp(true);
+        }, true);
+        window.addEventListener("scroll", () => {
+          if (activeHelpTarget) positionHelp(activeHelpTarget);
+        }, { passive:true });
+        window.addEventListener("resize", () => {
+          if (activeHelpTarget) positionHelp(activeHelpTarget);
+        });
+      }
+    }
+
+    let activeHelpTarget = null;
+    let activeHelpKey = "";
+    let helpPinned = false;
+
+    function showHelp(node, pinned) {
+      const text = helpText(node.dataset.helpKey);
+      if (!text || !document.createElement) return;
+      let bubble = document.getElementById("floatingHelp");
+      if (!bubble) {
+        bubble = document.createElement("div");
+        bubble.id = "floatingHelp";
+        bubble.className = "help-bubble";
+        (document.body || node.parentNode).appendChild(bubble);
+      }
+      activeHelpTarget = node;
+      activeHelpKey = node.dataset.helpKey || "";
+      helpPinned = pinned;
+      bubble.textContent = text;
+      positionHelp(node);
+      bubble.classList.add("show");
+    }
+
+    function positionHelp(node) {
+      const bubble = document.getElementById("floatingHelp");
+      if (!bubble || !node.getBoundingClientRect) return;
+      const rect = node.getBoundingClientRect();
+      const bubbleRect = bubble.getBoundingClientRect ? bubble.getBoundingClientRect() : { width:260, height:50 };
+      const margin = 12;
+      const width = bubbleRect.width || 260;
+      const height = bubbleRect.height || 50;
+      const left = Math.min(window.innerWidth - width - margin, Math.max(margin, rect.left + rect.width / 2 - width / 2));
+      const above = rect.top - height - 9;
+      const top = above > margin ? above : Math.min(window.innerHeight - height - margin, rect.bottom + 9);
+      bubble.style.left = `${left}px`;
+      bubble.style.top = `${Math.max(margin, top)}px`;
+    }
+
+    function hideHelp(force = false) {
+      if (helpPinned && !force) return;
+      const bubble = document.getElementById("floatingHelp");
+      if (bubble) bubble.classList.remove("show");
+      activeHelpTarget = null;
+      activeHelpKey = "";
+      helpPinned = false;
     }
 
     function update() {
@@ -1081,24 +1170,42 @@
         <span class="badge ${status}">${icon(status === "no" ? "warning" : "winner")}${status === "no" ? "Check inputs" : status ? "Warnings" : "Clean run"}</span>
         <div class="hero-metric"><span>${icon("winner")}Winner</span><strong>${escapeHtml(winner.option)}</strong></div>
         <div class="hero-metric"><span>${icon("budget")}Final money</span><strong>${euro(winner.finalMoney)}</strong></div>
-        <div class="hero-metric"><span>${icon("car")}Difference</span><strong>${runnerUp ? `+${euro(result.difference)} vs ${escapeHtml(runnerUp.option)}` : euro(0)}</strong></div>
+        <div class="hero-metric"><span>${icon("car")}Difference</span><strong>${runnerUp ? `+${euro(result.difference)}` : euro(0)}</strong></div>
+        <p class="summary-line">${escapeHtml(summaryLine(result))}</p>
       ` : "";
     }
 
+    function summaryLine(result) {
+      const winner = result.winner;
+      if (!winner) return "";
+      const reason = winner.mode === "finance" && winner.averageMonthlyInvested > 0
+        ? "It keeps more cash available early"
+        : "It leaves the strongest ending balance";
+      const budget = winner.maxMonthlyCarCost <= finite(state.assumptions.monthlyBudget)
+        ? "and stays within the monthly budget."
+        : "but has budget warnings to check.";
+      return `${winner.option} wins with ${euro(winner.finalMoney)}. ${reason} ${budget}`;
+    }
+
     function renderWarnings(result) {
-      const warnings = result.warnings;
+      const seen = new Set();
+      const warnings = result.warnings.filter((item) => {
+        const key = `${item.option}-${item.message}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
       document.getElementById("warningBox").innerHTML = warnings.length ? warnings.map((item) => `
-        <div class="notice ${item.severity === "no" ? "no" : ""}">${icon("warning")}<span><strong>${escapeHtml(item.option || "Option")}:</strong> ${escapeHtml(item.message)}</span></div>
+        <div class="notice ${item.severity === "no" ? "no" : ""}">${icon("warning")}<span>${escapeHtml(item.option || "Option")}: ${escapeHtml(item.message)}</span></div>
       `).join("") : "";
     }
 
     function renderMobileResults(result) {
       document.getElementById("mobileResultCards").innerHTML = result.rows.map((row) => `
         <article class="mobile-card">
-          <span class="status-${row.possible.toLowerCase()}">${escapeHtml(row.possible)}</span>
           <strong class="${row.isWinner ? "winner" : ""}">${escapeHtml(row.option)}</strong>
-          <p>${euro(row.finalMoney)} final</p>
-          <p class="hint">${escapeHtml(row.summary)}</p>
+          <p>${euro(row.finalMoney)} net worth</p>
+          <div class="meta">${rowBadges(row)}</div>
         </article>
       `).join("");
     }
@@ -1106,31 +1213,34 @@
     function renderTable(result) {
       document.getElementById("primaryTable").innerHTML = `<table><thead><tr>
         <th>Option</th>
-        <th>Possible?</th>
-        <th>Car paid</th>
-        <th>Extra/month</th>
-        <th>Extra total</th>
+        <th>Car/month</th>
+        <th>Car total</th>
+        <th>Costs/month</th>
+        <th>Costs total</th>
         <th>Total paid</th>
-        <th>Invested result</th>
-        <th>Resale</th>
-        <th>Loan left</th>
-        <th>Final money</th>
-        <th>Summary</th>
+        <th>Net worth</th>
       </tr></thead><tbody>${result.rows.map((row) => `
         <tr>
-          <td><strong class="${row.isWinner ? "winner" : ""}">${escapeHtml(row.option)}</strong></td>
-          <td class="status-${row.possible.toLowerCase()}">${escapeHtml(row.possible)}</td>
-          <td>${euro(row.carPaidDisplay)}<br><span class="hint">${escapeHtml(row.carPaidNote)}</span></td>
-          <td>${euro(row.extraMonth)}</td>
+          <td><strong class="${row.isWinner ? "winner" : ""}">${escapeHtml(row.option)}</strong><div class="meta">${rowBadges(row)}</div></td>
+          <td>${euro(row.carMonthlyPaymentDisplay)}/mo</td>
+          <td>${euro(row.carTotalDisplay)}${row.loanStillOwed > 0 ? `<br><span class="pill warn">loan continues</span>` : ""}</td>
+          <td>${euro(row.monthlyRunningCost)}/mo</td>
           <td>${euro(row.extraTotal)}</td>
           <td>${euro(row.totalPaid)}</td>
-          <td>${euro(row.investedResult)}</td>
-          <td>${euro(row.resaleValue)}<br><span class="hint">${escapeHtml(row.resaleSource)}</span></td>
-          <td>${euro(row.loanLeft)}</td>
           <td class="${row.isWinner ? "winner" : ""}">${euro(row.finalMoney)}</td>
-          <td>${escapeHtml(row.summary)}</td>
         </tr>
       `).join("")}</tbody></table>`;
+    }
+
+    function rowBadges(row) {
+      const badges = [];
+      const warningIds = new Set(row.warnings.map((warning) => warning.id));
+      if (warningIds.has("missing-name") || warningIds.has("missing-price") || warningIds.has("resale-invalid")) badges.push(chip("Missing value", "no"));
+      if (warningIds.has("upfront-cash") || warningIds.has("down-cash")) badges.push(chip("Initial cash not enough", "no"));
+      if (warningIds.has("monthly-budget")) badges.push(chip("Monthly budget exceeded", "warn"));
+      if (warningIds.has("loan-long")) badges.push(chip("Loan continues", "warn"));
+      if (row.resaleSource === "estimated") badges.push(chip("Resale estimated"));
+      return badges.join("");
     }
 
     init();

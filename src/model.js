@@ -185,7 +185,7 @@
 
   function estimatedResaleValue(carInput, yearsInput) {
     const car = withCarDefaults(carInput);
-    return Math.round(Math.max(0, num(car.upfrontPrice) * retentionRate(car.type, yearsInput) / 100) * 100);
+    return Math.round(Math.max(0, num(car.upfrontPrice) * retentionRate(car.type, yearsInput)) / 100) * 100;
   }
 
   function effectiveResaleValue(carInput, yearsInput) {
@@ -297,11 +297,8 @@
     if (row.maxMonthlyCarCost > num(assumptions.monthlyBudget)) {
       warnings.push(warning("monthly-budget", "warning", "Monthly cost exceeds monthly budget.", row.carKey, row.option));
     }
-    if (row.mode === PAYMENT_MODES.finance && num(car.loanMonths) > months) {
-      warnings.push(warning("loan-long", "warning", "Loan is not fully paid by the selected year.", row.carKey, row.option));
-    }
     if (row.mode === PAYMENT_MODES.finance && row.loanStillOwed > 0) {
-      warnings.push(warning("loan-left", "warning", "Car is not fully paid by the selected end year.", row.carKey, row.option));
+      warnings.push(warning("loan-long", "warning", "Loan still active after selected years.", row.carKey, row.option));
     }
     if (row.resaleValue < 0 || !Number.isFinite(row.resaleValue)) {
       warnings.push(warning("resale-invalid", "no", "Resale value is missing or negative.", row.carKey, row.option));
@@ -366,7 +363,7 @@
     const loanStillOwed = isFinance ? loanBalance(car, months) : 0;
     const finalMoney = investmentBalance + resaleValue - loanStillOwed - totalDeficits;
     const totalRunningCost = runningPaid;
-    const totalPaid = carPaymentsPaid + totalRunningCost + totalDeficits;
+    const totalPaid = carPaymentsPaid + totalRunningCost;
     const paidByEnd = isFinance ? carPaymentsPaid : num(car.upfrontPrice);
     const row = {
       id: "",
@@ -383,6 +380,9 @@
       initialSpent,
       carPaidDisplay: isFinance && finance.loanMonths > months ? paidByEnd : (isFinance ? finance.financeTotal : num(car.upfrontPrice)),
       carPaidNote: isFinance && finance.loanMonths > months ? "paid by selected year" : (isFinance ? "full finance term" : "paid upfront"),
+      carMonthlyPaymentDisplay: isFinance ? finance.monthlyPayment : 0,
+      carTotalDisplay: isFinance ? finance.financeTotal : num(car.upfrontPrice),
+      carPaymentsPaid,
       financeTotal: finance.financeTotal,
       financingCost: isFinance ? finance.financingCost : 0,
       monthlyRunningCost: monthlyRunning,

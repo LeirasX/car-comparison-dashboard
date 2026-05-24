@@ -75,7 +75,7 @@ run("changing years updates winner, final money, resale estimate, loan left, sum
   assert.ok(short.rows.find((row) => row.carName === "Long loan").loanLeft > 0);
   assert.equal(long.rows.find((row) => row.carName === "Long loan").loanLeft, 0);
   assert.match(short.rows.find((row) => row.carName === "Long loan").summary, /loan not paid/i);
-  assert.ok(short.warnings.some((warning) => /Loan is not fully paid/.test(warning.message)));
+  assert.ok(short.warnings.some((warning) => /Loan still active/.test(warning.message)));
   assert.equal(short.rows.length, 2);
 });
 
@@ -97,7 +97,7 @@ run("loan longer than years leaves loan owed and subtracts it from final money",
   const scenario = model.simulateScenario(car({ paymentMode: "finance", downPayment: 2000, monthlyPayment: 200, loanMonths: 60, resaleValue: 7000 }), assumptions({ yearsOwned: 1 }), "finance", 1);
   approx(scenario.loanLeft, 9600);
   approx(scenario.finalMoney, scenario.investedResult + scenario.resaleValue - scenario.loanLeft - scenario.totalDeficits);
-  assert.ok(scenario.warnings.some((warning) => /not fully paid/.test(warning.message)));
+  assert.ok(scenario.warnings.some((warning) => /Loan still active/.test(warning.message)));
 });
 
 run("monthly budget exceeded creates warning and subtracts deficits", () => {
@@ -105,6 +105,7 @@ run("monthly budget exceeded creates warning and subtracts deficits", () => {
   assert.ok(scenario.totalDeficits > 0);
   assert.ok(scenario.warnings.some((warning) => /Monthly cost exceeds/.test(warning.message)));
   approx(scenario.finalMoney, scenario.investedResult + scenario.resaleValue - scenario.loanLeft - scenario.totalDeficits);
+  approx(scenario.totalPaid, scenario.carPaymentsPaid + scenario.runningPaid);
 });
 
 run("initial cash exceeded marks impossible for upfront and finance down payment", () => {

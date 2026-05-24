@@ -100,9 +100,13 @@ assert.match(html, /id="costs"/);
 assert.match(html, /id="results"/);
 assert.doesNotMatch(html, /No Car Baseline|Charts|Quality|Preset|Balloon|Opening fee|Financed price|Explanation|Sensitivity|Car Comparison Inputs|Resale Values/i);
 assert.doesNotMatch(html, /data-assumption="investmentReturn"/);
+assert.doesNotMatch(html, /stock return|Reset type defaults/i);
+assert.match(html, /mouseenter/);
+assert.match(html, /mouseleave/);
+assert.match(html, /pointerdown/);
 assert.match(elements.primaryTable.innerHTML, /Option/);
-assert.match(elements.primaryTable.innerHTML, /Final money/);
-assert.doesNotMatch(elements.primaryTable.innerHTML, /3y money left|5y money left|Car 1|Car 2|Custom/);
+assert.match(elements.primaryTable.innerHTML, /Car\/month[\s\S]*Car total[\s\S]*Costs\/month[\s\S]*Costs total[\s\S]*Total paid[\s\S]*Net worth/);
+assert.doesNotMatch(elements.primaryTable.innerHTML, /Possible\?|Invested result|Investments result|Resale value|Loan left|Summary|Final money|3y money left|5y money left|Car 1|Car 2|Custom/);
 
 assert.ok(assumption("yearsOwned"), "years owned input should exist");
 assert.ok(!assumption("investmentReturn"), "stock return input should be removed");
@@ -127,7 +131,7 @@ assumption("yearsOwned").value = "20";
 assumption("yearsOwned").dispatch("input", { target: assumption("yearsOwned") });
 assert.notEqual(output(), beforeYear, "years owned should update visible results");
 assert.notEqual(field(elements.runningInputs, "car1", "resaleValue").value, resaleBefore, "auto resale should update with years");
-assert.match(elements.primaryTable.innerHTML, /Warning: loan not paid|Strong: low cost|Wins: more invested|Loses:/);
+assert.match(elements.warningBox.innerHTML + elements.primaryTable.innerHTML, /Loan still active after selected years|Monthly budget exceeded|Resale estimated/);
 
 const car1Mode = field(elements.choiceInputs, "car1", "paymentMode");
 car1Mode.value = "finance";
@@ -157,7 +161,7 @@ const highDown = field(elements.financeInputs, "car1", "downPayment");
 highDown.value = "999999";
 highDown.dispatch("input", { target: highDown });
 assert.match(elements.warningBox.innerHTML, /Down payment exceeds initial cash/);
-assert.match(elements.primaryTable.innerHTML, /status-no|No/);
+assert.match(elements.primaryTable.innerHTML, /Initial cash not enough/);
 
 const serialized = output() + elements.financeInputs.innerHTML + elements.runningInputs.innerHTML;
 assert.doesNotMatch(serialized, /NaN|undefined|Infinity/);
