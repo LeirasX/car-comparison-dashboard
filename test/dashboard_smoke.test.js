@@ -108,9 +108,32 @@ assert.match(html, /pointerdown/);
 assert.match(elements.primaryTable.innerHTML, /Option/);
 assert.match(elements.primaryTable.innerHTML, /Car\/month[\s\S]*Car total[\s\S]*Costs\/month[\s\S]*Costs total[\s\S]*Total paid[\s\S]*Net worth/);
 assert.doesNotMatch(elements.primaryTable.innerHTML, /Possible\?|Invested result|Investments result|Resale value|Loan left|Summary|Final money|Resale estimated|3y money left|5y money left|Car 1|Car 2|Custom/);
-assert.match(elements.heroSummary.innerHTML, /Difference/);
-assert.match(elements.heroSummary.innerHTML, /\+\d+(?:\.\d)?%/);
-assert.doesNotMatch(elements.heroSummary.innerHTML, /Warnings|Clean run|Check inputs|wins with|€[0-9,]+ vs|Difference[\s\S]*€[0-9,]+/);
+assert.equal((elements.heroSummary.innerHTML.match(/class="hero-metric/g) || []).length, 3);
+assert.match(elements.heroSummary.innerHTML, /Winner/);
+assert.match(elements.heroSummary.innerHTML, /Cost difference/);
+assert.match(elements.heroSummary.innerHTML, /Net worth difference/);
+assert.match(elements.heroSummary.innerHTML, /[-+]\d+(?:\.\d)?%/);
+assert.doesNotMatch(elements.heroSummary.innerHTML, /Warnings|Clean run|Check inputs|Final money|wins with|€[0-9,]+ vs|Difference[\s\S]*€[0-9,]+/);
+const defaultResult = context.CarCompareModel.analyze({
+  assumptions: context.CarCompareModel.DEFAULT_ASSUMPTIONS,
+  cars: {
+    car1: context.CarCompareModel.defaultCar("car1"),
+    car2: context.CarCompareModel.defaultCar("car2"),
+  },
+});
+const expectedCostPct = (defaultResult.winner.totalPaid - defaultResult.runnerUp.totalPaid) / Math.abs(defaultResult.runnerUp.totalPaid) * 100;
+const expectedNetPct = (defaultResult.winner.finalMoney - defaultResult.runnerUp.finalMoney) / Math.abs(defaultResult.runnerUp.finalMoney) * 100;
+assert.match(elements.heroSummary.innerHTML, new RegExp(`${expectedCostPct >= 0 ? "\\+" : ""}${expectedCostPct.toLocaleString("en-IE", { maximumFractionDigits:1 })}%`));
+assert.match(elements.heroSummary.innerHTML, new RegExp(`${expectedNetPct >= 0 ? "\\+" : ""}${expectedNetPct.toLocaleString("en-IE", { maximumFractionDigits:1 })}%`));
+assert.match(context.helpText("heroWinner"), /Used Tesla upfront leaves €[\d,]+ after 7 years/);
+assert.match(context.helpText("heroWinner"), /Used Combustion upfront leaves €[\d,]+/);
+assert.match(context.helpText("heroWinner"), /Total paid:/);
+assert.doesNotMatch(context.helpText("heroWinner"), /Car 1|Car 2/);
+assert.match(html, /heroComparisonText/);
+assert.match(html, /winner\.finalMoney/);
+assert.match(html, /other\.finalMoney/);
+assert.match(html, /winner\.totalPaid/);
+assert.match(html, /other\.totalPaid/);
 
 assert.ok(assumption("yearsOwned"), "years owned input should exist");
 assert.ok(!assumption("investmentReturn"), "stock return input should be removed");
@@ -145,6 +168,7 @@ assert.match(elements.runningInputs.innerHTML, /Fuel:/);
 assert.match(elements.runningInputs.innerHTML, /Monthly running:/);
 assert.match(elements.runningInputs.innerHTML, /Annual running:/);
 assert.doesNotMatch(elements.runningInputs.innerHTML, /Retention:|Depreciation:|>Estimated<|>Custom</);
+assert.doesNotMatch(output(), /Car 1|Car 2/);
 
 const beforeYear = output();
 const resaleBefore = field(elements.runningInputs, "car1", "resaleValue").value;
@@ -153,6 +177,7 @@ assumption("yearsOwned").dispatch("input", { target: assumption("yearsOwned") })
 assert.notEqual(output(), beforeYear, "years owned should update visible results");
 assert.notEqual(field(elements.runningInputs, "car1", "resaleValue").value, resaleBefore, "auto resale should update with years");
 assert.doesNotMatch(elements.warningBox.innerHTML + elements.primaryTable.innerHTML, /Resale estimated/);
+assert.match(context.helpText("heroWinner"), /after 20 years/);
 
 const car1Mode = field(elements.choiceInputs, "car1", "paymentMode");
 car1Mode.value = "finance";
@@ -172,6 +197,8 @@ name.value = "My actual car";
 name.dispatch("input", { target: name });
 assert.match(output(), /My actual car finance/);
 assert.doesNotMatch(output(), /Car 1|Car 2|Custom/);
+assert.match(context.helpText("heroWinner"), /My actual car finance/);
+assert.doesNotMatch(context.helpText("heroWinner"), /Car 1|Car 2/);
 
 const highPayment = field(elements.financeInputs, "car1", "monthlyPayment");
 highPayment.value = "3000";
@@ -179,6 +206,12 @@ highPayment.dispatch("input", { target: highPayment });
 assert.match(elements.warningBox.innerHTML, /Monthly cost exceeds monthly budget/);
 assert.doesNotMatch(elements.heroSummary.innerHTML, /Warnings|Clean run|Check inputs/);
 assert.doesNotMatch(elements.warningBox.innerHTML, /Used Tesla finance:/);
+assert.match(context.helpText("car1.monthlyPayment"), /My actual car finance payment is €3,000\/month/);
+const fuelPrice = field(elements.runningInputs, "car1", "fuelPrice");
+fuelPrice.value = "2.5";
+fuelPrice.dispatch("input", { target: fuelPrice });
+assert.match(context.helpText("car1.fuelPrice"), /€2\.50\/L/);
+assert.match(context.helpText("costs"), /My actual car running cost is €[\d,]+\/month/);
 
 const highDown = field(elements.financeInputs, "car1", "downPayment");
 highDown.value = "999999";

@@ -101,13 +101,24 @@
     .button.primary { background:var(--ink); border-color:var(--ink); color:#fff; }
     .small-button { min-height:34px; padding:7px 11px; font-size:12px; }
     .hero-card { border-radius:30px; padding:22px; display:flex; flex-direction:column; gap:14px; }
-    .hero-metric { padding:16px; border-radius:17px; background:linear-gradient(180deg,#fff,#f8faf8); border:1px solid var(--line); }
+    .hero-metric {
+      padding:16px;
+      border-radius:17px;
+      background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,250,248,.86));
+      border:1px solid var(--line);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .hero-metric:hover { transform:translateY(-2px); box-shadow:var(--shadow-soft); border-color:rgba(49,95,82,.28); }
+    .hero-metric.flow { animation:softFlow .42s ease both; }
     .hero-metric span { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px; font-weight:850; text-transform:uppercase; letter-spacing:.04em; }
-    .hero-metric strong { display:block; margin-top:7px; font-size:clamp(22px,3vw,34px); letter-spacing:-.025em; }
+    .hero-metric strong { display:block; margin-top:7px; font-size:clamp(22px,3vw,34px); letter-spacing:-.025em; transition:opacity .18s ease, transform .18s ease; }
     .badge { display:inline-flex; align-items:center; gap:6px; align-self:flex-start; border-radius:999px; padding:7px 10px; background:var(--good-soft); color:var(--good); font-size:12px; font-weight:850; }
     .badge.warn { background:var(--amber-soft); color:var(--amber); }
     .badge.no { background:var(--red-soft); color:var(--red); }
-    .panel { border-radius:var(--radius); padding:18px; margin-bottom:18px; overflow:hidden; animation:rise .34s ease both; }
+    .panel { border-radius:var(--radius); padding:18px; margin-bottom:18px; overflow:hidden; animation:rise .34s ease both; transition:box-shadow .2s ease, transform .2s ease, border-color .2s ease; }
+    .panel:hover, .car-panel:hover { transform:translateY(-1px); box-shadow:var(--shadow-soft); border-color:rgba(49,95,82,.24); }
     .panel > summary {
       display:flex;
       align-items:center;
@@ -148,6 +159,7 @@
       border-radius:17px;
       padding:16px;
       box-shadow:0 1px 0 rgba(255,255,255,.7) inset;
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
     }
     .car-panel h3 { display:flex; align-items:center; gap:8px; margin-bottom:14px; font-size:16px; letter-spacing:-.01em; }
     label { display:grid; gap:6px; color:#303835; font-size:13px; font-weight:780; }
@@ -251,6 +263,10 @@
     .pill.no { border-color:rgba(169,58,50,.2); background:var(--red-soft); color:var(--red); }
     .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
     @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes softFlow {
+      from { opacity:.64; transform:translateY(4px) scale(.992); }
+      to { opacity:1; transform:translateY(0) scale(1); }
+    }
     @media (prefers-reduced-motion:reduce) {
       *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.001ms !important; }
     }
@@ -335,13 +351,14 @@
       assumptions: structuredClone(M.DEFAULT_ASSUMPTIONS),
       cars: { car1: M.defaultCar("car1"), car2: M.defaultCar("car2") },
     };
+    let latestResult = null;
 
     const HELP = {
       setup: "Initial cash is spent first. Unused cash and monthly leftovers stay working in the background.",
       cars: "Each option has one payment mode. Changing type updates untouched defaults only; fields you edited stay custom.",
       payment: "Upfront pays cash price now. Finance pays down payment now and monthly payments until the loan term ends.",
       costs: "Running costs are monthly energy/fuel plus annual maintenance, insurance, repairs, and tax divided by 12. Resale can be adjusted manually.",
-      results: "Final money = investment balance + resale - loan left - deficits. Highest final money wins.",
+      results: "Highest net worth wins, using the current inputs, resale, loan balance, and budget deficits.",
       initialCashBudget: "Cash available at month 0 before buying or financing.",
       monthlyBudget: "Each month, leftover budget after car costs is invested. If costs exceed budget, the deficit is subtracted at the end.",
       yearsOwned: "Any number of years. The simulation runs month by month for years owned x 12 months.",
@@ -397,6 +414,9 @@
     function euro(value) {
       return new Intl.NumberFormat("en-IE", { style:"currency", currency:"EUR", maximumFractionDigits:0 }).format(finite(value));
     }
+    function euroPrecise(value) {
+      return new Intl.NumberFormat("en-IE", { style:"currency", currency:"EUR", minimumFractionDigits:2, maximumFractionDigits:2 }).format(finite(value));
+    }
     function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : 0; }
     function number(value, digits = 1) { return finite(value).toLocaleString("en-IE", { maximumFractionDigits:digits }); }
     function escapeHtml(value) {
@@ -412,13 +432,13 @@
       if (!document.querySelectorAll) return;
       document.querySelectorAll("[data-icon]").forEach((node) => { node.innerHTML = iconOnly(node.dataset.icon); });
     }
-    function helpText(key) { return HELP[key] || ""; }
+    function helpText(key) { return dynamicHelpText(key) || HELP[key] || ""; }
     function helpAttrs(key) {
       return helpText(key) ? ` data-help-key="${key}"` : "";
     }
     function fieldLabel(carKey, field, label) {
       const id = `${carKey}-${field}`;
-      return `<label class="field-label help-target" for="${id}"${helpAttrs(field)}>${escapeHtml(label)}</label>`;
+      return `<label class="field-label help-target" for="${id}"${helpAttrs(`${carKey}.${field}`)}>${escapeHtml(label)}</label>`;
     }
     function carTitle(carKey) {
       return escapeHtml(state.cars[carKey].name || "Unnamed option");
@@ -456,7 +476,7 @@
     }
 
     function carPanel(carKey, html) {
-      return `<div class="car-panel"><h3>${icon("car")}${carTitle(carKey)}</h3>${html}</div>`;
+      return `<div class="car-panel"><h3 class="help-target" ${helpAttrs(`${carKey}.panel`)}>${icon("car")}${carTitle(carKey)}</h3>${html}</div>`;
     }
 
     function renderCars() {
@@ -524,6 +544,94 @@
         chip(`Monthly running: ${euro(running.total / 12)}`),
         chip(`Annual running: ${euro(running.total)}`),
       ].join("");
+    }
+
+    function dynamicHelpText(key) {
+      const result = latestResult || M.analyze(state);
+      const years = number(result.assumptions.yearsOwned, 1);
+      const budget = euro(result.assumptions.monthlyBudget);
+      const cars = result.cars || state.cars;
+      const rows = Object.fromEntries((result.rows || []).map((row) => [row.carKey, row]));
+      if (key === "heroWinner") return heroComparisonText("winner");
+      if (key === "heroCostDiff") return heroComparisonText("cost");
+      if (key === "heroNetWorthDiff") return heroComparisonText("net");
+      if (key === "setup") return `You are comparing ${carName("car1", cars)} and ${carName("car2", cars)} over ${years} years with ${euro(result.assumptions.initialCashBudget)} initial cash and a ${budget}/month budget.`;
+      if (key === "cars") return `${carName("car1", cars)} is ${typeLabel(cars.car1)} and ${carName("car2", cars)} is ${typeLabel(cars.car2)}. Names shown here are used everywhere in the results and help text.`;
+      if (key === "payment") return `${carName("car1", cars)} is ${paymentLabel(cars.car1)} at ${euro(cars.car1.upfrontPrice)}. ${carName("car2", cars)} is ${paymentLabel(cars.car2)} at ${euro(cars.car2.upfrontPrice)}.`;
+      if (key === "costs") return `${carName("car1", cars)} running cost is ${euro(rows.car1?.monthlyRunningCost || 0)}/month. ${carName("car2", cars)} running cost is ${euro(rows.car2?.monthlyRunningCost || 0)}/month at ${number(result.assumptions.annualKm, 0)} km/year.`;
+      if (key === "results") return heroComparisonText("winner");
+      if (key === "initialCashBudget") return `${euro(result.assumptions.initialCashBudget)} is available at the start. Upfront purchases or finance down payments are taken from this before leftover cash is invested.`;
+      if (key === "monthlyBudget") return `${budget}/month is available for car payments and running costs. Anything left after those costs keeps working in the background.`;
+      if (key === "yearsOwned") return `The model runs for ${years} years. Resale, loan left, total paid, and final money all update when this changes.`;
+      if (key === "annualKm") return `${number(result.assumptions.annualKm, 0)} km/year drives the current electricity/fuel chips and running totals.`;
+      const carField = key.match(/^(car[12])\.(.+)$/);
+      if (carField) return carFieldHelp(carField[1], carField[2], cars, rows, result);
+      const rowMatch = key.match(/^row\.(car[12])\.(.+)$/);
+      if (rowMatch) return rowHelp(rowMatch[1], rowMatch[2], rows, result);
+      return "";
+    }
+
+    function carName(carKey, cars = state.cars) {
+      return String(cars[carKey]?.name || "Unnamed option").trim() || "Unnamed option";
+    }
+
+    function typeLabel(car) {
+      return ({ ev:"an EV", hybrid:"a hybrid", combustion:"a combustion car" }[car?.type] || "a car");
+    }
+
+    function paymentLabel(car) {
+      return car?.paymentMode === "finance"
+        ? `financed with ${euro(car.downPayment)} down and ${euro(car.monthlyPayment)}/month for ${number(car.loanMonths, 0)} months`
+        : `paid upfront`;
+    }
+
+    function carFieldHelp(carKey, field, cars, rows, result) {
+      const car = cars[carKey];
+      const row = rows[carKey];
+      const name = carName(carKey, cars);
+      const years = number(result.assumptions.yearsOwned, 1);
+      const running = M.annualRunningBreakdown(car, result.assumptions);
+      const map = {
+        panel: `${name} is ${typeLabel(car)}, ${paymentLabel(car)}, and currently leaves ${euro(row?.finalMoney || 0)} after ${years} years.`,
+        name: `This option is shown as ${name} in the hero, table, and all help bubbles.`,
+        type: `${name} is set as ${typeLabel(car)}. Changing type updates untouched type defaults while preserving fields you edited.`,
+        paymentMode: `${name} is currently ${paymentLabel(car)}.`,
+        upfrontPrice: `${name} price is ${euro(car.upfrontPrice)}. This drives upfront cost, finance comparison, and resale estimate.`,
+        downPayment: `${name} down payment is ${euro(car.downPayment)}.`,
+        monthlyPayment: `${name} finance payment is ${euro(car.monthlyPayment)}/month while the loan is active.`,
+        loanMonths: `${name} loan term is ${number(car.loanMonths, 0)} months. If it extends beyond ${years} years, loan left is subtracted from net worth.`,
+        kwhPer100Km: `${name} uses ${number(car.kwhPer100Km, 1)} kWh/100 km. Current electricity cost is ${euro(running.energy / 12)}/month.`,
+        litersPer100Km: `${name} uses ${number(car.litersPer100Km, 1)} L/100 km. Current fuel cost is ${euro(running.energy / 12)}/month.`,
+        fuelPrice: `${name} fuel price is ${euroPrecise(car.fuelPrice)}/L. Current fuel cost is ${euro(running.energy / 12)}/month.`,
+        homeElectricityPrice: `${name} home electricity is ${euroPrecise(car.homeElectricityPrice)}/kWh with ${number(car.homeChargingPct, 0)}% home charging.`,
+        publicElectricityPrice: `${name} public electricity is ${euroPrecise(car.publicElectricityPrice)}/kWh with ${number(car.publicChargingPct, 0)}% public charging.`,
+        homeChargingPct: `${name} currently charges ${number(car.homeChargingPct, 0)}% at home.`,
+        publicChargingPct: `${name} currently charges ${number(car.publicChargingPct, 0)}% publicly.`,
+        annualMaintenance: `${name} maintenance is ${euro(car.annualMaintenance)}/year.`,
+        annualInsurance: `${name} insurance is ${euro(car.annualInsurance)}/year.`,
+        annualRepairs: `${name} repair reserve is ${euro(car.annualRepairs)}/year.`,
+        annualTax: `${name} road tax is ${euro(car.annualTax)}/year.`,
+        resaleValue: `${name} resale after ${years} years is ${euro(car.resaleValue)}. Net worth includes this value.`,
+      };
+      return map[field] || "";
+    }
+
+    function rowHelp(carKey, field, rows, result) {
+      const row = rows[carKey];
+      const other = (result.rows || []).find((item) => item.carKey !== carKey);
+      if (!row) return "";
+      const name = row.option;
+      const otherName = other?.option || "the other option";
+      const map = {
+        option: `${name} leaves ${euro(row.finalMoney)} after ${number(row.years, 1)} years. ${otherName} leaves ${euro(other?.finalMoney || 0)}.`,
+        carMonth: `${name} car payment is ${euro(row.carMonthlyPaymentDisplay)}/month while active.`,
+        carTotal: `${name} car total is ${euro(row.carTotalDisplay)}. Paid during selected years: ${euro(row.carPaymentsPaid)}.`,
+        costsMonth: `${name} running costs are ${euro(row.monthlyRunningCost)}/month.`,
+        costsTotal: `${name} running costs total ${euro(row.extraTotal)} over ${number(row.years, 1)} years.`,
+        totalPaid: `${name} total paid during the selected years is ${euro(row.totalPaid)}.`,
+        netWorth: `${name} leaves ${euro(row.finalMoney)} after resale, investments, deficits, and any loan left.`,
+      };
+      return map[field] || "";
     }
 
     function bindCarInputs(rootId) {
@@ -649,6 +757,7 @@
     function update() {
       refreshAutoResale();
       const result = M.analyze(state);
+      latestResult = result;
       renderHero(result);
       renderWarnings(result);
       renderMobileResults(result);
@@ -659,17 +768,56 @@
       const winner = result.winner;
       const runnerUp = result.runnerUp;
       document.getElementById("heroSummary").innerHTML = winner ? `
-        <div class="hero-metric"><span>${icon("winner")}Winner</span><strong>${escapeHtml(winner.option)}</strong></div>
-        <div class="hero-metric"><span>${icon("budget")}Final money</span><strong>${euro(winner.finalMoney)}</strong></div>
-        <div class="hero-metric"><span>${icon("car")}Difference</span><strong>${formatDifferencePct(winner, runnerUp)}</strong></div>
+        <div class="hero-metric help-target flow" ${helpAttrs("heroWinner")}><span>${icon("winner")}Winner</span><strong>${escapeHtml(winner.option)}</strong></div>
+        <div class="hero-metric help-target flow" ${helpAttrs("heroCostDiff")}><span>${icon("budget")}Cost difference</span><strong>${formatCostDifferencePct(winner, runnerUp)}</strong></div>
+        <div class="hero-metric help-target flow" ${helpAttrs("heroNetWorthDiff")}><span>${icon("car")}Net worth difference</span><strong>${formatNetWorthDifferencePct(winner, runnerUp)}</strong></div>
       ` : "";
+      bindHelp();
     }
 
-    function formatDifferencePct(winner, runnerUp) {
+    function formatPct(value) {
+      return `${value >= 0 ? "+" : ""}${number(value, 1)}%`;
+    }
+
+    function percentageDifference(a, b) {
+      const base = Math.abs(finite(b));
+      return base > 0 ? (finite(a) - finite(b)) / base * 100 : 0;
+    }
+
+    function formatCostDifferencePct(winner, runnerUp) {
       if (!winner || !runnerUp) return "+0.0%";
-      const base = Math.abs(finite(runnerUp.finalMoney));
-      const pct = base > 0 ? (finite(winner.finalMoney) - finite(runnerUp.finalMoney)) / base * 100 : 0;
-      return `${pct >= 0 ? "+" : ""}${number(pct, 1)}%`;
+      return formatPct(percentageDifference(winner.totalPaid, runnerUp.totalPaid));
+    }
+
+    function formatNetWorthDifferencePct(winner, runnerUp) {
+      if (!winner || !runnerUp) return "+0.0%";
+      return formatPct(percentageDifference(winner.finalMoney, runnerUp.finalMoney));
+    }
+
+    function euroDifference(a, b) {
+      const diff = finite(a) - finite(b);
+      const sign = diff >= 0 ? "+" : "";
+      return `${sign}${euro(diff)}`;
+    }
+
+    function signedEuro(value) {
+      const amount = finite(value);
+      return `${amount >= 0 ? "+" : ""}${euro(amount)}`;
+    }
+
+    function heroComparisonText(topic) {
+      const result = latestResult || M.analyze(state);
+      const winner = result.winner;
+      const other = result.runnerUp;
+      if (!winner || !other) return "";
+      const years = number(result.assumptions.yearsOwned, 1);
+      const netDiff = winner.finalMoney - other.finalMoney;
+      const paidDiff = winner.totalPaid - other.totalPaid;
+      const paidDirection = paidDiff <= 0 ? "cheaper" : "more expensive";
+      const base = `${winner.option} leaves ${euro(winner.finalMoney)} after ${years} years. ${other.option} leaves ${euro(other.finalMoney)}. Net worth difference: ${signedEuro(netDiff)}. Total paid: ${winner.option} ${euro(winner.totalPaid)}, ${other.option} ${euro(other.totalPaid)}. Cost difference: ${signedEuro(paidDiff)}.`;
+      if (topic === "cost") return `${winner.option} is ${Math.abs(percentageDifference(winner.totalPaid, other.totalPaid)).toLocaleString("en-IE", { maximumFractionDigits:1 })}% ${paidDirection} on total paid. ${base}`;
+      if (topic === "net") return `${winner.option} leaves ${formatNetWorthDifferencePct(winner, other)} more net worth than ${other.option}. ${base}`;
+      return base;
     }
 
     function renderWarnings(result) {
@@ -687,7 +835,7 @@
 
     function renderMobileResults(result) {
       document.getElementById("mobileResultCards").innerHTML = result.rows.map((row) => `
-        <article class="mobile-card">
+        <article class="mobile-card help-target" ${helpAttrs(`row.${row.carKey}.option`)}>
           <strong class="${row.isWinner ? "winner" : ""}">${escapeHtml(row.option)}</strong>
           <p>${euro(row.finalMoney)} net worth</p>
           <div class="meta">${rowBadges(row)}</div>
@@ -706,15 +854,16 @@
         <th>Net worth</th>
       </tr></thead><tbody>${result.rows.map((row) => `
         <tr>
-          <td><strong class="${row.isWinner ? "winner" : ""}">${escapeHtml(row.option)}</strong><div class="meta">${rowBadges(row)}</div></td>
-          <td>${euro(row.carMonthlyPaymentDisplay)}/mo</td>
-          <td>${euro(row.carTotalDisplay)}${row.loanStillOwed > 0 ? `<br><span class="pill warn">loan continues</span>` : ""}</td>
-          <td>${euro(row.monthlyRunningCost)}/mo</td>
-          <td>${euro(row.extraTotal)}</td>
-          <td>${euro(row.totalPaid)}</td>
-          <td class="${row.isWinner ? "winner" : ""}">${euro(row.finalMoney)}</td>
+          <td class="help-target" ${helpAttrs(`row.${row.carKey}.option`)}><strong class="${row.isWinner ? "winner" : ""}">${escapeHtml(row.option)}</strong><div class="meta">${rowBadges(row)}</div></td>
+          <td class="help-target" ${helpAttrs(`row.${row.carKey}.carMonth`)}>${euro(row.carMonthlyPaymentDisplay)}/mo</td>
+          <td class="help-target" ${helpAttrs(`row.${row.carKey}.carTotal`)}>${euro(row.carTotalDisplay)}${row.loanStillOwed > 0 ? `<br><span class="pill warn">loan continues</span>` : ""}</td>
+          <td class="help-target" ${helpAttrs(`row.${row.carKey}.costsMonth`)}>${euro(row.monthlyRunningCost)}/mo</td>
+          <td class="help-target" ${helpAttrs(`row.${row.carKey}.costsTotal`)}>${euro(row.extraTotal)}</td>
+          <td class="help-target" ${helpAttrs(`row.${row.carKey}.totalPaid`)}>${euro(row.totalPaid)}</td>
+          <td class="help-target ${row.isWinner ? "winner" : ""}" ${helpAttrs(`row.${row.carKey}.netWorth`)}>${euro(row.finalMoney)}</td>
         </tr>
       `).join("")}</tbody></table>`;
+      bindHelp();
     }
 
     function rowBadges(row) {
