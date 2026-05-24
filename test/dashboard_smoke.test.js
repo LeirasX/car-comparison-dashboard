@@ -21,6 +21,12 @@ class FakeElement {
   }
   get innerHTML() { return this._innerHTML; }
   setAttribute(name, value) { this.attributes[name] = value; }
+  focus() { document.activeElement = this; }
+  select() {
+    document.activeElement = this;
+    this.selectionStart = 0;
+    this.selectionEnd = String(this.value).length;
+  }
   addEventListener(name, handler) {
     this.listeners[name] = this.listeners[name] || [];
     this.listeners[name].push(handler);
@@ -66,6 +72,7 @@ function parseChildren(html) {
 const ids = ["setupInputs", "choiceInputs", "financeInputs", "runningInputs", "heroSummary", "warningBox", "primaryTable", "mobileResultCards"];
 const elements = Object.fromEntries(ids.map((id) => [id, new FakeElement(id)]));
 const document = {
+  activeElement: null,
   getElementById(id) {
     if (!elements[id]) elements[id] = new FakeElement(id);
     return elements[id];
@@ -185,6 +192,13 @@ car1Mode.dispatch("input", { target: car1Mode });
 assert.ok(field(elements.financeInputs, "car1", "downPayment"), "switching to finance shows finance fields");
 assert.ok(field(elements.financeInputs, "car1", "monthlyPayment"), "switching to finance shows monthly payment");
 
+const focusedMonthly = field(elements.financeInputs, "car1", "monthlyPayment");
+focusedMonthly.focus();
+focusedMonthly.value = "12345";
+focusedMonthly.dispatch("input", { target: focusedMonthly });
+assert.equal(document.activeElement, focusedMonthly, "finance input keeps focus while typing");
+assert.ok(elements.financeInputs.children.includes(focusedMonthly), "finance input is not remounted while typing");
+
 const car1Type = field(elements.choiceInputs, "car1", "type");
 car1Type.value = "combustion";
 car1Type.dispatch("input", { target: car1Type });
@@ -193,25 +207,49 @@ assert.ok(!field(elements.runningInputs, "car1", "kwhPer100Km"), "combustion hid
 assert.match(elements.primaryTable.innerHTML, /Used Tesla finance/);
 
 const name = field(elements.choiceInputs, "car1", "name");
+name.focus();
 name.value = "My actual car";
 name.dispatch("input", { target: name });
+assert.equal(document.activeElement, name, "name input keeps focus while typing");
+assert.ok(elements.choiceInputs.children.includes(name), "name input is not remounted while typing");
 assert.match(output(), /My actual car finance/);
 assert.doesNotMatch(output(), /Car 1|Car 2|Custom/);
 assert.match(context.helpText("heroWinner"), /My actual car finance/);
 assert.doesNotMatch(context.helpText("heroWinner"), /Car 1|Car 2/);
 
 const highPayment = field(elements.financeInputs, "car1", "monthlyPayment");
+highPayment.focus();
 highPayment.value = "3000";
 highPayment.dispatch("input", { target: highPayment });
+assert.equal(document.activeElement, highPayment, "monthly payment keeps focus after live recalculation");
 assert.match(elements.warningBox.innerHTML, /Monthly cost exceeds monthly budget/);
 assert.doesNotMatch(elements.heroSummary.innerHTML, /Warnings|Clean run|Check inputs/);
 assert.doesNotMatch(elements.warningBox.innerHTML, /Used Tesla finance:/);
 assert.match(context.helpText("car1.monthlyPayment"), /My actual car finance payment is €3,000\/month/);
 const fuelPrice = field(elements.runningInputs, "car1", "fuelPrice");
+fuelPrice.focus();
 fuelPrice.value = "2.5";
 fuelPrice.dispatch("input", { target: fuelPrice });
+assert.equal(document.activeElement, fuelPrice, "running cost input keeps focus while typing");
+assert.ok(elements.runningInputs.children.includes(fuelPrice), "running cost input is not remounted while typing");
 assert.match(context.helpText("car1.fuelPrice"), /€2\.50\/L/);
 assert.match(context.helpText("costs"), /My actual car running cost is €[\d,]+\/month/);
+
+const taxInput = field(elements.runningInputs, "car1", "annualTax");
+taxInput.focus();
+taxInput.value = "";
+taxInput.dispatch("input", { target: taxInput });
+assert.equal(document.activeElement, taxInput, "temporarily empty input keeps focus");
+assert.doesNotMatch(output(), /NaN|undefined|Infinity/);
+taxInput.value = "0";
+taxInput.dispatch("input", { target: taxInput });
+assert.equal(document.activeElement, taxInput, "0 input keeps focus");
+
+const decimalInput = field(elements.runningInputs, "car1", "litersPer100Km");
+decimalInput.focus();
+decimalInput.value = "1.75";
+decimalInput.dispatch("input", { target: decimalInput });
+assert.equal(document.activeElement, decimalInput, "decimal input keeps focus");
 
 const highDown = field(elements.financeInputs, "car1", "downPayment");
 highDown.value = "999999";

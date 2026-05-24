@@ -975,7 +975,7 @@
     }
 
     function carPanel(carKey, html) {
-      return `<div class="car-panel"><h3 class="help-target" ${helpAttrs(`${carKey}.panel`)}>${icon("car")}${carTitle(carKey)}</h3>${html}</div>`;
+      return `<div class="car-panel" data-car-panel="${carKey}"><h3 class="help-target" ${helpAttrs(`${carKey}.panel`)}>${icon("car")}<span data-car-title="${carKey}">${carTitle(carKey)}</span></h3>${html}</div>`;
     }
 
     function renderCars() {
@@ -998,7 +998,7 @@
         const rows = fields.map(([field, label, step]) => numberInput(carKey, field, label, step)).join("");
         const finance = M.financeSummary(car);
         const meta = car.paymentMode === "finance"
-          ? `<div class="meta"><span class="pill">${icon("loan")}Finance total ${euro(finance.financeTotal)}</span><span class="pill">Finance cost ${euro(finance.financingCost)}</span></div>`
+          ? `<div class="meta" data-finance-meta="${carKey}">${financeChips(car)}</div>`
           : "";
         return carPanel(carKey, rows + meta);
       }).join("");
@@ -1011,7 +1011,7 @@
         const car = state.cars[carKey];
         const fields = (costFields[car.type] || costFields.combustion).concat(commonCostFields);
         const rows = fields.map(([field, label, step]) => numberInput(carKey, field, label, step)).join("");
-        return carPanel(carKey, `${rows}<div class="meta">${runningChips(car)}</div>`);
+        return carPanel(carKey, `${rows}<div class="meta" data-running-meta="${carKey}">${runningChips(car)}</div>`);
       }).join("");
       bindCarInputs("runningInputs");
     }
@@ -1035,6 +1035,11 @@
       return `<span class="pill ${tone}">${escapeHtml(text)}</span>`;
     }
 
+    function financeChips(car) {
+      const finance = M.financeSummary(car);
+      return `<span class="pill">${icon("loan")}Finance total ${euro(finance.financeTotal)}</span><span class="pill">Finance cost ${euro(finance.financingCost)}</span>`;
+    }
+
     function runningChips(car) {
       const running = M.annualRunningBreakdown(car, state.assumptions);
       const energyLabel = car.type === "ev" ? "Electricity" : "Fuel";
@@ -1043,6 +1048,32 @@
         chip(`Monthly running: ${euro(running.total / 12)}`),
         chip(`Annual running: ${euro(running.total)}`),
       ].join("");
+    }
+
+    function updateCarTitles(carKey) {
+      if (!document.querySelectorAll) return;
+      document.querySelectorAll(`[data-car-title="${carKey}"]`).forEach((node) => {
+        node.textContent = state.cars[carKey].name || "Unnamed option";
+      });
+    }
+
+    function updateFinanceMeta(carKey) {
+      if (!document.querySelectorAll) return;
+      document.querySelectorAll(`[data-finance-meta="${carKey}"]`).forEach((node) => {
+        node.innerHTML = financeChips(state.cars[carKey]);
+      });
+    }
+
+    function updateRunningMeta(carKey) {
+      if (!document.querySelectorAll) return;
+      document.querySelectorAll(`[data-running-meta="${carKey}"]`).forEach((node) => {
+        node.innerHTML = runningChips(state.cars[carKey]);
+      });
+    }
+
+    function syncAutoResaleInput(carKey) {
+      const input = document.getElementById(`${carKey}-resaleValue`);
+      if (input && document.activeElement !== input) input.value = state.cars[carKey].resaleValue ?? "";
     }
 
     function dynamicHelpText(key) {
@@ -1150,17 +1181,18 @@
               renderPayment();
               bindHelp();
             } else {
-              renderCars();
-              bindHelp();
+              updateCarTitles(carKey);
             }
           } else {
             car[field] = input.value === "" ? "" : Number(input.value);
             if (field === "resaleValue") car.resaleCustom = true;
             else M.markCustom(car, field);
-            if (field === "upfrontPrice" && !car.resaleCustom) refreshAutoResale();
-            if (["upfrontPrice", "downPayment", "monthlyPayment", "loanMonths"].includes(field)) renderPayment();
-            if (["upfrontPrice", "resaleValue", "kwhPer100Km", "litersPer100Km", "fuelPrice", "homeElectricityPrice", "publicElectricityPrice", "homeChargingPct", "publicChargingPct", "annualMaintenance", "annualInsurance", "annualRepairs", "annualTax"].includes(field)) renderCosts();
-            bindHelp();
+            if (field === "upfrontPrice" && !car.resaleCustom) {
+              refreshAutoResale();
+              syncAutoResaleInput(carKey);
+            }
+            if (["upfrontPrice", "downPayment", "monthlyPayment", "loanMonths"].includes(field)) updateFinanceMeta(carKey);
+            if (["upfrontPrice", "resaleValue", "kwhPer100Km", "litersPer100Km", "fuelPrice", "homeElectricityPrice", "publicElectricityPrice", "homeChargingPct", "publicChargingPct", "annualMaintenance", "annualInsurance", "annualRepairs", "annualTax"].includes(field)) updateRunningMeta(carKey);
           }
           update();
         });
