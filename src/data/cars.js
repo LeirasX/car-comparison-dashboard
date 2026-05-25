@@ -462,13 +462,54 @@
     ["great-wall-ora-03", "Great Wall Ora 03", "Common EVs", "ev", 26000, "electricity", null, 16.8, 0, 0],
   ].map((row) => generated(...row));
 
+  function teslaPriorityCars() {
+    const rows = [];
+    const add = (modelName, trim, year, price2024, kwh, group = "Common EVs", reliabilityBias = 1) => {
+      const factor = yearFactor(year) / yearFactor(2024);
+      const price = roundTo(price2024 * factor, 500);
+      const displayName = `Tesla ${modelName} ${trim} ${year}`;
+      rows.push(generated(`tesla-${slug(modelName)}-${slug(trim)}-${year}`, displayName, group, "ev", price, "electricity", null, kwh, 0, reliabilityBias));
+    };
+
+    [2019, 2020].forEach((year) => {
+      add("Model 3", "Standard Range Plus", year, 30000, 16.2);
+      add("Model 3", "Long Range", year, 36000, 17.0);
+      add("Model 3", "Performance", year, 41000, 18.4, "Premium EVs", 0);
+    });
+    [2021, 2022, 2023, 2024].forEach((year) => {
+      add("Model 3", "RWD", year, 33000, year >= 2024 ? 15.5 : 16.0);
+      add("Model 3", "Long Range", year, 39000, year >= 2024 ? 16.5 : 17.0);
+      add("Model 3", "Performance", year, 45500, year >= 2024 ? 18.0 : 18.6, "Premium EVs", 0);
+    });
+    [2021, 2022, 2023, 2024].forEach((year) => {
+      if (year >= 2022) add("Model Y", "RWD", year, 36000, 17.2);
+      add("Model Y", "Long Range", year, 43000, 18.0);
+      add("Model Y", "Performance", year, 50000, 19.2, "Premium EVs", 0);
+    });
+    [2016, 2018, 2020].forEach((year) => {
+      add("Model S", "75D", year, 52000, 20.0, "Premium EVs", -1);
+      add("Model S", "100D", year, 62000, 20.5, "Premium EVs", -1);
+    });
+    [2021, 2022, 2024].forEach((year) => {
+      add("Model S", "Long Range", year, 72000, 19.8, "Premium EVs", 0);
+      add("Model S", "Plaid", year, 88000, 21.0, "Premium EVs", -1);
+    });
+    [2017, 2019, 2021, 2024].forEach((year) => {
+      add("Model X", year >= 2021 ? "Long Range" : "100D", year, 78000, 23.5, "Premium EVs", -1);
+      if (year >= 2021) add("Model X", "Plaid", year, 95000, 24.8, "Premium EVs", -1);
+    });
+    return rows;
+  }
+
+  const TESLA_PRIORITY_CARS = teslaPriorityCars();
+
   function slug(value) {
     return String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   }
 
   function inferGroupAndPowertrain(brand, modelName) {
     const text = `${brand} ${modelName}`.toLowerCase();
-    const ev = /ev|electric|e-tech|e-tron|eq|ioniq|id\.|model |tesla|byd|polestar|nio|xpeng|lucid|rivian|taycan|i4|i5|i7|ix|ix1|ix3|i-pace|mg4|mg5|zs ev|cybertruck|roadster|air|dolphin|seal|han|tang|atto|ora|geometry|hummer ev|nevera|spectre|lexus rz|ex30|ex40|ex90|solterra|bz4x|leaf|zoe|spring|500e|mokka-e|e-208|e-2008|ë-c3|ë-c4/.test(text);
+    const ev = /ev|electric|e-tech|e-tron|eq|ioniq electric|ioniq 5|ioniq 6|id\.|model |tesla|byd|polestar|nio|xpeng|lucid|rivian|taycan|i4|i5|i7|ix|ix1|ix3|i-pace|mg4|mg5|zs ev|cybertruck|roadster|air|dolphin|seal|han|tang|atto|ora|geometry|hummer ev|nevera|spectre|lexus rz|ex30|ex40|ex90|solterra|bz4x|leaf|zoe|spring|500e|mokka-e|e-208|e-2008|ë-c3|ë-c4/.test(text);
     const plugHybrid = /plug-in|phev|tfsi e|330e|300 e|gte|e-hybrid/.test(text);
     const hybrid = plugHybrid || /hybrid|prius|ioniq|rav4|c-hr|yaris cross|corolla touring|camry|lexus|niro|hr-v|jazz|cr-v|outlander|kuga|swace|across/.test(text);
     const supercar = /bugatti|koenigsegg|pagani|ferrari|lamborghini|mclaren|rimac|veyron|chiron|jesko|regera|huayra|nevera|laferrari|enzo|revuelto|aventador|huracan|murcielago|senna|speedtail|p1|gt3 rs|carrera gt|clk gtr|amg one|ford gt|lfa|nsx|r8|corvette zr1/.test(text);
@@ -520,30 +561,209 @@
     return roundTo(groupBase * brandFactor * generationFactor, group === "Sports cars" || group === "Luxury cars" ? 5000 : 500);
   }
 
+  function yearFactor(year) {
+    if (year >= 2026) return 1.12;
+    if (year === 2025) return 1.06;
+    if (year === 2024) return 1.00;
+    if (year === 2023) return 0.93;
+    if (year === 2022) return 0.86;
+    if (year === 2021) return 0.79;
+    if (year === 2020) return 0.72;
+    if (year === 2019) return 0.65;
+    if (year === 2018) return 0.58;
+    if (year === 2017) return 0.52;
+    if (year === 2016) return 0.46;
+    if (year === 2015) return 0.41;
+    if (year === 2014) return 0.36;
+    if (year === 2013) return 0.32;
+    if (year === 2012) return 0.29;
+    if (year === 2011) return 0.26;
+    if (year === 2010) return 0.23;
+    if (year === 2009) return 0.21;
+    return 0.19;
+  }
+
+  function generationIndexForYear(year) {
+    if (year >= 2020) return 2;
+    if (year >= 2014) return 1;
+    return 0;
+  }
+
+  function trimVariants(brand, modelName, meta, year) {
+    const key = `${brand} ${modelName}`.toLowerCase();
+    const variants = [];
+    const add = (trim, options = {}) => variants.push(Object.assign({ trim, priceFactor: 1, litersFactor: 1, kwhFactor: 1, reliabilityBias: 0 }, options));
+
+    if (brand === "Tesla" && modelName === "Model 3") {
+      if (year >= 2019) {
+        add(year >= 2021 ? "RWD" : "Standard Range Plus", { priceFactor: 0.92, kwhFactor: 0.96, reliabilityBias: 1 });
+        add("Long Range", { priceFactor: 1.14, kwhFactor: 1.02, reliabilityBias: 1 });
+        add("Performance", { priceFactor: 1.28, kwhFactor: 1.12, reliabilityBias: 0 });
+      }
+      return variants;
+    }
+    if (brand === "Tesla" && modelName === "Model Y") {
+      if (year >= 2021) {
+        if (year >= 2022) add("RWD", { priceFactor: 0.90, kwhFactor: 0.96, reliabilityBias: 1 });
+        add("Long Range", { priceFactor: 1.08, kwhFactor: 1.02, reliabilityBias: 1 });
+        add("Performance", { priceFactor: 1.22, kwhFactor: 1.12, reliabilityBias: 0 });
+      }
+      return variants;
+    }
+    if (brand === "Tesla" && modelName === "Model S") {
+      if (year >= 2021) {
+        add("Long Range", { priceFactor: 1.00, kwhFactor: 1.00, reliabilityBias: 0 });
+        add("Plaid", { priceFactor: 1.32, kwhFactor: 1.10, reliabilityBias: -1 });
+      } else if (year >= 2014) {
+        add("75D", { priceFactor: 0.82, kwhFactor: 0.98, reliabilityBias: -1 });
+        add("100D", { priceFactor: 1.04, kwhFactor: 1.03, reliabilityBias: -1 });
+        add("P100D", { priceFactor: 1.28, kwhFactor: 1.15, reliabilityBias: -1 });
+      }
+      return variants;
+    }
+    if (brand === "Tesla" && modelName === "Model X") {
+      if (year >= 2021) {
+        add("Long Range", { priceFactor: 1.00, kwhFactor: 1.00, reliabilityBias: -1 });
+        add("Plaid", { priceFactor: 1.26, kwhFactor: 1.12, reliabilityBias: -1 });
+      } else if (year >= 2016) {
+        add("75D", { priceFactor: 0.78, kwhFactor: 0.98, reliabilityBias: -1 });
+        add("100D", { priceFactor: 1.00, kwhFactor: 1.04, reliabilityBias: -1 });
+      }
+      return variants;
+    }
+
+    if (brand === "BMW" && modelName === "3 Series") {
+      add("318d", { fuelType: "diesel", priceFactor: 0.86, litersFactor: 0.86 });
+      add("320d", { fuelType: "diesel", priceFactor: 0.96, litersFactor: 0.88 });
+      add("320d Touring", { fuelType: "diesel", priceFactor: 1.04, litersFactor: 0.91 });
+      add("330i", { fuelType: "petrol", priceFactor: 1.10, litersFactor: 1.12 });
+      if (year >= 2016) add("330e", { category: "hybrid", fuelType: "petrol plug-in hybrid", priceFactor: 1.13, litersFactor: 0.92 });
+      if (year >= 2020) add("M340i xDrive", { category: "combustion", fuelType: "petrol", priceFactor: 1.42, litersFactor: 1.35 });
+      return variants;
+    }
+    if (brand === "BMW" && modelName === "5 Series") {
+      add("520d", { fuelType: "diesel", priceFactor: 0.92, litersFactor: 0.88 });
+      add("520d Touring", { fuelType: "diesel", priceFactor: 1.00, litersFactor: 0.91 });
+      add("530d", { fuelType: "diesel", priceFactor: 1.12, litersFactor: 1.02 });
+      if (year >= 2017) add("530e", { category: "hybrid", fuelType: "petrol plug-in hybrid", priceFactor: 1.12, litersFactor: 0.95 });
+      return variants;
+    }
+    if (brand === "Mercedes-Benz" && modelName === "C-Class") {
+      add("C 200", { fuelType: "petrol", priceFactor: 0.96, litersFactor: 1.02 });
+      add("C 220 d", { fuelType: "diesel", priceFactor: 1.00, litersFactor: 0.88 });
+      add("C 300 d", { fuelType: "diesel", priceFactor: 1.12, litersFactor: 0.96 });
+      if (year >= 2016) add("C 300 e", { category: "hybrid", fuelType: "petrol plug-in hybrid", priceFactor: 1.13, litersFactor: 0.94 });
+      return variants;
+    }
+    if (brand === "Audi" && modelName === "A4") {
+      add("35 TDI", { fuelType: "diesel", priceFactor: 0.94, litersFactor: 0.88 });
+      add("40 TDI quattro", { fuelType: "diesel", priceFactor: 1.10, litersFactor: 0.96 });
+      add("35 TFSI", { fuelType: "petrol", priceFactor: 0.96, litersFactor: 1.00 });
+      add("Avant 40 TDI", { fuelType: "diesel", priceFactor: 1.08, litersFactor: 0.96 });
+      return variants;
+    }
+    if (brand === "Volkswagen" && modelName === "Golf") {
+      add("1.0 TSI", { fuelType: "petrol", priceFactor: 0.84, litersFactor: 0.88 });
+      add("1.5 TSI", { fuelType: "petrol", priceFactor: 0.96, litersFactor: 0.96 });
+      add("1.6 TDI", { fuelType: "diesel", priceFactor: 0.92, litersFactor: 0.82 });
+      add("2.0 TDI", { fuelType: "diesel", priceFactor: 1.02, litersFactor: 0.88 });
+      if (year >= 2014) add("GTI", { fuelType: "petrol", category: "combustion", priceFactor: 1.34, litersFactor: 1.25 });
+      return variants;
+    }
+    if (brand === "Volkswagen" && modelName === "Passat") {
+      add("1.6 TDI", { fuelType: "diesel", priceFactor: 0.86, litersFactor: 0.82 });
+      add("2.0 TDI", { fuelType: "diesel", priceFactor: 1.00, litersFactor: 0.88 });
+      add("Variant 2.0 TDI", { fuelType: "diesel", priceFactor: 1.08, litersFactor: 0.91 });
+      if (year >= 2016) add("GTE", { category: "hybrid", fuelType: "petrol plug-in hybrid", priceFactor: 1.12, litersFactor: 0.95 });
+      return variants;
+    }
+    if (brand === "Renault" && modelName === "Clio") {
+      add("TCe", { fuelType: "petrol", priceFactor: 0.92, litersFactor: 0.94 });
+      add("dCi", { fuelType: "diesel", priceFactor: 0.88, litersFactor: 0.78 });
+      if (year >= 2020) add("E-Tech Hybrid", { category: "hybrid", fuelType: "petrol hybrid", priceFactor: 1.08, litersFactor: 0.82 });
+      return variants;
+    }
+    if (brand === "Renault" && modelName === "Captur") {
+      add("TCe", { fuelType: "petrol", priceFactor: 0.94, litersFactor: 0.96 });
+      add("dCi", { fuelType: "diesel", priceFactor: 0.90, litersFactor: 0.82 });
+      if (year >= 2020) add("E-Tech Plug-in Hybrid", { category: "hybrid", fuelType: "petrol plug-in hybrid", priceFactor: 1.12, litersFactor: 0.94 });
+      return variants;
+    }
+    if (brand === "Peugeot" && modelName === "208") {
+      add("PureTech 75", { fuelType: "petrol", priceFactor: 0.86, litersFactor: 0.92 });
+      add("PureTech 100", { fuelType: "petrol", priceFactor: 0.96, litersFactor: 0.96 });
+      add("BlueHDi 100", { fuelType: "diesel", priceFactor: 0.92, litersFactor: 0.78 });
+      return variants;
+    }
+    if (brand === "Peugeot" && modelName === "308") {
+      add("PureTech 130", { fuelType: "petrol", priceFactor: 0.96, litersFactor: 0.98 });
+      add("BlueHDi 130", { fuelType: "diesel", priceFactor: 0.98, litersFactor: 0.82 });
+      if (year >= 2021) add("Hybrid 180", { category: "hybrid", fuelType: "petrol plug-in hybrid", priceFactor: 1.15, litersFactor: 0.94 });
+      return variants;
+    }
+    if (brand === "Toyota" && modelName === "Corolla") {
+      add("1.2T", { fuelType: "petrol", priceFactor: 0.88, litersFactor: 1.02, reliabilityBias: 2 });
+      add("Hybrid", { category: "hybrid", fuelType: "petrol hybrid", priceFactor: 1.04, litersFactor: 0.78, reliabilityBias: 2 });
+      add("Touring Sports Hybrid", { category: "hybrid", fuelType: "petrol hybrid", priceFactor: 1.12, litersFactor: 0.82, reliabilityBias: 2 });
+      return variants;
+    }
+    if (brand === "Toyota" && modelName === "Yaris") {
+      add("1.0 VVT-i", { fuelType: "petrol", priceFactor: 0.82, litersFactor: 0.94, reliabilityBias: 2 });
+      add("1.5 Hybrid", { category: "hybrid", fuelType: "petrol hybrid", priceFactor: 1.06, litersFactor: 0.78, reliabilityBias: 2 });
+      return variants;
+    }
+    if (brand === "Ford" && modelName === "Focus") {
+      add("1.0 EcoBoost", { fuelType: "petrol", priceFactor: 0.92, litersFactor: 0.94 });
+      add("1.5 EcoBlue", { fuelType: "diesel", priceFactor: 0.94, litersFactor: 0.82 });
+      add("ST-Line", { fuelType: "petrol", priceFactor: 1.08, litersFactor: 1.02 });
+      return variants;
+    }
+    if (brand === "Opel" && modelName === "Corsa") {
+      add("1.2 Turbo", { fuelType: "petrol", priceFactor: 0.94, litersFactor: 0.95 });
+      add("1.5 Diesel", { fuelType: "diesel", priceFactor: 0.90, litersFactor: 0.78 });
+      return variants;
+    }
+    if (brand === "Skoda" && modelName === "Octavia") {
+      add("1.0 TSI", { fuelType: "petrol", priceFactor: 0.86, litersFactor: 0.91 });
+      add("1.5 TSI", { fuelType: "petrol", priceFactor: 0.96, litersFactor: 0.96 });
+      add("2.0 TDI", { fuelType: "diesel", priceFactor: 1.00, litersFactor: 0.82 });
+      add("Combi 2.0 TDI", { fuelType: "diesel", priceFactor: 1.08, litersFactor: 0.86 });
+      if (year >= 2020) add("iV Plug-in Hybrid", { category: "hybrid", fuelType: "petrol plug-in hybrid", priceFactor: 1.12, litersFactor: 0.94 });
+      return variants;
+    }
+
+    if (year >= 2020 && !/active tourer|tourer|verso|berlingo|combo|caddy|kangoo|tourneo|citan|proace|rifter|partner|doblo/i.test(modelName)) {
+      add(meta.energyType === "electricity" ? "Long Range" : meta.category === "hybrid" ? "Hybrid" : meta.group === "Sports cars" ? "Performance" : "Plus", {
+        priceFactor: meta.group === "Sports cars" ? 1.18 : 1.12,
+        litersFactor: 1.04,
+        kwhFactor: 1.04,
+      });
+    }
+    return variants;
+  }
+
   function likelyStartYear(brand, modelName) {
     const text = `${brand} ${modelName}`.toLowerCase();
     if (/tourbillon|utopia|revuelto|junior electric|ev3|ev5|r2|gravity|spectre|cybertruck|ex30|ex40|ex90|5 e-tech|bigster|600e|seagull|ora 07|galaxy e5|haval jolion|tank 300/.test(text)) return 2024;
     if (/model y|seal u|seal|dolphin|atto 3|han|tang|song plus|yuan plus|ev9|ev6|ioniq 5|ioniq 6|id\.4|id\.5|id\.7|q4 e-tron|q8 e-tron|eqa|eqb|eqe|eqs|ix1|ix3|ix|i4|i5|i7|taycan|macan electric|mg4|marvel r|zs ev|spring|mokka-e|e-208|e-2008|ë-c3|ë-c4|500e|solterra|bz4x|ariya|scenic e-tech|megane e-tech|evenger electric|hummer ev|air sapphire|nevera|sf90|296 gtb|purosangue|mc20|cyberster/.test(text)) return 2021;
-    if (/model 3|kona electric|niro ev|leaf|zoe|i3|i8|bolt ev|i-pace|e-tron gt|polestar 2|et5|et7|es6|es8|p5|p7|r1t|r1s|air|roadster/.test(text)) return 2018;
+    if (/model 3|kona electric|niro ev|leaf|zoe|ioniq electric|ioniq plug-in|soul ev|i3|i8|bolt ev|i-pace|e-tron gt|polestar 2|et5|et7|es6|es8|p5|p7|r1t|r1s|air|roadster/.test(text)) return 2018;
+    if (/hyundai ioniq/.test(text)) return 2016;
     if (/c-hr|yaris cross|t-roc|t-cross|kamiq|karoq|kodiaq|arona|ateca|tarraco|captur|kadjar|austral|2008|3008|5008|mokka|grandland|puma|bayon|stonic|xceed|cx-30|ux|nx|lbx|xc40|gv60|gv70|gv80|formentor|tonale|grecale|dbx|urus|bentayga/.test(text)) return 2016;
     if (/gr yaris|gr86|supra|m2|m4|m5 cs|m3 csl|rs3|rs4|rs6|amg gt|amg one|911 gt3 rs|918 spyder|p1|senna|speedtail|765lt|laferrari|enzo|regera|jesko|huayra|chiron|veyron|valkyrie|lfa/.test(text)) return 2014;
     return 2008;
   }
 
   function catalogRows() {
-    const targetRows = 1900;
-    const years = [
-      [2026, 1.12, 2, "new/current Portugal/EU value"],
-      [2024, 1.00, 2, "nearly new Portugal/EU value"],
-      [2022, 0.86, 2, "recent used Portugal/EU value"],
-      [2020, 0.72, 2, "used Portugal/EU value"],
-      [2018, 0.58, 1, "used Portugal/EU value"],
-      [2016, 0.46, 1, "older used Portugal/EU value"],
-      [2014, 0.36, 1, "older used Portugal/EU value"],
-      [2012, 0.29, 0, "older used Portugal/EU value"],
-      [2010, 0.23, 0, "budget used Portugal/EU value"],
-      [2008, 0.19, 0, "budget used Portugal/EU value"],
-    ];
+    const targetRows = 9500;
+    const years = Array.from({ length: 19 }, (_, index) => {
+      const year = 2026 - index;
+      return [
+        year,
+        yearFactor(year),
+        generationIndexForYear(year),
+        year >= 2025 ? "new/current Portugal/EU value" : year >= 2020 ? "recent used Portugal/EU value" : year >= 2014 ? "older used Portugal/EU value" : "budget used Portugal/EU value",
+      ];
+    });
     const rows = [];
     const flatModels = Object.entries(BRAND_MODELS).flatMap(([brand, models]) => models.map((modelName) => [brand, modelName]));
     const addRow = (brand, modelName, year, valueFactor, context, generationIndex) => {
@@ -559,15 +779,29 @@
       const id = `${slug(brand)}-${slug(modelName)}-${year}`;
       const displayName = `${brand} ${modelName} ${year}`;
       rows.push(generated(id, displayName, meta.group, meta.category, price, meta.energyType, meta.fuelType, kwh, liters, /toyota|honda|lexus/.test(text) ? 2 : /alfa|jeep|land rover|mclaren/.test(text) ? -1 : 0));
-      const lastModern = generationIndex === 2 && year >= 2020 && !/base|active|tourer|verso|berlingo|combo|caddy|kangoo|tourneo|citan|proace|rifter|partner|doblo/i.test(modelName);
-      if (lastModern && rows.length < targetRows) {
-        const trim = meta.energyType === "electricity" ? "Long Range" : meta.category === "hybrid" ? "Hybrid" : meta.group === "Sports cars" ? "Performance" : "Plus";
-        rows.push(generated(`${id}-${slug(trim)}`, `${brand} ${modelName} ${trim} ${year}`, meta.group, meta.category, Math.round(price * 1.18 / 500) * 500, meta.energyType, meta.fuelType, ev ? Number((kwh * 1.04).toFixed(1)) : 0, ev ? 0 : Number((liters * 1.05).toFixed(1)), /toyota|honda|lexus/.test(text) ? 2 : 0));
-      }
+      trimVariants(brand, modelName, meta, year).forEach((variant) => {
+        if (rows.length >= targetRows) return;
+        const variantCategory = variant.category || meta.category;
+        const variantEnergy = variant.energyType || meta.energyType;
+        const variantEv = variantEnergy === "electricity";
+        const variantFuelType = variant.fuelType === undefined ? meta.fuelType : variant.fuelType;
+        const variantGroup = variant.group || (variantEv ? meta.group : variantCategory === "hybrid" ? "Hybrids" : meta.group);
+        rows.push(generated(
+          `${id}-${slug(variant.trim)}`,
+          `${brand} ${modelName} ${variant.trim} ${year}`,
+          variantGroup,
+          variantCategory,
+          Math.max(1000, Math.round(price * variant.priceFactor / 500) * 500),
+          variantEnergy,
+          variantFuelType,
+          variantEv ? Number((kwh * variant.kwhFactor).toFixed(1)) : 0,
+          variantEv ? 0 : Number((liters * variant.litersFactor).toFixed(1)),
+          (/toyota|honda|lexus/.test(text) ? 2 : /alfa|jeep|land rover|mclaren/.test(text) ? -1 : 0) + variant.reliabilityBias
+        ));
+      });
     };
     flatModels.forEach(([brand, modelName]) => {
       years.forEach(([year, valueFactor, generationIndex, context]) => {
-        if (rows.length >= targetRows) return;
         addRow(brand, modelName, year, valueFactor, context, generationIndex);
       });
     });
@@ -783,8 +1017,9 @@
 
   function representativeYear(car) {
     const text = `${car.id || ""} ${car.displayName || ""}`.toLowerCase();
-    const exact = text.match(/\b(19[8-9]\d|20[0-2]\d)\b/);
-    if (exact) return Number(exact[1]);
+    const displayTokens = String(car.displayName || "").trim().split(/\s+/);
+    const exact = String(car.displayName || "").match(/\s(19[8-9]\d|20[0-2]\d)$/);
+    if (exact && displayTokens.length >= 3) return Number(exact[1]);
     const range = text.match(/\((20\d{2})-(20\d{2})\)|\b(20\d{2})-to-(20\d{2})\b/);
     if (range) return Math.round((Number(range[1] || range[3]) + Number(range[2] || range[4])) / 2);
     if (/tourbillon|utopia|revuelto|junior electric|ev3|gravity|spectre|cybertruck|ex30|ex90|5 e-tech|600e|ora 03|taycan turbo gt/.test(text)) return 2024;
@@ -795,10 +1030,82 @@
     return 2021;
   }
 
+  const VISIBLE_TRIM_PATTERNS = [
+    /\bstandard range plus\b/gi,
+    /\bstandard range\b/gi,
+    /\blong range\b/gi,
+    /\bperformance\b/gi,
+    /\brwd\b/gi,
+    /\bplaid\b/gi,
+    /\bhighland\b/gi,
+    /\b75d\b/gi,
+    /\b100d\b/gi,
+    /\bp100d\b/gi,
+    /\b318d\b/gi,
+    /\b320d touring\b/gi,
+    /\b320d\b/gi,
+    /\b330i\b/gi,
+    /\b330e\b/gi,
+    /\bm340i xdrive\b/gi,
+    /\b520d touring\b/gi,
+    /\b520d\b/gi,
+    /\b530d\b/gi,
+    /\b530e\b/gi,
+    /\bc 200\b/gi,
+    /\bc 220 d\b/gi,
+    /\bc 300 d\b/gi,
+    /\bc 300 e\b/gi,
+    /\b35 tdi\b/gi,
+    /\b40 tdi quattro\b/gi,
+    /\b35 tfsi\b/gi,
+    /\bavant 40 tdi\b/gi,
+    /\b1\.0 tsi\b/gi,
+    /\b1\.5 tsi\b/gi,
+    /\b1\.6 tdi\b/gi,
+    /\b2\.0 tdi\b/gi,
+    /\bvariant 2\.0 tdi\b/gi,
+    /\bgti\b/gi,
+    /\bgte\b/gi,
+    /\btce\b/gi,
+    /\bdci\b/gi,
+    /\be-tech plug-in hybrid\b/gi,
+    /\be-tech hybrid\b/gi,
+    /\bpuretech 75\b/gi,
+    /\bpuretech 100\b/gi,
+    /\bpuretech 130\b/gi,
+    /\bbluehdi 100\b/gi,
+    /\bbluehdi 130\b/gi,
+    /\bhybrid 180\b/gi,
+    /\b1\.2t\b/gi,
+    /\btouring sports hybrid\b/gi,
+    /\bhybrid\b/gi,
+    /\b1\.0 vvt-i\b/gi,
+    /\b1\.5 hybrid\b/gi,
+    /\b1\.0 ecoboost\b/gi,
+    /\b1\.5 ecoblue\b/gi,
+    /\bst-line\b/gi,
+    /\b1\.2 turbo\b/gi,
+    /\b1\.5 diesel\b/gi,
+    /\bcombi 2\.0 tdi\b/gi,
+    /\biv plug-in hybrid\b/gi,
+    /\bplus\b/gi,
+  ];
+
+  function visibleBaseName(value) {
+    return VISIBLE_TRIM_PATTERNS.reduce((name, pattern) => name.replace(pattern, " "), String(value || ""))
+      .replace(/^MG(\d)/, "MG $1")
+      .replace(/^DS(\d)/, "DS $1")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
   function nameWithYear(car) {
     const year = representativeYear(car);
-    const base = String(car.displayName || "").replace(/\s*\((?:19|20)\d{2}-(?:19|20)\d{2}\)\s*$/, "").replace(/\s+/g, " ").trim();
-    return /\b(19[8-9]\d|20[0-2]\d)\b/.test(base) ? base : `${base} ${year}`.trim();
+    let rawBase = String(car.displayName || "").replace(/\s*\((?:19|20)\d{2}-(?:19|20)\d{2}\)\s*$/, "").replace(/\s+/g, " ").trim();
+    if (rawBase.split(/\s+/).length >= 3) rawBase = rawBase.replace(/\s+\b(19[8-9]\d|20[0-2]\d)\b\s*$/, "").trim();
+    const cleanedBase = visibleBaseName(rawBase);
+    const base = cleanedBase.split(/\s+/).length >= 2 ? cleanedBase : rawBase;
+    return /\s(19[8-9]\d|20[0-2]\d)$/.test(base) && base.split(/\s+/).length >= 3 ? base : `${base} ${year}`.trim();
   }
 
   function reviewCar(car) {
@@ -807,7 +1114,9 @@
     const costs = reviewedCosts(car);
     const consumption = reviewedConsumption(normalizedCar);
     const identity = carIdentity(normalizedCar);
-    return Object.assign({}, normalizedCar, costs, consumption, {
+    const reviewed = Object.assign({}, normalizedCar, costs, consumption, {
+      fullName: displayName,
+      visibleName: displayName,
       brand: identity.brand,
       model: identity.model,
       generation: car.generation || identity.year || "",
@@ -822,6 +1131,12 @@
       scores: reviewedScores(normalizedCar),
       sourceNotes: `${car.sourceNotes} Values reviewed against Portugal/EU 2026 market bands, IUC context, official/spec baselines, real-world consumption evidence, and owner/reliability heuristics.`,
     });
+    reviewed.searchText = normalizeSearchText([reviewed.fullName, reviewed.brand, reviewed.model, reviewed.year, reviewed.yearRange, reviewed.id, reviewed.categoryGroup, reviewed.category, reviewed.powertrain, reviewed.segment, reviewed.energyType, reviewed.fuelType, reviewed.typicalMarket].filter(Boolean).join(" "));
+    return reviewed;
+  }
+
+  function normalizeSearchText(value) {
+    return String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
 
   function carIdentity(car) {
@@ -848,7 +1163,19 @@
     return unique;
   }
 
-  return uniqueById([
+  function uniqueByFullName(cars) {
+    const seen = new Set();
+    const unique = [];
+    cars.forEach((car) => {
+      const key = String(car.fullName || car.displayName || "").toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      unique.push(car);
+    });
+    return unique;
+  }
+
+  return uniqueByFullName(uniqueById([
     {
       id: "toyota-corolla",
       displayName: "Toyota Corolla",
@@ -1876,8 +2203,9 @@
     ...GENERATED_DAILY_DRIVERS,
     ...ICONIC_EDGE_CARS,
     ...BRAND_COVERAGE_CARS,
+    ...TESLA_PRIORITY_CARS,
     ...LARGE_CATALOG_CARS,
-  ]).map(reviewCar).sort((a, b) => {
+  ]).map(reviewCar)).sort((a, b) => {
     const groupDiff = CATEGORY_ORDER.indexOf(categoryGroup(a)) - CATEGORY_ORDER.indexOf(categoryGroup(b));
     return groupDiff || a.defaultUpfrontPrice - b.defaultUpfrontPrice || a.displayName.localeCompare(b.displayName);
   });

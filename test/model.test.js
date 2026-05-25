@@ -171,7 +171,7 @@ run("custom names are used and never fall back to Custom, Car 1, or Car 2", () =
 });
 
 run("selecting each model loads non-empty valid values", () => {
-  assert.ok(model.CAR_DATABASE.length >= 1500 && model.CAR_DATABASE.length <= 3000, `expected 1500-3000 cars, got ${model.CAR_DATABASE.length}`);
+  assert.ok(model.CAR_DATABASE.length >= 5000 && model.CAR_DATABASE.length <= 10000, `expected 5000-10000 cars, got ${model.CAR_DATABASE.length}`);
   ["opel-corsa", "seat-ibiza", "skoda-octavia", "volvo-ex30", "porsche-macan-electric", "lamborghini-huracan", "citroen-c3", "renault-captur", "toyota-yaris-cross", "volkswagen-id3", "kia-ev9", "bugatti-veyron", "koenigsegg-jesko", "pagani-huayra", "porsche-carrera-gt", "tesla-cybertruck-cyberbeast", "maybach-s-class"].forEach((id) => {
     assert.ok(model.carModelById(id), `${id} should exist`);
   });
@@ -187,7 +187,9 @@ run("selecting each model loads non-empty valid values", () => {
       assert.ok(Number(loaded[field]) >= 0, `${entry.id} ${field} should be non-negative`);
     });
     assert.equal(loaded.carValue, entry.defaultUpfrontPrice, `${entry.id} car value`);
-    assert.match(entry.displayName, /\b(19[8-9]\d|20[0-2]\d)\b/, `${entry.id} complete searchable name should include a year`);
+    assert.equal(entry.fullName, entry.displayName, `${entry.id} fullName should drive visible name`);
+    assert.match(entry.displayName, new RegExp(`^${entry.brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} .+ (19[8-9]\\d|20[0-2]\\d)$`), `${entry.id} should use Brand + Model + Year visible naming`);
+    assert.doesNotMatch(entry.displayName, /Standard Range|Long Range|Performance|RWD|Plaid|PureTech|BlueHDi|TDI|TSI|Hybrid|Plus/i, `${entry.id} visible name should not expose trim clutter`);
     assert.ok(entry.displayName.startsWith(entry.brand), `${entry.id} complete searchable name should start with brand`);
     ["reliability", "comfort", "safety", "practicality", "tech", "drivingEnjoyment"].forEach((field) => {
       assert.ok(Number.isFinite(Number(loaded.scores[field])), `${entry.id} score ${field}`);
@@ -196,6 +198,28 @@ run("selecting each model loads non-empty valid values", () => {
     assert.equal(Object.keys(loaded.scores).length, 6, `${entry.id} score count`);
     assert.ok(["high", "medium", "low"].includes(loaded.confidence), `${entry.id} confidence`);
     assert.ok(loaded.sourceNotes, `${entry.id} sourceNotes`);
+  });
+});
+
+run("priority Tesla and Portugal/EU models have key years", () => {
+  [
+    "Tesla Model 3 2019",
+    "Tesla Model 3 2021",
+    "Tesla Model 3 2024",
+    "Tesla Model Y 2021",
+    "Tesla Model Y 2022",
+    "Tesla Model Y 2023",
+    "Tesla Model Y 2024",
+    "Renault Clio 2018",
+    "Peugeot 208 2022",
+    "Toyota Corolla 2020",
+    "Volkswagen Golf 2019",
+    "Nissan Leaf 2021",
+    "BMW 3 Series 2018",
+    "Audi A3 2020",
+    "BYD Atto 3 2024",
+  ].forEach((fullName) => {
+    assert.ok(model.CAR_DATABASE.some((entry) => entry.fullName === fullName), `${fullName} should exist`);
   });
 });
 
@@ -208,6 +232,8 @@ run("complete-name search supports brand, model, year, and mixed token queries",
   assert.ok(matches("Model 3").some((entry) => /Tesla Model 3/.test(entry.displayName)));
   assert.ok(matches("2021").every((entry) => /2021/.test(entry.displayName) || entry.year === 2021 || entry.yearRange === 2021));
   assert.ok(matches("BMW 2020").some((entry) => /^BMW .* 2020$/.test(entry.displayName)));
+  assert.ok(matches("Tesla Model 3 2024").some((entry) => entry.fullName === "Tesla Model 3 2024"));
+  assert.ok(matches("Corolla 2020").some((entry) => entry.fullName === "Toyota Corolla 2020"));
   assert.ok(matches("Toyota Corolla").some((entry) => /^Toyota Corolla/.test(entry.displayName)));
   assert.ok(matches("GT3").some((entry) => /GT3/.test(entry.displayName)));
 });
@@ -217,7 +243,7 @@ run("database covers requested brand groups and required iconic cars", () => {
   ["Toyota", "Honda", "Nissan", "Mazda", "Subaru", "Suzuki", "Mitsubishi", "Hyundai", "Kia", "Volkswagen", "Skoda", "SEAT", "Renault", "Peugeot", "Citroën", "Fiat", "Ford", "Chevrolet", "Opel", "Dacia", "BMW", "Mercedes-Benz", "Audi", "Lexus", "Volvo", "Jaguar", "Land Rover", "Porsche", "Genesis", "Tesla", "BYD", "Polestar", "NIO", "XPeng", "Rivian", "Lucid", "Ferrari", "Lamborghini", "McLaren", "Bugatti", "Pagani", "Koenigsegg", "Aston Martin", "Maserati", "Alfa Romeo", "Rolls-Royce", "Bentley", "Maybach", "Jeep", "Ram", "GMC", "Isuzu", "Geely", "Chery", "Great Wall", "MG"].forEach((brand) => {
     assert.ok(brands.has(brand), `${brand} should be covered`);
   });
-  ["bugatti-chiron", "bugatti-veyron", "koenigsegg-jesko", "koenigsegg-regera", "pagani-huayra", "rimac-nevera", "ferrari-laferrari", "ferrari-sf90-stradale", "ferrari-f40", "ferrari-enzo", "lamborghini-aventador", "lamborghini-revuelto", "lamborghini-huracan-sto", "lamborghini-murcielago", "porsche-918-spyder", "porsche-911-gt3-rs", "porsche-carrera-gt", "porsche-taycan-turbo-gt", "mclaren-p1", "mclaren-senna", "mclaren-speedtail", "mclaren-765lt", "mercedes-amg-one", "mercedes-clk-gtr", "bmw-m5-cs", "bmw-m3-csl", "bmw-i8", "bmw-xm", "audi-r8", "audi-rs6-avant", "audi-e-tron-gt-rs", "tesla-roadster", "tesla-model-s-plaid", "tesla-cybertruck-cyberbeast", "nissan-gt-r", "toyota-supra", "honda-nsx", "lexus-lfa", "mazda-rx-7", "ford-gt", "dodge-challenger-srt-demon-170", "chevrolet-corvette-zr1", "ford-mustang-shelby-gt500", "rolls-royce-phantom", "bentley-continental-gt", "maybach-s-class"].forEach((id) => {
+  ["bugatti-chiron", "bugatti-veyron", "koenigsegg-jesko", "koenigsegg-regera", "pagani-huayra", "rimac-nevera", "ferrari-laferrari", "ferrari-sf90-stradale", "ferrari-f40", "ferrari-enzo", "lamborghini-aventador", "lamborghini-revuelto", "lamborghini-huracan-sto", "lamborghini-murcielago", "porsche-918-spyder", "porsche-911-gt3-rs", "porsche-carrera-gt", "porsche-taycan-turbo-gt", "mclaren-p1", "mclaren-senna", "mclaren-speedtail", "mclaren-765lt", "mercedes-amg-one", "mercedes-clk-gtr", "bmw-m5-cs", "bmw-m3-csl", "bmw-i8", "bmw-xm", "audi-r8", "audi-rs6-avant", "audi-e-tron-gt-rs", "tesla-roadster", "tesla-model-s", "tesla-cybertruck-cyberbeast", "nissan-gt-r", "toyota-supra", "honda-nsx", "lexus-lfa", "mazda-rx-7", "ford-gt", "dodge-challenger-srt-demon-170", "chevrolet-corvette-zr1", "ford-mustang-shelby-gt500", "rolls-royce-phantom", "bentley-continental-gt", "maybach-s-class"].forEach((id) => {
     assert.ok(model.carModelById(id), `${id} should exist`);
   });
 });
@@ -420,7 +446,7 @@ run("ranking uses the same formulas as main comparison", () => {
   const setup = assumptions({ initialCashBudget: 35000, monthlyBudget: 450, yearsOwned: 6, annualKm: 18000 });
   const ranking = model.rankCarDatabase(setup);
   assert.equal(ranking.length, model.CAR_DATABASE.length);
-  assert.ok(ranking[0].rankingScore >= ranking[1].rankingScore);
+  assert.ok(ranking[0].finalMoney >= ranking[1].finalMoney);
   assert.equal(ranking[0].globalRank, 1);
   const rankedTesla = ranking.find((row) => row.modelId === "tesla-model-3");
   const car1 = model.applyCarModelDefaults({}, "tesla-model-3");
@@ -429,45 +455,27 @@ run("ranking uses the same formulas as main comparison", () => {
   approx(rankedTesla.finalMoney, comparedTesla.finalMoney, 1e-9);
   approx(rankedTesla.totalPaid, comparedTesla.totalPaid, 1e-9);
   approx(rankedTesla.qualityScore, model.weightedQualityScore(car1), 1e-9);
-  assert.ok(rankedTesla.rankingScore >= 0 && rankedTesla.rankingScore <= 1);
 });
 
-run("ranking score uses normalized net worth and quality score only", () => {
+run("ranking has no hidden combined rank formula", () => {
   const setup = assumptions({ initialCashBudget: 30000, monthlyBudget: 500, yearsOwned: 7, annualKm: 15000 });
-  const defaultRanking = model.rankCarDatabase(setup);
-  const defaultTopTen = defaultRanking.slice(0, 10).map((row) => row.modelId).join("|");
-  const drivingRanking = model.rankCarDatabase(setup, { reliability: 0, safety: 0, practicality: 0, comfort: 0, tech: 0, drivingEnjoyment: 100 });
-  const drivingTopTen = drivingRanking.slice(0, 10).map((row) => row.modelId).join("|");
-  assert.notEqual(defaultTopTen, drivingTopTen);
-  drivingRanking.forEach((row, index) => assert.equal(row.globalRank, index + 1));
-  const minWorth = Math.min(...defaultRanking.map((row) => row.finalMoney));
-  const maxWorth = Math.max(...defaultRanking.map((row) => row.finalMoney));
-  defaultRanking.forEach((row) => {
-    const worthNorm = maxWorth > minWorth ? (row.finalMoney - minWorth) / (maxWorth - minWorth) : 1;
-    const scoreNorm = row.qualityScore / 10;
-    approx(row.rankingScore, 0.65 * worthNorm + 0.35 * scoreNorm, 1e-12, row.modelId);
-    assert.equal(row.paidScore, undefined, "cost should not be a direct ranking input");
+  const ranking = model.rankCarDatabase(setup);
+  ranking.forEach((row, index) => {
+    assert.equal(row.globalRank, index + 1);
+    assert.equal(row.rankingScore, undefined);
+    assert.equal(row.netWorthScore, undefined);
+    assert.equal(row.qualityScoreNormalized, undefined);
+    if (index > 0) assert.ok(ranking[index - 1].finalMoney >= row.finalMoney);
   });
-  const scoreBeatsSlightWorth = defaultRanking.find((row) => row.modelId === "kia-ev9-2024");
-  const slightlyHigherWorth = defaultRanking.find((row) => row.modelId === "hyundai-ioniq-5-2024");
-  assert.ok(slightlyHigherWorth.finalMoney > scoreBeatsSlightWorth.finalMoney);
-  assert.ok(scoreBeatsSlightWorth.qualityScore > slightlyHigherWorth.qualityScore);
-  assert.ok(scoreBeatsSlightWorth.rankingScore > slightlyHigherWorth.rankingScore);
-  const muchHigherWorth = defaultRanking.find((row) => row.modelId === "tesla-model-y-rwd");
-  const slightlyHigherScore = defaultRanking.find((row) => row.modelId === "porsche-macan-electric");
-  assert.ok(muchHigherWorth.finalMoney > slightlyHigherScore.finalMoney + 15000);
-  assert.ok(slightlyHigherScore.qualityScore > muchHigherWorth.qualityScore);
-  assert.ok(muchHigherWorth.rankingScore > slightlyHigherScore.rankingScore);
 });
 
-run("ranking score handles equal net worth without division by zero", () => {
+run("ranking handles equal net worth without division by zero", () => {
   const original = model.CAR_DATABASE.slice();
   model.CAR_DATABASE.splice(0, model.CAR_DATABASE.length, model.carModelById("dacia-sandero"), model.carModelById("dacia-sandero"));
   try {
     const ranking = model.rankCarDatabase(assumptions({ annualKm: 0 }));
     assert.equal(ranking.length, 2);
     ranking.forEach((row) => {
-      assert.ok(Number.isFinite(row.rankingScore));
       assert.doesNotMatch(JSON.stringify(row), /NaN|Infinity|undefined/);
     });
   } finally {

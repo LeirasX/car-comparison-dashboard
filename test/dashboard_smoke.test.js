@@ -291,14 +291,15 @@ assert.doesNotMatch(elements.rankingTable.innerHTML, /Car value|Running\/month/)
 assert.doesNotMatch(elements.rankingTable.innerHTML, /NaN|undefined|Infinity/);
 assert.match(elements.rankingSummary.textContent, /Showing 250|No matches/);
 assert.ok(rankingFilter("search"), "ranking search exists");
-assert.ok(rankingFilter("category"), "ranking category filter exists");
+assert.ok(!rankingFilter("category"), "category filter should be removed");
 assert.ok(!rankingFilter("brand"), "brand filter should be removed");
 assert.ok(!rankingFilter("powertrain"), "type filter should be removed");
 assert.ok(!rankingFilter("model"), "model filter should be removed");
-const rankedTeslaY = context.CarCompareModel.rankCarDatabase(context.CarCompareModel.DEFAULT_ASSUMPTIONS).find((row) => row.modelId === "tesla-model-y-long-range");
+const defaultOrdering = context.CarCompareModel.rankCarDatabase(context.CarCompareModel.DEFAULT_ASSUMPTIONS);
+const rankedTeslaY = defaultOrdering.find((row) => row.carName === "Tesla Model Y 2022");
 const rankingSearchInput = rankingFilter("search");
 rankingSearchInput.focus();
-for (const char of "Tesla Model Y") {
+for (const char of "Tesla Model Y 2022") {
   rankingSearchInput.value += char;
   rankingSearchInput.selectionStart = rankingSearchInput.value.length;
   rankingSearchInput.dispatch("input", { target: rankingSearchInput });
@@ -328,13 +329,6 @@ assert.notEqual(document.activeElement, rankingSearchInput, "enter blurs ranking
 rankingSearchInput.focus();
 rankingSearchInput.value = "";
 rankingSearchInput.dispatch("input", { target: rankingSearchInput });
-rankingFilter("category").value = "EV SUV";
-rankingFilter("category").dispatch("change", { target: rankingFilter("category") });
-assert.match(elements.rankingTable.innerHTML, /EV SUV/);
-const categoryRank = elements.rankingTable.innerHTML.match(/<tbody>[\s\S]*?<td>#(\d+)<\/td>/)?.[1];
-assert.ok(categoryRank && Number(categoryRank) >= 1, "category filter keeps global rank");
-rankingFilter("category").value = "";
-rankingFilter("category").dispatch("change", { target: rankingFilter("category") });
 assert.ok(rankingPage("more"), "show more button exists");
 rankingPage("more").dispatch("click", { target: rankingPage("more") });
 assert.match(elements.rankingSummary.textContent, /Showing 500/);
@@ -343,10 +337,23 @@ rankingPage("all").dispatch("click", { target: rankingPage("all") });
 assert.match(elements.rankingSummary.textContent, new RegExp(`Showing ${context.CarCompareModel.CAR_DATABASE.length}`));
 rankingSort("totalPaid").dispatch("click", { target: rankingSort("totalPaid") });
 const totalPaidAscFirstRank = elements.rankingTable.innerHTML.match(/<tbody>[\s\S]*?<td>#(\d+)<\/td>/)?.[1];
-assert.ok(totalPaidAscFirstRank && Number(totalPaidAscFirstRank) >= 1, "sorting keeps rank column");
-rankingSort("totalPaid").dispatch("click", { target: rankingSort("totalPaid") });
+assert.equal(totalPaidAscFirstRank, "1", "total paid sorting updates rank numbers");
 rankingSort("finalMoney").dispatch("click", { target: rankingSort("finalMoney") });
+const netWorthFirstRank = elements.rankingTable.innerHTML.match(/<tbody>[\s\S]*?<td>#(\d+)<\/td>/)?.[1];
+assert.equal(netWorthFirstRank, "1", "net worth sorting updates rank numbers");
 rankingSort("score").dispatch("click", { target: rankingSort("score") });
+const scoreFirstRank = elements.rankingTable.innerHTML.match(/<tbody>[\s\S]*?<td>#(\d+)<\/td>/)?.[1];
+assert.equal(scoreFirstRank, "1", "score sorting updates rank numbers");
+const scoreOrderedTeslaY = context.CarCompareModel.rankCarDatabase(context.CarCompareModel.DEFAULT_ASSUMPTIONS)
+  .slice()
+  .sort((a, b) => b.qualityScore - a.qualityScore || a.carName.localeCompare(b.carName))
+  .map((row, index) => Object.assign({}, row, { globalRank: index + 1 }))
+  .find((row) => row.carName === "Tesla Model Y 2022");
+rankingSearchInput.value = "Tesla Model Y 2022";
+rankingSearchInput.dispatch("input", { target: rankingSearchInput });
+assert.match(elements.rankingTable.innerHTML, new RegExp(`#${scoreOrderedTeslaY.globalRank}`), "search preserves score-sort rank");
+rankingSearchInput.value = "";
+rankingSearchInput.dispatch("input", { target: rankingSearchInput });
 const rankingBeforeSetupChange = elements.rankingTable.innerHTML;
 assumption("annualKm").value = "30000";
 assumption("annualKm").dispatch("input", { target: assumption("annualKm") });

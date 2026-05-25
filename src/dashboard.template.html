@@ -354,15 +354,6 @@
     .model-option:hover, .model-option.selected { background:rgba(49,95,82,.08); }
     .model-option small { color:var(--muted); font-size:11px; font-weight:720; }
     .model-more { padding:4px 2px 0; color:var(--muted); font-size:12px; }
-    .ranking-select {
-      width:auto;
-      min-width:132px;
-      min-height:36px;
-      padding:7px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:780;
-    }
     .sort-button {
       display:inline-flex;
       align-items:center;
@@ -432,7 +423,7 @@
       .rank-toggle { margin-left:0; }
       .ranking-head { display:grid; }
       .ranking-tools { justify-content:stretch; min-width:0; }
-      .ranking-tools .search-control, .ranking-tools .ranking-select { width:100%; }
+      .ranking-tools .search-control { width:100%; }
       .table-wrap { border-radius:14px; }
       table { min-width:780px; }
       th, td { padding:10px; font-size:12px; }
@@ -513,8 +504,8 @@
       savedOffers: { car1: {}, car2: {} },
       modelSearch: { car1: "", car2: "" },
       modelDropdownOpen: { car1: false, car2: false },
-      rankingFilters: { search: "", category: "" },
-      rankingSort: { field: "rank", direction: "asc" },
+      rankingFilters: { search: "" },
+      rankingSort: { field: "finalMoney", direction: "desc" },
       rankingVisibleCount: 250,
       rankingShowAll: false,
       scoreWeights: structuredClone(M.DEFAULT_SCORE_WEIGHTS),
@@ -583,7 +574,6 @@
     const scoreFields = [["reliability", "Reliability"], ["comfort", "Comfort"], ["safety", "Safety"], ["practicality", "Practicality"], ["tech", "Tech"], ["drivingEnjoyment", "Driving"]];
     const categoryOrder = ["City car", "Supermini", "Hatchback", "Sedan", "Estate", "MPV", "Crossover", "SUV", "Pickup", "Van", "Coupe", "Convertible", "Sports car", "Supercar", "Hypercar", "Luxury sedan", "Luxury SUV", "Off-road", "EV hatchback", "EV sedan", "EV SUV"];
     const rankingPageSize = 250;
-    const rankingSortLabels = { rank:"Rank", car:"Car", category:"Category", totalPaid:"Total paid", finalMoney:"Net worth", score:"Score" };
 
     function euro(value) {
       return new Intl.NumberFormat("en-IE", { style:"currency", currency:"EUR", maximumFractionDigits:0 }).format(finite(value));
@@ -700,7 +690,7 @@
 
     function modelMatchesSearch(car, query) {
       if (!query) return true;
-      const haystack = normalizeSearch([car.displayName, car.brand, car.model, car.year, car.yearRange, car.id, carCategoryGroup(car), car.category, car.powertrain, car.segment, car.energyType, car.fuelType, car.typicalMarket].filter(Boolean).join(" "));
+      const haystack = car.searchText || normalizeSearch([car.displayName, car.brand, car.model, car.year, car.yearRange, car.id, carCategoryGroup(car), car.category, car.powertrain, car.segment, car.energyType, car.fuelType, car.typicalMarket].filter(Boolean).join(" "));
       return normalizeSearch(query).split(/\s+/).filter(Boolean).every((term) => haystack.includes(term));
     }
 
@@ -1277,20 +1267,12 @@
       if (state.rankingOpen && panel && panel.scrollIntoView) panel.scrollIntoView({ behavior:"smooth", block:"start" });
     }
 
-    function rankingCategoryOptions() {
-      const values = [...new Set(M.CAR_DATABASE.map((car) => carCategoryGroup(car)).filter(Boolean))];
-      return values.sort((a, b) => {
-        return categoryOrder.indexOf(a) - categoryOrder.indexOf(b) || a.localeCompare(b);
-      });
-    }
-
     function renderRankingControls() {
       const tools = document.getElementById("rankingTools");
       if (!tools) return;
       if (state.rankingControlsRendered && tools.querySelector("[data-ranking-filter]")) return;
       tools.innerHTML = `
         <label class="search-control" for="rankingSearch"><span class="icon">${iconOnly("search")}</span><input id="rankingSearch" data-ranking-filter="search" type="search" placeholder="Search" value="${escapeHtml(state.rankingFilters.search)}"></label>
-        <select class="ranking-select" data-ranking-filter="category" aria-label="Category"><option value="">Category</option>${rankingCategoryOptions().map((category) => `<option value="${escapeHtml(category)}" ${state.rankingFilters.category === category ? "selected" : ""}>${escapeHtml(category)}</option>`).join("")}</select>
         <button class="small-button" id="rankingClose" type="button">Hide</button>
       `;
       state.rankingControlsRendered = true;
@@ -1343,7 +1325,7 @@
         state.rankingSort.direction = state.rankingSort.direction === "asc" ? "desc" : "asc";
       } else {
         state.rankingSort.field = field;
-        state.rankingSort.direction = ["finalMoney", "score"].includes(field) ? "desc" : "asc";
+        state.rankingSort.direction = field === "totalPaid" ? "asc" : "desc";
       }
       renderRankingResults();
     }
@@ -1362,19 +1344,19 @@
       const table = document.getElementById("rankingTable");
       const summary = document.getElementById("rankingSummary");
       if (!panel || !table || panel.hidden || !state.rankingOpen) return;
-      const rankedRows = M.rankCarDatabase(state.assumptions, state.scoreWeights);
-      const rows = sortRankingRows(rankedRows.filter((row) => {
+      const orderedRows = rankRowsForCurrentSort(M.rankCarDatabase(state.assumptions, state.scoreWeights));
+      const rows = orderedRows.filter((row) => {
         const model = M.carModelById(row.modelId) || row;
         return rankingRowMatches(row, model);
-      }));
+      });
       const visibleRows = state.rankingShowAll ? rows : rows.slice(0, state.rankingVisibleCount);
-      const top = rankedRows[0];
+      const top = orderedRows[0];
       const total = M.CAR_DATABASE.length;
       if (summary) summary.textContent = rows.length ? `${rows.length}/${total} cars. Showing ${visibleRows.length}. Best: #${top.globalRank} ${top.carName}.` : "No matches.";
       table.innerHTML = `<table><thead><tr>
-        ${rankingHeader("rank", "Rank")}
-        ${rankingHeader("car", "Car")}
-        ${rankingHeader("category", "Category")}
+        <th>Rank</th>
+        <th>Car</th>
+        <th>Category</th>
         ${rankingHeader("totalPaid", "Total paid")}
         ${rankingHeader("finalMoney", "Net worth")}
         ${rankingHeader("score", "Score")}
@@ -1395,28 +1377,23 @@
       const filters = state.rankingFilters;
       const query = (filters.search || "").trim().toLowerCase();
       if (query && !modelMatchesSearch(model, query)) return false;
-      if (filters.category && carCategoryGroup(model) !== filters.category) return false;
       return true;
     }
 
-    function sortRankingRows(rows) {
+    function rankRowsForCurrentSort(rows) {
       const field = state.rankingSort.field;
       const direction = state.rankingSort.direction === "desc" ? -1 : 1;
       const getters = {
-        rank: (row) => row.globalRank,
-        car: (row) => row.carName,
-        category: (row) => carCategoryGroup(M.carModelById(row.modelId) || row),
         totalPaid: (row) => row.totalPaid,
         finalMoney: (row) => row.finalMoney,
         score: (row) => row.qualityScore,
       };
-      const getter = getters[field] || getters.rank;
+      const getter = getters[field] || getters.finalMoney;
       return rows.slice().sort((a, b) => {
         const av = getter(a);
         const bv = getter(b);
-        const compare = typeof av === "string" ? av.localeCompare(String(bv)) : av - bv;
-        return compare * direction || a.globalRank - b.globalRank;
-      });
+        return (av - bv) * direction || a.carName.localeCompare(b.carName);
+      }).map((row, index) => Object.assign({}, row, { globalRank: index + 1 }));
     }
 
     function rankingHeader(field, label) {

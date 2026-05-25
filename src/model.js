@@ -142,6 +142,7 @@
     return Object.assign(defaults, {
       modelId: model.id,
       modelDisplayName: model.displayName,
+      fullName: model.fullName || model.displayName,
       name: model.displayName,
       brand: model.brand,
       model: model.model,
@@ -272,6 +273,7 @@
       const modelDefaults = carDefaultsFromModel(model.id);
       [
         "modelDisplayName",
+        "fullName",
         "brand",
         "model",
         "generation",
@@ -618,11 +620,6 @@
     };
   }
 
-  function normalizedValue(value, min, max) {
-    if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) return 1;
-    return clamp((num(value) - min) / (max - min), 0, 1);
-  }
-
   function rankCarDatabase(assumptionsInput, scoreWeightsInput) {
     const assumptions = Object.assign({}, DEFAULT_ASSUMPTIONS, assumptionsInput || {});
     assumptions.yearsOwned = normalizeYears(assumptions.yearsOwned);
@@ -735,21 +732,12 @@
           financingCost: 0,
         },
         qualityScore,
-        rankingScore: 0,
         globalRank: 0,
         yearly: [],
         resaleRisk: resaleValue > num(entry.defaultUpfrontPrice) * 0.9 && years >= 2,
       };
     });
-    const netWorthValues = rows.map((row) => row.finalMoney);
-    const minNetWorth = Math.min(...netWorthValues);
-    const maxNetWorth = Math.max(...netWorthValues);
-    rows.forEach((row) => {
-      row.netWorthScore = normalizedValue(row.finalMoney, minNetWorth, maxNetWorth);
-      row.qualityScoreNormalized = clamp(row.qualityScore / 10, 0, 1);
-      row.rankingScore = 0.65 * row.netWorthScore + 0.35 * row.qualityScoreNormalized;
-    });
-    return rows.sort((a, b) => b.rankingScore - a.rankingScore || b.finalMoney - a.finalMoney || a.carName.localeCompare(b.carName)).map((row, index) => Object.assign(row, { globalRank: index + 1 }));
+    return rows.sort((a, b) => b.finalMoney - a.finalMoney || a.carName.localeCompare(b.carName)).map((row, index) => Object.assign(row, { globalRank: index + 1 }));
   }
 
   function formatEuro(value) {
