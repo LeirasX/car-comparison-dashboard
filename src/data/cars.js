@@ -6,9 +6,13 @@
   "use strict";
 
   // Assumption basis, May 2026:
-  // - Consumption starts from official/WLTP/EPA/spec databases where available, then is adjusted toward EU/UK owner-report reality.
-  // - Portugal IUC is estimated from fuel type, displacement/CO2 bands, and EV exemption context; exact values vary by year/trim/import status.
-  // - Insurance uses Portugal market ranges by value/class, then scales for luxury, repair complexity, and theft/performance risk.
+  // - Values are source-informed estimates, not scraped live listings. They use official/WLTP/EPA/spec baselines,
+  //   EU real-world consumption evidence, Portugal used-market bands, and owner/reliability heuristics.
+  // - Portuguese used-price sanity checks used Standvirtual/OLX/PiscaPisca/AutoScout24/AutoUncle-style market ranges.
+  // - EV consumption uses WLTP/spec baselines adjusted toward EV Database/Green NCAP/owner-report mixed use.
+  // - Portugal IUC is estimated from fuel type, displacement/CO2 bands, and EV exemption context; exact values vary
+  //   by registration date, import status, engine, CO2, municipality, and legal changes.
+  // - Insurance uses Portugal market ranges by value/class, then scales for luxury, repair complexity, theft, and performance.
   // - Maintenance/repairs are annual reserves, not guaranteed spend; older and exotic cars include age/parts availability risk.
   // - resaleRetentionEstimate is the approximate retained share after the app default 7-year ownership period.
   const SHARED_SOURCE_NOTES = {
@@ -27,9 +31,16 @@
     return {
       id,
       displayName,
+      brand: "",
+      model: displayName,
+      generation: "",
+      yearRange: "",
       category,
       categoryGroup,
       categoryLabel: categoryGroup,
+      powertrain: energyType === "electricity" ? "EV" : category === "hybrid" ? (String(fuelType || "").includes("plug-in") ? "plug-in hybrid" : "hybrid") : "combustion",
+      segment: categoryGroup,
+      marketContext: market,
       typicalMarket: market,
       defaultUpfrontPrice: price,
       energyType,
@@ -122,25 +133,722 @@
     extra("lamborghini-huracan", "Lamborghini Huracan", "Supercars / collector cars", "supercar", 220000, "fuel", "petrol", 0, 14.5, 5000, 6500, 8500, 900, [0.82, 0.93, 0.24, "Huracan residuals are strong but costs are exotic."], 0.51, "Specialist service estimate.", "low", SHARED_SOURCE_NOTES.supercar),
   ];
 
-  const CATEGORY_ORDER = ["Cheap city cars", "Common small cars", "Common family cars", "Hybrids", "Cheap EVs", "Common EVs", "SUVs", "Premium sedans", "Premium EVs", "Sports cars", "Luxury cars", "Supercars / collector cars"];
-
-  function categoryGroup(car) {
-    if (car.categoryGroup) return car.categoryGroup;
-    if (car.category === "hybrid") return "Hybrids";
-    if (car.energyType === "electricity") {
-      if (car.category === "luxury" || car.category === "supercar" || car.defaultUpfrontPrice >= 36000) return "Premium EVs";
-      return car.defaultUpfrontPrice <= 22000 ? "Cheap EVs" : "Common EVs";
-    }
-    if (car.category === "supercar") return "Supercars / collector cars";
-    if (car.category === "luxury" && car.defaultUpfrontPrice >= 60000) return "Luxury cars";
-    if (car.category === "luxury" || ["bmw-3-series", "mercedes-c-class", "audi-a4"].includes(car.id)) return "Premium sedans";
-    if (car.category === "pickup" || /hilux|f150|rav4|cr-v|rx/i.test(car.id)) return "SUVs";
-    if (car.defaultUpfrontPrice <= 9000 || /panda|aygo|picanto|i10|up|206/i.test(car.id)) return "Cheap city cars";
-    if (car.defaultUpfrontPrice <= 14500 || /fiesta|clio|sandero|corsa|ibiza|fabia|micra|208/i.test(car.id)) return "Common small cars";
-    return "Common family cars";
+  function generated(id, displayName, group, category, price, energyType, fuelType, kwh, liters, reliabilityBias = 0) {
+    const ev = energyType === "electricity";
+    const hybrid = category === "hybrid";
+    const premium = group === "Premium cars" || group === "Premium EVs" || group === "Luxury cars";
+    const sports = group === "Sports cars";
+    const city = group === "Cheap city cars";
+    const valueBand = Math.max(0, price / 10000);
+    const maintenance = Math.round((ev ? 260 : city ? 380 : hybrid ? 520 : 500) + valueBand * (premium ? 130 : sports ? 115 : 42));
+    const insurance = Math.round((city ? 260 : ev ? 390 : 330) + valueBand * (premium ? 145 : sports ? 120 : 45));
+    const repairs = Math.round((ev ? 420 : city ? 380 : hybrid ? 460 : 500) + valueBand * (premium ? 170 : sports ? 150 : 55) - reliabilityBias * 30);
+    const tax = ev ? 0 : Math.round((city ? 65 : hybrid ? 110 : 120) + valueBand * (premium ? 38 : sports ? 32 : 18));
+    const first = ev ? 0.72 : hybrid ? 0.81 : premium ? 0.74 : sports ? 0.82 : 0.78;
+    const annual = ev ? 0.875 : hybrid ? 0.915 : premium ? 0.89 : sports ? 0.93 : 0.90;
+    const resale = Math.max(0.22, Math.min(0.52, first * Math.pow(annual, 6)));
+    const source = ev ? SHARED_SOURCE_NOTES.ev : premium || sports ? SHARED_SOURCE_NOTES.luxury : SHARED_SOURCE_NOTES.mainstream;
+    return extra(id, displayName, group, category, price, energyType, fuelType, kwh, liters, maintenance, insurance, repairs, tax, [first, annual, ev ? 0.09 : 0.14, `${group} estimate with conservative Portugal/EU ownership assumptions.`], Number(resale.toFixed(2)), "Generated daily-driver estimate from official/spec class baselines, European real-world adjustment, and Portugal ownership cost bands.", "medium", source);
   }
 
-  return [
+  const GENERATED_DAILY_DRIVERS = [
+    ["citroen-c1", "Citroën C1", "Cheap city cars", "combustion", 6500, "fuel", "petrol", 0, 5.2, 0],
+    ["peugeot-107", "Peugeot 107", "Cheap city cars", "combustion", 5500, "fuel", "petrol", 0, 5.3, 0],
+    ["peugeot-108", "Peugeot 108", "Cheap city cars", "combustion", 7500, "fuel", "petrol", 0, 5.2, 0],
+    ["citroen-c2", "Citroën C2", "Cheap city cars", "combustion", 4000, "fuel", "petrol", 0, 6.2, -1],
+    ["citroen-c3", "Citroën C3", "Small daily cars", "combustion", 11000, "fuel", "petrol/diesel", 0, 5.8, 0],
+    ["fiat-500", "Fiat 500", "Cheap city cars", "combustion", 8500, "fuel", "petrol", 0, 5.7, 0],
+    ["fiat-punto", "Fiat Punto", "Small daily cars", "combustion", 5500, "fuel", "petrol/diesel", 0, 6.1, -1],
+    ["fiat-tipo", "Fiat Tipo", "Family hatchbacks", "combustion", 12500, "fuel", "petrol/diesel", 0, 6.0, 0],
+    ["dacia-logan", "Dacia Logan", "Sedans", "combustion", 9000, "fuel", "petrol/diesel", 0, 5.9, 1],
+    ["dacia-duster", "Dacia Duster", "SUVs", "combustion", 16000, "fuel", "petrol/diesel", 0, 6.8, 1],
+    ["dacia-jogger", "Dacia Jogger", "Wagons", "combustion", 18000, "fuel", "petrol/hybrid", 0, 6.3, 1],
+    ["renault-twingo", "Renault Twingo", "Cheap city cars", "combustion", 8000, "fuel", "petrol", 0, 5.5, 0],
+    ["renault-modus", "Renault Modus", "Small daily cars", "combustion", 5000, "fuel", "petrol/diesel", 0, 6.0, -1],
+    ["renault-scenic", "Renault Scenic", "Crossovers", "combustion", 12000, "fuel", "diesel/petrol", 0, 6.2, -1],
+    ["renault-kadjar", "Renault Kadjar", "Crossovers", "combustion", 17000, "fuel", "diesel/petrol", 0, 6.1, 0],
+    ["renault-austral", "Renault Austral", "SUVs", "hybrid", 31000, "fuel", "petrol hybrid", 0, 5.7, 0],
+    ["peugeot-2008", "Peugeot 2008", "Crossovers", "combustion", 18000, "fuel", "petrol/diesel", 0, 6.0, 0],
+    ["peugeot-308", "Peugeot 308", "Family hatchbacks", "combustion", 18500, "fuel", "petrol/diesel", 0, 5.8, 0],
+    ["peugeot-508", "Peugeot 508", "Sedans", "combustion", 26000, "fuel", "diesel/petrol", 0, 6.2, 0],
+    ["peugeot-5008", "Peugeot 5008", "SUVs", "combustion", 27000, "fuel", "diesel/petrol", 0, 6.5, 0],
+    ["opel-astra", "Opel Astra", "Family hatchbacks", "combustion", 14500, "fuel", "petrol/diesel", 0, 5.9, 0],
+    ["opel-insignia", "Opel Insignia", "Sedans", "combustion", 16000, "fuel", "diesel/petrol", 0, 6.3, 0],
+    ["opel-mokka", "Opel Mokka", "Crossovers", "combustion", 18000, "fuel", "petrol", 0, 6.2, 0],
+    ["opel-grandland", "Opel Grandland", "SUVs", "combustion", 23000, "fuel", "petrol/diesel", 0, 6.5, 0],
+    ["ford-ka", "Ford Ka", "Cheap city cars", "combustion", 5500, "fuel", "petrol", 0, 5.8, -1],
+    ["ford-puma", "Ford Puma", "Crossovers", "combustion", 20000, "fuel", "petrol mild hybrid", 0, 6.0, 0],
+    ["ford-kuga", "Ford Kuga", "SUVs", "combustion", 25000, "fuel", "petrol/diesel/hybrid", 0, 6.8, 0],
+    ["ford-mondeo", "Ford Mondeo", "Sedans", "combustion", 14500, "fuel", "diesel/petrol", 0, 6.4, 0],
+    ["ford-s-max", "Ford S-Max", "Wagons", "combustion", 16500, "fuel", "diesel/petrol", 0, 6.8, 0],
+    ["nissan-juke", "Nissan Juke", "Crossovers", "combustion", 14500, "fuel", "petrol", 0, 6.2, 0],
+    ["nissan-x-trail", "Nissan X-Trail", "SUVs", "combustion", 26000, "fuel", "petrol hybrid", 0, 6.8, 0],
+    ["nissan-note", "Nissan Note", "Small daily cars", "combustion", 7500, "fuel", "petrol/diesel", 0, 5.8, 0],
+    ["toyota-auris", "Toyota Auris", "Family hatchbacks", "combustion", 12500, "fuel", "petrol/hybrid", 0, 5.8, 2],
+    ["toyota-avensis", "Toyota Avensis", "Sedans", "combustion", 13000, "fuel", "diesel/petrol", 0, 6.2, 2],
+    ["toyota-verso", "Toyota Verso", "Wagons", "combustion", 12000, "fuel", "diesel/petrol", 0, 6.4, 2],
+    ["toyota-yaris", "Toyota Yaris", "Small daily cars", "combustion", 12000, "fuel", "petrol", 0, 5.4, 2],
+    ["toyota-yaris-cross", "Toyota Yaris Cross", "Crossovers", "hybrid", 23000, "fuel", "petrol hybrid", 0, 4.8, 2],
+    ["toyota-corolla-touring", "Toyota Corolla Touring Sports", "Wagons", "hybrid", 26000, "fuel", "petrol hybrid", 0, 5.0, 2],
+    ["toyota-rav4", "Toyota RAV4", "SUVs", "combustion", 29000, "fuel", "petrol/hybrid", 0, 6.5, 2],
+    ["honda-jazz", "Honda Jazz", "Small daily cars", "combustion", 13000, "fuel", "petrol", 0, 5.5, 2],
+    ["honda-hr-v", "Honda HR-V", "Crossovers", "hybrid", 25000, "fuel", "petrol hybrid", 0, 5.3, 2],
+    ["honda-cr-v", "Honda CR-V", "SUVs", "combustion", 28000, "fuel", "petrol/hybrid", 0, 6.8, 2],
+    ["honda-e", "Honda e", "Cheap EVs", "ev", 21000, "electricity", null, 18.5, 0, 1],
+    ["volkswagen-polo", "Volkswagen Polo", "Small daily cars", "combustion", 13000, "fuel", "petrol", 0, 5.7, 0],
+    ["volkswagen-t-roc", "Volkswagen T-Roc", "Crossovers", "combustion", 23000, "fuel", "petrol/diesel", 0, 6.4, 0],
+    ["volkswagen-t-cross", "Volkswagen T-Cross", "Crossovers", "combustion", 20000, "fuel", "petrol", 0, 6.1, 0],
+    ["volkswagen-touran", "Volkswagen Touran", "Wagons", "combustion", 19000, "fuel", "diesel/petrol", 0, 6.3, 0],
+    ["volkswagen-arteon", "Volkswagen Arteon", "Sedans", "combustion", 32000, "fuel", "diesel/petrol", 0, 6.7, 0],
+    ["seat-arona", "SEAT Arona", "Crossovers", "combustion", 16000, "fuel", "petrol", 0, 5.9, 0],
+    ["seat-ateca", "SEAT Ateca", "SUVs", "combustion", 21000, "fuel", "petrol/diesel", 0, 6.4, 0],
+    ["seat-toledo", "SEAT Toledo", "Sedans", "combustion", 9000, "fuel", "diesel/petrol", 0, 5.8, 0],
+    ["skoda-scala", "Skoda Scala", "Family hatchbacks", "combustion", 15000, "fuel", "petrol", 0, 5.8, 0],
+    ["skoda-superb", "Skoda Superb", "Sedans", "combustion", 25000, "fuel", "diesel/petrol", 0, 6.2, 0],
+    ["skoda-kamiq", "Skoda Kamiq", "Crossovers", "combustion", 18000, "fuel", "petrol", 0, 5.9, 0],
+    ["skoda-karoq", "Skoda Karoq", "SUVs", "combustion", 23000, "fuel", "petrol/diesel", 0, 6.3, 0],
+    ["skoda-kodiaq", "Skoda Kodiaq", "SUVs", "combustion", 30000, "fuel", "petrol/diesel", 0, 7.0, 0],
+    ["hyundai-i20", "Hyundai i20", "Small daily cars", "combustion", 12500, "fuel", "petrol", 0, 5.6, 1],
+    ["hyundai-bayon", "Hyundai Bayon", "Crossovers", "combustion", 17000, "fuel", "petrol", 0, 5.9, 1],
+    ["hyundai-ix35", "Hyundai ix35", "SUVs", "combustion", 12000, "fuel", "diesel/petrol", 0, 6.8, 0],
+    ["hyundai-santa-fe", "Hyundai Santa Fe", "SUVs", "combustion", 33000, "fuel", "diesel/hybrid", 0, 7.0, 1],
+    ["kia-rio", "Kia Rio", "Small daily cars", "combustion", 10000, "fuel", "petrol/diesel", 0, 5.6, 1],
+    ["kia-stonic", "Kia Stonic", "Crossovers", "combustion", 16000, "fuel", "petrol", 0, 5.9, 1],
+    ["kia-xceed", "Kia XCeed", "Crossovers", "combustion", 19000, "fuel", "petrol/diesel", 0, 6.1, 1],
+    ["kia-sorento", "Kia Sorento", "SUVs", "combustion", 36000, "fuel", "diesel/hybrid", 0, 7.1, 1],
+    ["mazda-2", "Mazda 2", "Small daily cars", "combustion", 12500, "fuel", "petrol", 0, 5.5, 1],
+    ["mazda-3", "Mazda 3", "Family hatchbacks", "combustion", 19000, "fuel", "petrol", 0, 6.2, 1],
+    ["mazda-6", "Mazda 6", "Sedans", "combustion", 19000, "fuel", "diesel/petrol", 0, 6.5, 1],
+    ["mazda-cx-3", "Mazda CX-3", "Crossovers", "combustion", 17000, "fuel", "petrol/diesel", 0, 6.2, 1],
+    ["mazda-cx-5", "Mazda CX-5", "SUVs", "combustion", 26000, "fuel", "diesel/petrol", 0, 7.0, 1],
+    ["volvo-v40", "Volvo V40", "Family hatchbacks", "combustion", 15000, "fuel", "diesel/petrol", 0, 5.9, 0],
+    ["volvo-v90", "Volvo V90", "Wagons", "combustion", 38000, "fuel", "diesel/petrol", 0, 6.8, 0],
+    ["volvo-xc60", "Volvo XC60", "SUVs", "combustion", 39000, "fuel", "diesel/petrol/hybrid", 0, 7.2, 0],
+    ["volvo-xc90", "Volvo XC90", "SUVs", "combustion", 55000, "fuel", "diesel/petrol/hybrid", 0, 7.8, 0],
+    ["bmw-1-series", "BMW 1 Series", "Premium cars", "combustion", 24000, "fuel", "petrol/diesel", 0, 6.2, 0],
+    ["bmw-2-series-active-tourer", "BMW 2 Series Active Tourer", "Premium cars", "combustion", 28000, "fuel", "petrol/diesel/hybrid", 0, 6.4, 0],
+    ["bmw-4-series", "BMW 4 Series", "Premium cars", "combustion", 43000, "fuel", "petrol/diesel", 0, 7.0, 0],
+    ["bmw-x1", "BMW X1", "Premium cars", "combustion", 36000, "fuel", "petrol/diesel", 0, 6.8, 0],
+    ["bmw-x3", "BMW X3", "Premium cars", "combustion", 50000, "fuel", "petrol/diesel", 0, 7.4, 0],
+    ["bmw-x5", "BMW X5", "Luxury cars", "luxury", 70000, "fuel", "diesel/petrol/hybrid", 0, 8.5, 0],
+    ["mercedes-a-class", "Mercedes-Benz A-Class", "Premium cars", "combustion", 26000, "fuel", "petrol/diesel", 0, 6.2, 0],
+    ["mercedes-b-class", "Mercedes-Benz B-Class", "Premium cars", "combustion", 26000, "fuel", "petrol/diesel", 0, 6.3, 0],
+    ["mercedes-cla", "Mercedes-Benz CLA", "Premium cars", "combustion", 32000, "fuel", "petrol/diesel", 0, 6.5, 0],
+    ["mercedes-gla", "Mercedes-Benz GLA", "Premium cars", "combustion", 36000, "fuel", "petrol/diesel", 0, 6.8, 0],
+    ["mercedes-glc", "Mercedes-Benz GLC", "Premium cars", "combustion", 52000, "fuel", "diesel/petrol", 0, 7.4, 0],
+    ["audi-a1", "Audi A1", "Premium cars", "combustion", 21000, "fuel", "petrol", 0, 5.9, 0],
+    ["audi-a3", "Audi A3", "Premium cars", "combustion", 28000, "fuel", "petrol/diesel", 0, 6.1, 0],
+    ["audi-q2", "Audi Q2", "Premium cars", "combustion", 30000, "fuel", "petrol/diesel", 0, 6.4, 0],
+    ["audi-q3", "Audi Q3", "Premium cars", "combustion", 36000, "fuel", "petrol/diesel", 0, 6.8, 0],
+    ["audi-q5", "Audi Q5", "Premium cars", "combustion", 52000, "fuel", "diesel/petrol", 0, 7.4, 0],
+    ["lexus-ct", "Lexus CT", "Hybrids", "hybrid", 16000, "fuel", "petrol hybrid", 0, 5.0, 2],
+    ["lexus-nx", "Lexus NX", "Hybrids", "hybrid", 38000, "fuel", "petrol hybrid", 0, 6.4, 2],
+    ["lexus-es", "Lexus ES", "Hybrids", "hybrid", 36000, "fuel", "petrol hybrid", 0, 5.8, 2],
+    ["lexus-lbX", "Lexus LBX", "Hybrids", "hybrid", 30000, "fuel", "petrol hybrid", 0, 4.8, 2],
+    ["mini-cooper", "MINI Cooper", "Small daily cars", "combustion", 18000, "fuel", "petrol", 0, 6.0, 0],
+    ["mini-countryman", "MINI Countryman", "Crossovers", "combustion", 26000, "fuel", "petrol/diesel", 0, 6.6, 0],
+    ["suzuki-swift", "Suzuki Swift", "Small daily cars", "combustion", 12000, "fuel", "petrol mild hybrid", 0, 5.2, 1],
+    ["suzuki-vitara", "Suzuki Vitara", "Crossovers", "combustion", 18000, "fuel", "petrol mild hybrid", 0, 6.0, 1],
+    ["suzuki-s-cross", "Suzuki S-Cross", "Crossovers", "combustion", 20000, "fuel", "petrol mild hybrid", 0, 6.1, 1],
+    ["mitsubishi-space-star", "Mitsubishi Space Star", "Cheap city cars", "combustion", 8000, "fuel", "petrol", 0, 5.2, 0],
+    ["mitsubishi-asx", "Mitsubishi ASX", "Crossovers", "combustion", 16000, "fuel", "petrol/diesel", 0, 6.4, 0],
+    ["mitsubishi-outlander", "Mitsubishi Outlander", "SUVs", "hybrid", 25000, "fuel", "petrol plug-in hybrid", 0, 6.6, 0],
+    ["smart-fortwo", "Smart Fortwo", "Cheap city cars", "combustion", 8500, "fuel", "petrol", 0, 5.2, 0],
+    ["smart-forfour", "Smart Forfour", "Cheap city cars", "combustion", 9000, "fuel", "petrol", 0, 5.4, 0],
+    ["tesla-model-3-highland", "Tesla Model 3 Highland", "Common EVs", "ev", 36000, "electricity", null, 15.6, 0, 0],
+    ["tesla-model-y-rwd", "Tesla Model Y RWD", "Common EVs", "ev", 38000, "electricity", null, 17.2, 0, 0],
+    ["tesla-model-y-long-range", "Tesla Model Y Long Range", "Common EVs", "ev", 45000, "electricity", null, 18.0, 0, 0],
+    ["volkswagen-id3", "Volkswagen ID.3", "Common EVs", "ev", 26000, "electricity", null, 16.7, 0, 0],
+    ["volkswagen-id5", "Volkswagen ID.5", "Premium EVs", "ev", 39000, "electricity", null, 19.5, 0, 0],
+    ["cupra-born", "CUPRA Born", "Common EVs", "ev", 28000, "electricity", null, 17.2, 0, 0],
+    ["cupra-formentor", "CUPRA Formentor", "Crossovers", "combustion", 30000, "fuel", "petrol/hybrid", 0, 7.0, 0],
+    ["renault-megane-e-tech", "Renault Megane E-Tech", "Common EVs", "ev", 30000, "electricity", null, 16.8, 0, 0],
+    ["renault-scenic-e-tech", "Renault Scenic E-Tech", "Common EVs", "ev", 37000, "electricity", null, 17.5, 0, 0],
+    ["nissan-ariya", "Nissan Ariya", "Common EVs", "ev", 38000, "electricity", null, 19.2, 0, 0],
+    ["toyota-bz4x", "Toyota bZ4X", "Common EVs", "ev", 36000, "electricity", null, 19.0, 0, 1],
+    ["subaru-solterra", "Subaru Solterra", "Common EVs", "ev", 36000, "electricity", null, 19.5, 0, 0],
+    ["ford-mustang-mach-e", "Ford Mustang Mach-E", "Premium EVs", "ev", 43000, "electricity", null, 20.5, 0, 0],
+    ["bmw-ix1", "BMW iX1", "Premium EVs", "ev", 43000, "electricity", null, 18.7, 0, 0],
+    ["bmw-ix3", "BMW iX3", "Premium EVs", "ev", 52000, "electricity", null, 20.0, 0, 0],
+    ["mercedes-eqa", "Mercedes-Benz EQA", "Premium EVs", "ev", 41000, "electricity", null, 19.0, 0, 0],
+    ["mercedes-eqb", "Mercedes-Benz EQB", "Premium EVs", "ev", 47000, "electricity", null, 20.2, 0, 0],
+    ["audi-q8-e-tron", "Audi Q8 e-tron", "Premium EVs", "ev", 70000, "electricity", null, 23.5, 0, 0],
+    ["volvo-c40-recharge", "Volvo C40 Recharge", "Premium EVs", "ev", 42000, "electricity", null, 19.5, 0, 0],
+    ["volvo-xc40-recharge", "Volvo XC40 Recharge", "Premium EVs", "ev", 40000, "electricity", null, 19.7, 0, 0],
+    ["polestar-2", "Polestar 2", "Premium EVs", "ev", 39000, "electricity", null, 18.8, 0, 0],
+    ["byd-seal", "BYD Seal", "Common EVs", "ev", 38000, "electricity", null, 17.8, 0, 0],
+    ["byd-seal-u", "BYD Seal U", "Common EVs", "ev", 36000, "electricity", null, 18.9, 0, 0],
+    ["byd-han", "BYD Han", "Premium EVs", "ev", 52000, "electricity", null, 19.5, 0, 0],
+    ["mg5-ev", "MG5 EV", "Common EVs", "ev", 24000, "electricity", null, 17.5, 0, 0],
+    ["mg-marvel-r", "MG Marvel R", "Common EVs", "ev", 33000, "electricity", null, 20.0, 0, 0],
+    ["hyundai-ioniq-electric", "Hyundai Ioniq Electric", "Cheap EVs", "ev", 18000, "electricity", null, 13.8, 0, 1],
+    ["kia-soul-ev", "Kia Soul EV", "Cheap EVs", "ev", 19000, "electricity", null, 16.5, 0, 1],
+    ["seat-mii-electric", "SEAT Mii Electric", "Cheap EVs", "ev", 14000, "electricity", null, 14.5, 0, 0],
+    ["skoda-citigo-e", "Skoda Citigo-e iV", "Cheap EVs", "ev", 14000, "electricity", null, 14.5, 0, 0],
+    ["smart-eq-fortwo", "Smart EQ Fortwo", "Cheap EVs", "ev", 13000, "electricity", null, 15.0, 0, 0],
+    ["mini-electric", "MINI Electric", "Cheap EVs", "ev", 22000, "electricity", null, 16.0, 0, 0],
+    ["citroen-c4", "Citroën C4", "Family hatchbacks", "combustion", 17000, "fuel", "petrol/diesel", 0, 5.9, 0],
+    ["citroen-c4-cactus", "Citroën C4 Cactus", "Crossovers", "combustion", 13000, "fuel", "petrol/diesel", 0, 5.8, 0],
+    ["citroen-c5-aircross", "Citroën C5 Aircross", "SUVs", "combustion", 23000, "fuel", "diesel/petrol", 0, 6.4, 0],
+    ["ds-3-crossback", "DS 3 Crossback", "Crossovers", "combustion", 21000, "fuel", "petrol/diesel", 0, 6.1, 0],
+    ["ds-4", "DS 4", "Premium cars", "combustion", 30000, "fuel", "petrol/diesel", 0, 6.2, 0],
+    ["alfa-romeo-giulietta", "Alfa Romeo Giulietta", "Family hatchbacks", "combustion", 13000, "fuel", "diesel/petrol", 0, 6.3, -1],
+    ["alfa-romeo-giulia", "Alfa Romeo Giulia", "Premium cars", "combustion", 33000, "fuel", "diesel/petrol", 0, 6.8, -1],
+    ["alfa-romeo-stelvio", "Alfa Romeo Stelvio", "Premium cars", "combustion", 39000, "fuel", "diesel/petrol", 0, 7.6, -1],
+    ["jeep-renegade", "Jeep Renegade", "Crossovers", "combustion", 17000, "fuel", "petrol/diesel", 0, 6.9, -1],
+    ["jeep-compass", "Jeep Compass", "SUVs", "combustion", 24000, "fuel", "petrol/diesel", 0, 7.1, -1],
+    ["toyota-proace-city-verso", "Toyota Proace City Verso", "Wagons", "combustion", 23000, "fuel", "diesel", 0, 5.9, 1],
+    ["peugeot-rifter", "Peugeot Rifter", "Wagons", "combustion", 22000, "fuel", "diesel", 0, 5.9, 0],
+    ["citroen-berlingo", "Citroën Berlingo", "Wagons", "combustion", 21000, "fuel", "diesel", 0, 5.9, 0],
+    ["opel-combo-life", "Opel Combo Life", "Wagons", "combustion", 21000, "fuel", "diesel", 0, 5.9, 0],
+    ["volkswagen-caddy", "Volkswagen Caddy", "Wagons", "combustion", 24000, "fuel", "diesel", 0, 6.0, 0],
+    ["mercedes-citan-tourer", "Mercedes-Benz Citan Tourer", "Wagons", "combustion", 26000, "fuel", "diesel", 0, 6.2, 0],
+    ["renault-kangoo", "Renault Kangoo", "Wagons", "combustion", 19000, "fuel", "diesel", 0, 5.8, 0],
+    ["ford-tourneo-connect", "Ford Tourneo Connect", "Wagons", "combustion", 23000, "fuel", "diesel", 0, 6.0, 0],
+    ["hyundai-ioniq-phev", "Hyundai Ioniq Plug-in Hybrid", "Hybrids", "hybrid", 18000, "fuel", "petrol plug-in hybrid", 0, 4.2, 1],
+    ["kia-niro-phev", "Kia Niro Plug-in Hybrid", "Hybrids", "hybrid", 23000, "fuel", "petrol plug-in hybrid", 0, 4.5, 1],
+    ["toyota-prius-plus", "Toyota Prius+", "Hybrids", "hybrid", 17000, "fuel", "petrol hybrid", 0, 5.2, 2],
+    ["toyota-camry-hybrid", "Toyota Camry Hybrid", "Hybrids", "hybrid", 30000, "fuel", "petrol hybrid", 0, 5.6, 2],
+    ["ford-kuga-phev", "Ford Kuga Plug-in Hybrid", "Hybrids", "hybrid", 28000, "fuel", "petrol plug-in hybrid", 0, 5.8, 0],
+    ["volvo-xc40-phev", "Volvo XC40 Plug-in Hybrid", "Hybrids", "hybrid", 33000, "fuel", "petrol plug-in hybrid", 0, 6.0, 0],
+    ["bmw-330e", "BMW 330e", "Hybrids", "hybrid", 36000, "fuel", "petrol plug-in hybrid", 0, 6.2, 0],
+    ["mercedes-c300e", "Mercedes-Benz C 300 e", "Hybrids", "hybrid", 42000, "fuel", "petrol plug-in hybrid", 0, 6.3, 0],
+    ["audi-a3-tfsi-e", "Audi A3 TFSI e", "Hybrids", "hybrid", 32000, "fuel", "petrol plug-in hybrid", 0, 5.8, 0],
+    ["volkswagen-golf-gte", "Volkswagen Golf GTE", "Hybrids", "hybrid", 30000, "fuel", "petrol plug-in hybrid", 0, 5.8, 0],
+    ["skoda-octavia-iv", "Skoda Octavia iV", "Hybrids", "hybrid", 29000, "fuel", "petrol plug-in hybrid", 0, 5.6, 0],
+    ["seat-leon-e-hybrid", "SEAT Leon e-Hybrid", "Hybrids", "hybrid", 28000, "fuel", "petrol plug-in hybrid", 0, 5.6, 0],
+    ["cupra-leon", "CUPRA Leon", "Sports cars", "combustion", 36000, "fuel", "petrol/hybrid", 0, 7.2, 0],
+    ["hyundai-i30-n", "Hyundai i30 N", "Sports cars", "combustion", 33000, "fuel", "petrol", 0, 8.4, 0],
+    ["ford-fiesta-st", "Ford Fiesta ST", "Sports cars", "combustion", 23000, "fuel", "petrol", 0, 7.0, 0],
+    ["ford-focus-st", "Ford Focus ST", "Sports cars", "combustion", 32000, "fuel", "petrol", 0, 8.0, 0],
+    ["volkswagen-golf-gti", "Volkswagen Golf GTI", "Sports cars", "combustion", 36000, "fuel", "petrol", 0, 7.4, 0],
+    ["volkswagen-golf-r", "Volkswagen Golf R", "Sports cars", "combustion", 48000, "fuel", "petrol", 0, 8.5, 0],
+    ["toyota-gr-yaris", "Toyota GR Yaris", "Sports cars", "combustion", 43000, "fuel", "petrol", 0, 8.0, 1],
+    ["renault-clio-rs", "Renault Clio RS", "Sports cars", "combustion", 18000, "fuel", "petrol", 0, 7.3, 0],
+    ["porsche-macan", "Porsche Macan", "Luxury cars", "luxury", 65000, "fuel", "petrol", 0, 9.5, 0],
+    ["porsche-cayenne", "Porsche Cayenne", "Luxury cars", "luxury", 85000, "fuel", "petrol/hybrid", 0, 10.0, 0],
+    ["mercedes-gle", "Mercedes-Benz GLE", "Luxury cars", "luxury", 78000, "fuel", "diesel/petrol", 0, 8.5, 0],
+    ["bmw-x6", "BMW X6", "Luxury cars", "luxury", 85000, "fuel", "diesel/petrol", 0, 8.8, 0],
+    ["audi-q7", "Audi Q7", "Luxury cars", "luxury", 76000, "fuel", "diesel/petrol", 0, 8.4, 0],
+    ["audi-q8", "Audi Q8", "Luxury cars", "luxury", 85000, "fuel", "diesel/petrol", 0, 8.8, 0],
+    ["volvo-ex90", "Volvo EX90", "Premium EVs", "ev", 80000, "electricity", null, 22.5, 0, 0],
+    ["kia-ev3", "Kia EV3", "Common EVs", "ev", 33000, "electricity", null, 16.8, 0, 0],
+    ["kia-ev9", "Kia EV9", "Premium EVs", "ev", 72000, "electricity", null, 24.0, 0, 0],
+    ["hyundai-ioniq-6", "Hyundai Ioniq 6", "Common EVs", "ev", 41000, "electricity", null, 16.5, 0, 0],
+    ["peugeot-e-2008", "Peugeot e-2008", "Common EVs", "ev", 27000, "electricity", null, 17.8, 0, 0],
+    ["opel-mokka-e", "Opel Mokka-e", "Common EVs", "ev", 26000, "electricity", null, 17.6, 0, 0],
+    ["citroen-e-c4", "Citroën ë-C4", "Common EVs", "ev", 26000, "electricity", null, 17.2, 0, 0],
+    ["fiat-600e", "Fiat 600e", "Common EVs", "ev", 29000, "electricity", null, 16.8, 0, 0],
+    ["jeep-avenger-electric", "Jeep Avenger Electric", "Common EVs", "ev", 30000, "electricity", null, 17.5, 0, 0],
+    ["alfa-romeo-junior-electric", "Alfa Romeo Junior Electric", "Common EVs", "ev", 33000, "electricity", null, 17.2, 0, 0],
+    ["renault-5-e-tech", "Renault 5 E-Tech", "Cheap EVs", "ev", 24000, "electricity", null, 15.5, 0, 0],
+    ["citroen-e-c3", "Citroën ë-C3", "Cheap EVs", "ev", 21000, "electricity", null, 15.8, 0, 0],
+  ].map((row) => generated(...row));
+
+  const BRAND_MODELS = {
+    Toyota: ["Yaris", "Yaris Cross", "Corolla", "Corolla Touring Sports", "Auris", "Avensis", "Camry", "Prius", "Prius+", "C-HR", "RAV4", "Highlander", "Land Cruiser", "Hilux", "Aygo", "Verso", "Proace City Verso", "GR Yaris", "GR86", "Supra", "bZ4X"],
+    Honda: ["Jazz", "Civic", "Accord", "Insight", "HR-V", "CR-V", "ZR-V", "e:Ny1", "Honda e", "FR-V", "Legend", "NSX", "S2000"],
+    Nissan: ["Micra", "Note", "Juke", "Qashqai", "X-Trail", "Ariya", "Leaf", "Pulsar", "Primera", "Almera", "Pathfinder", "Navara", "GT-R", "370Z"],
+    Mazda: ["Mazda 2", "Mazda 3", "Mazda 6", "CX-3", "CX-30", "CX-5", "CX-60", "MX-30", "MX-5", "RX-7", "RX-8"],
+    Subaru: ["Impreza", "Legacy", "Outback", "Forester", "XV", "Crosstrek", "Levorg", "BRZ", "WRX STI", "Solterra"],
+    Suzuki: ["Swift", "Baleno", "Ignis", "Vitara", "S-Cross", "Jimny", "Splash", "Alto", "Wagon R", "Swace", "Across"],
+    Mitsubishi: ["Space Star", "Colt", "Lancer", "ASX", "Outlander", "Eclipse Cross", "Pajero", "L200", "Grandis", "i-MiEV"],
+    Hyundai: ["i10", "i20", "i30", "Ioniq", "Ioniq Plug-in", "Ioniq Electric", "Ioniq 5", "Ioniq 6", "Kona", "Kona Electric", "Bayon", "Tucson", "Santa Fe", "ix35", "Veloster", "i40", "Nexo"],
+    Kia: ["Picanto", "Rio", "Ceed", "XCeed", "Stonic", "Niro Hybrid", "Niro EV", "Soul EV", "Sportage", "Sorento", "EV3", "EV5", "EV6", "EV9", "Optima", "Stinger", "Carens"],
+    Volkswagen: ["Up!", "Polo", "Golf", "Golf GTI", "Golf R", "Beetle", "Jetta", "Passat", "Arteon", "Touran", "Caddy", "T-Cross", "T-Roc", "Tiguan", "Touareg", "ID.3", "ID.4", "ID.5", "ID.7", "California"],
+    Skoda: ["Citigo", "Fabia", "Scala", "Octavia", "Superb", "Roomster", "Kamiq", "Karoq", "Kodiaq", "Yeti", "Enyaq", "Rapid"],
+    SEAT: ["Mii", "Ibiza", "Leon", "Leon e-Hybrid", "Toledo", "Arona", "Ateca", "Tarraco", "Alhambra", "Exeo", "CUPRA Born", "CUPRA Formentor", "CUPRA Leon"],
+    Renault: ["Twingo", "Clio", "Megane", "Megane E-Tech", "Captur", "Kadjar", "Austral", "Scenic", "Scenic E-Tech", "Espace", "Laguna", "Talisman", "Kangoo", "Modus", "Zoe", "5 E-Tech", "Clio RS"],
+    Peugeot: ["107", "108", "206", "207", "208", "2008", "307", "308", "3008", "406", "407", "508", "5008", "Rifter", "Partner", "e-208", "e-2008", "RCZ"],
+    Citroën: ["C1", "C2", "C3", "C3 Aircross", "C4", "C4 Cactus", "C5", "C5 Aircross", "Berlingo", "Saxo", "Xsara", "ë-C3", "ë-C4", "DS3", "DS4"],
+    Fiat: ["Panda", "500", "500e", "500X", "600e", "Punto", "Grande Punto", "Tipo", "Bravo", "Stilo", "Doblo", "Multipla", "124 Spider", "Uno"],
+    Ford: ["Ka", "Fiesta", "Fiesta ST", "Focus", "Focus ST", "Mondeo", "Puma", "Kuga", "S-Max", "Galaxy", "B-Max", "C-Max", "Tourneo Connect", "Mustang", "Mustang Mach-E", "Mustang Shelby GT500", "GT", "F-150", "Ranger", "Explorer"],
+    Chevrolet: ["Spark", "Aveo", "Cruze", "Lacetti", "Malibu", "Trax", "Captiva", "Camaro", "Corvette", "Corvette ZR1", "Bolt EV", "Tahoe", "Suburban"],
+    Opel: ["Adam", "Karl", "Corsa", "Astra", "Insignia", "Meriva", "Zafira", "Mokka", "Mokka-e", "Crossland", "Grandland", "Combo Life", "Vectra", "Tigra"],
+    Dacia: ["Sandero", "Sandero Stepway", "Logan", "Duster", "Jogger", "Spring", "Lodgy", "Dokker", "Bigster"],
+    BMW: ["1 Series", "2 Series", "2 Series Active Tourer", "3 Series", "4 Series", "5 Series", "7 Series", "8 Series", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "M2", "M3", "M3 CSL", "M4", "M5", "M5 CS", "i3", "i4", "i5", "i7", "i8", "iX1", "iX3", "iX", "XM", "Z4"],
+    "Mercedes-Benz": ["A-Class", "B-Class", "C-Class", "E-Class", "S-Class", "CLA", "CLS", "GLA", "GLB", "GLC", "GLE", "GLS", "G-Class", "SL", "SLC", "AMG GT", "AMG One", "CLK GTR", "EQA", "EQB", "EQC", "EQE", "EQS", "Citan Tourer", "V-Class"],
+    Audi: ["A1", "A3", "A4", "A5", "A6", "A7", "A8", "Q2", "Q3", "Q4 e-tron", "Q5", "Q7", "Q8", "Q8 e-tron", "TT", "R8", "RS3", "RS4 Avant", "RS6 Avant", "RS e-tron GT", "e-tron GT RS"],
+    Lexus: ["CT", "IS", "ES", "GS", "LS", "UX", "NX", "RX", "LBX", "RZ", "LC", "RC", "LFA", "LS Hybrid"],
+    Volvo: ["C30", "V40", "S40", "S60", "S90", "V50", "V60", "V90", "XC40", "XC40 Recharge", "C40 Recharge", "EX30", "EX40", "EX90", "XC60", "XC90"],
+    Jaguar: ["XE", "XF", "XJ", "F-Pace", "E-Pace", "I-Pace", "F-Type", "X-Type", "S-Type"],
+    "Land Rover": ["Defender", "Discovery", "Discovery Sport", "Range Rover Evoque", "Range Rover Velar", "Range Rover Sport", "Range Rover", "Freelander"],
+    Porsche: ["Boxster", "Cayman", "911", "911 GT3 RS", "911 Turbo", "Carrera GT", "918 Spyder", "Panamera", "Macan", "Macan Electric", "Cayenne", "Taycan", "Taycan Turbo GT"],
+    Genesis: ["G70", "G80", "G90", "GV60", "GV70", "GV80", "Electrified G80"],
+    Tesla: ["Model 3", "Model 3 Highland", "Model Y", "Model Y RWD", "Model Y Long Range", "Model S", "Model S Plaid", "Model X", "Model X Plaid", "Roadster", "Cybertruck", "Cybertruck Cyberbeast"],
+    BYD: ["Dolphin", "Atto 3", "Seal", "Seal U", "Han", "Tang", "Song Plus", "Seagull", "Qin Plus", "Yuan Plus"],
+    Polestar: ["2", "3", "4", "5"],
+    NIO: ["ET5", "ET7", "ES6", "ES8", "EL6", "EL7"],
+    XPeng: ["P5", "P7", "G6", "G9"],
+    Rivian: ["R1T", "R1S", "R2"],
+    Lucid: ["Air", "Air Pure", "Air Touring", "Air Grand Touring", "Air Sapphire", "Gravity"],
+    Ferrari: ["F40", "F430", "458 Italia", "488", "F8 Tributo", "Roma", "Portofino", "California", "812 Superfast", "296 GTB", "SF90 Stradale", "LaFerrari", "Enzo", "Purosangue"],
+    Lamborghini: ["Gallardo", "Huracan", "Huracan STO", "Aventador", "Revuelto", "Murcielago", "Urus", "Diablo", "Countach"],
+    McLaren: ["540C", "570S", "600LT", "650S", "720S", "765LT", "Artura", "GT", "P1", "Senna", "Speedtail"],
+    Bugatti: ["Veyron", "Chiron", "Tourbillon", "Divo"],
+    Pagani: ["Zonda", "Huayra", "Utopia"],
+    Koenigsegg: ["Agera RS", "Jesko", "Regera", "Gemera"],
+    "Aston Martin": ["Vantage", "DB9", "DB11", "DB12", "DBS", "Rapide", "Vanquish", "DBX", "Valkyrie"],
+    Maserati: ["Ghibli", "Quattroporte", "Levante", "Grecale", "GranTurismo", "MC20"],
+    "Alfa Romeo": ["MiTo", "Giulietta", "Giulia", "Stelvio", "Tonale", "4C", "Junior Electric"],
+    "Rolls-Royce": ["Ghost", "Phantom", "Cullinan", "Wraith", "Dawn", "Spectre"],
+    Bentley: ["Continental GT", "Flying Spur", "Bentayga", "Mulsanne", "Azure"],
+    Maybach: ["S-Class", "GLS"],
+    Jeep: ["Renegade", "Compass", "Cherokee", "Grand Cherokee", "Wrangler", "Avenger", "Avenger Electric", "Gladiator"],
+    Ram: ["1500", "2500", "3500", "TRX"],
+    GMC: ["Sierra 1500", "Yukon", "Hummer EV", "Canyon"],
+    Isuzu: ["D-Max", "MU-X"],
+    Geely: ["Coolray", "Geometry C", "Galaxy E5", "Emgrand", "Monjaro"],
+    Chery: ["Tiggo 4", "Tiggo 7", "Tiggo 8", "Omoda 5", "Arrizo 5"],
+    "Great Wall": ["Ora 03", "Ora 07", "Haval Jolion", "Haval H6", "Tank 300"],
+    MG: ["MG3", "MG4", "MG5 EV", "ZS", "ZS EV", "Marvel R", "HS", "EHS", "Cyberster"],
+  };
+
+  const ICONIC_EDGE_CARS = [
+    ["bugatti-veyron", "Bugatti Veyron", "Sports cars", "supercar", 1500000, "fuel", "petrol", 0, 24.0, -2],
+    ["koenigsegg-jesko", "Koenigsegg Jesko", "Sports cars", "supercar", 3200000, "fuel", "petrol", 0, 18.0, -2],
+    ["koenigsegg-regera", "Koenigsegg Regera", "Sports cars", "supercar", 2500000, "fuel", "petrol hybrid", 0, 14.0, -2],
+    ["pagani-huayra", "Pagani Huayra", "Sports cars", "supercar", 2600000, "fuel", "petrol", 0, 17.0, -2],
+    ["ferrari-sf90-stradale", "Ferrari SF90 Stradale", "Sports cars", "supercar", 520000, "fuel", "petrol plug-in hybrid", 0, 10.5, -1],
+    ["ferrari-enzo", "Ferrari Enzo", "Sports cars", "supercar", 3600000, "fuel", "petrol", 0, 19.0, -1],
+    ["lamborghini-revuelto", "Lamborghini Revuelto", "Sports cars", "supercar", 620000, "fuel", "petrol plug-in hybrid", 0, 13.5, -1],
+    ["lamborghini-huracan-sto", "Lamborghini Huracan STO", "Sports cars", "supercar", 330000, "fuel", "petrol", 0, 14.5, -1],
+    ["lamborghini-murcielago", "Lamborghini Murcielago", "Sports cars", "supercar", 380000, "fuel", "petrol", 0, 18.0, -1],
+    ["porsche-911-gt3-rs", "Porsche 911 GT3 RS", "Sports cars", "supercar", 260000, "fuel", "petrol", 0, 13.0, 0],
+    ["porsche-carrera-gt", "Porsche Carrera GT", "Sports cars", "supercar", 1400000, "fuel", "petrol", 0, 16.0, -1],
+    ["porsche-taycan-turbo-gt", "Porsche Taycan Turbo GT", "Premium EVs", "ev", 250000, "electricity", null, 24.0, 0, 0],
+    ["mclaren-senna", "McLaren Senna", "Sports cars", "supercar", 1200000, "fuel", "petrol", 0, 15.0, -2],
+    ["mclaren-speedtail", "McLaren Speedtail", "Sports cars", "supercar", 2400000, "fuel", "petrol hybrid", 0, 12.5, -2],
+    ["mclaren-765lt", "McLaren 765LT", "Sports cars", "supercar", 360000, "fuel", "petrol", 0, 14.5, -2],
+    ["mercedes-amg-one", "Mercedes-AMG One", "Sports cars", "supercar", 2800000, "fuel", "petrol plug-in hybrid", 0, 11.0, -2],
+    ["mercedes-clk-gtr", "Mercedes-Benz CLK GTR", "Sports cars", "supercar", 10000000, "fuel", "petrol", 0, 20.0, -2],
+    ["bmw-m5-cs", "BMW M5 CS", "Sports cars", "combustion", 155000, "fuel", "petrol", 0, 11.5, 0],
+    ["bmw-m3-csl", "BMW M3 CSL", "Sports cars", "combustion", 150000, "fuel", "petrol", 0, 10.0, 0],
+    ["bmw-i8", "BMW i8", "Sports cars", "hybrid", 70000, "fuel", "petrol plug-in hybrid", 0, 6.5, 0],
+    ["bmw-xm", "BMW XM", "Luxury cars", "luxury", 145000, "fuel", "petrol plug-in hybrid", 0, 10.0, -1],
+    ["audi-r8", "Audi R8", "Sports cars", "supercar", 140000, "fuel", "petrol", 0, 13.0, 0],
+    ["audi-rs6-avant", "Audi RS6 Avant", "Sports cars", "combustion", 125000, "fuel", "petrol", 0, 11.5, 0],
+    ["audi-e-tron-gt-rs", "Audi e-tron GT RS", "Premium EVs", "ev", 115000, "electricity", null, 23.0, 0, 0],
+    ["tesla-roadster", "Tesla Roadster", "Sports cars", "ev", 180000, "electricity", null, 20.0, 0, 0],
+    ["tesla-model-s-plaid", "Tesla Model S Plaid", "Premium EVs", "ev", 85000, "electricity", null, 20.5, 0, 0],
+    ["tesla-cybertruck-cyberbeast", "Tesla Cybertruck Cyberbeast", "Premium EVs", "ev", 115000, "electricity", null, 28.0, 0, -1],
+    ["dodge-challenger-srt-demon-170", "Dodge Challenger SRT Demon 170", "Sports cars", "combustion", 180000, "fuel", "petrol", 0, 18.0, -1],
+    ["nissan-gt-r", "Nissan GT-R", "Sports cars", "combustion", 95000, "fuel", "petrol", 0, 11.5, 0],
+    ["toyota-supra", "Toyota Supra", "Sports cars", "combustion", 55000, "fuel", "petrol", 0, 8.4, 1],
+    ["honda-nsx", "Honda NSX", "Sports cars", "hybrid", 150000, "fuel", "petrol hybrid", 0, 9.5, 1],
+    ["lexus-lfa", "Lexus LFA", "Sports cars", "supercar", 900000, "fuel", "petrol", 0, 14.0, 1],
+    ["mazda-rx-7", "Mazda RX-7", "Sports cars", "combustion", 60000, "fuel", "petrol", 0, 11.0, -1],
+    ["ford-gt", "Ford GT", "Sports cars", "supercar", 650000, "fuel", "petrol", 0, 14.0, 0],
+    ["chevrolet-corvette-zr1", "Chevrolet Corvette ZR1", "Sports cars", "supercar", 180000, "fuel", "petrol", 0, 13.5, 0],
+    ["ford-mustang-shelby-gt500", "Ford Mustang Shelby GT500", "Sports cars", "combustion", 110000, "fuel", "petrol", 0, 14.0, 0],
+    ["maybach-s-class", "Maybach S-Class", "Luxury cars", "luxury", 180000, "fuel", "petrol/diesel", 0, 11.0, -1],
+  ].map((row) => generated(...row));
+
+  const BRAND_COVERAGE_CARS = [
+    ["aston-martin-vantage", "Aston Martin Vantage", "Sports cars", "combustion", 125000, "fuel", "petrol", 0, 11.0, -1],
+    ["maserati-ghibli", "Maserati Ghibli", "Luxury cars", "luxury", 52000, "fuel", "petrol/diesel", 0, 8.8, -1],
+    ["bmw-320d-touring-2020", "BMW 320d Touring 2020", "Wagons", "combustion", 27000, "fuel", "diesel", 0, 5.5, 0],
+    ["jaguar-xe", "Jaguar XE", "Premium cars", "combustion", 28000, "fuel", "diesel/petrol", 0, 6.6, -1],
+    ["land-rover-defender", "Land Rover Defender", "Luxury cars", "luxury", 78000, "fuel", "diesel/petrol", 0, 9.0, -1],
+    ["genesis-gv70", "Genesis GV70", "Luxury cars", "luxury", 52000, "fuel", "petrol/diesel", 0, 8.6, 0],
+    ["nio-et5", "NIO ET5", "Premium EVs", "ev", 48000, "electricity", null, 19.0, 0, 0],
+    ["xpeng-g6", "XPeng G6", "Premium EVs", "ev", 43000, "electricity", null, 18.2, 0, 0],
+    ["rivian-r1t", "Rivian R1T", "Premium EVs", "ev", 85000, "electricity", null, 25.5, 0, -1],
+    ["ram-1500", "Ram 1500", "SUVs", "pickup", 65000, "fuel", "petrol", 0, 13.5, -1],
+    ["gmc-sierra-1500", "GMC Sierra 1500", "SUVs", "pickup", 70000, "fuel", "petrol", 0, 13.8, -1],
+    ["isuzu-d-max", "Isuzu D-Max", "SUVs", "pickup", 36000, "fuel", "diesel", 0, 8.4, 0],
+    ["geely-coolray", "Geely Coolray", "Crossovers", "combustion", 22000, "fuel", "petrol", 0, 6.7, 0],
+    ["chery-tiggo-7", "Chery Tiggo 7", "SUVs", "combustion", 27000, "fuel", "petrol", 0, 7.4, 0],
+    ["great-wall-ora-03", "Great Wall Ora 03", "Common EVs", "ev", 26000, "electricity", null, 16.8, 0, 0],
+  ].map((row) => generated(...row));
+
+  function slug(value) {
+    return String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
+  function inferGroupAndPowertrain(brand, modelName) {
+    const text = `${brand} ${modelName}`.toLowerCase();
+    const ev = /ev|electric|e-tech|e-tron|eq|ioniq|id\.|model |tesla|byd|polestar|nio|xpeng|lucid|rivian|taycan|i4|i5|i7|ix|ix1|ix3|i-pace|mg4|mg5|zs ev|cybertruck|roadster|air|dolphin|seal|han|tang|atto|ora|geometry|hummer ev|nevera|spectre|lexus rz|ex30|ex40|ex90|solterra|bz4x|leaf|zoe|spring|500e|mokka-e|e-208|e-2008|ë-c3|ë-c4/.test(text);
+    const plugHybrid = /plug-in|phev|tfsi e|330e|300 e|gte|e-hybrid/.test(text);
+    const hybrid = plugHybrid || /hybrid|prius|ioniq|rav4|c-hr|yaris cross|corolla touring|camry|lexus|niro|hr-v|jazz|cr-v|outlander|kuga|swace|across/.test(text);
+    const supercar = /bugatti|koenigsegg|pagani|ferrari|lamborghini|mclaren|rimac|veyron|chiron|jesko|regera|huayra|nevera|laferrari|enzo|revuelto|aventador|huracan|murcielago|senna|speedtail|p1|gt3 rs|carrera gt|clk gtr|amg one|ford gt|lfa|nsx|r8|corvette zr1/.test(text);
+    const sports = supercar || /mustang|camaro|corvette|supra|gt-r|rx-7|rx-8|mx-5|s2000|brz|wrx|sti|m2|m3|m4|m5|amg|rs3|rs4|rs6|gti|golf r|shelby|demon|4c|giulia|stinger|z4|tt|f-type|vantage|db|mc20|gran turismo|911|boxster|cayman/.test(text);
+    const luxury = /rolls|bentley|maybach|phantom|ghost|cullinan|wraith|dawn|mulsanne|flying spur|continental|s-class|7 series|8 series|x7|gls|g-class|range rover|panamera|cayenne|quattroporte|levante|g90|ls hybrid|lexus ls/.test(text);
+    const premium = luxury || /bmw|mercedes|audi|lexus|volvo|jaguar|land rover|porsche|genesis|polestar/.test(text);
+    const city = /aygo|c1|107|108|panda|500|i10|picanto|up|mii|citigo|twingo|ka|spark|adam|karl|spring|fortwo|forfour|seagull|space star|alto/.test(text);
+    const small = city || /yaris|jazz|swift|micra|note|clio|208|fiesta|corsa|ibiza|fabia|polo|rio|i20|mazda 2|baleno|colt|aveo|sandero|mini cooper/.test(text);
+    const wagon = /touring|avant|estate|wagon|variant|v60|v90|swace|rifter|berlingo|combo|caddy|kangoo|tourneo|citan|proace|doblo|partner|lodgy|jogger|s-max|galaxy|v-class|california/.test(text);
+    const suv = /rav4|qashqai|juke|x-trail|hr-v|cr-v|cx-|forester|outback|crosstrek|vitara|asx|outlander|kona|bayon|tucson|santa fe|stonic|sportage|sorento|t-cross|t-roc|tiguan|touareg|kamiq|karoq|kodiaq|arona|ateca|tarraco|captur|kadjar|austral|2008|3008|5008|c3 aircross|c5 aircross|mokka|grandland|puma|kuga|duster|x1|x3|x5|x6|gl|q2|q3|q5|q7|q8|ux|nx|rx|xc|f-pace|e-pace|defender|discovery|range rover|macan|cayenne|gv|model y|model x|cybertruck|r1s|gravity|tang|seal u|song|zs|hs|marvel|hummer|yukon|tahoe|suburban|wrangler|cherokee|compass|renegade|avenger|gladiator|haval|tank|tiggo|omoda|coolray|monjaro/.test(text);
+    const pickup = /hilux|navara|l200|d-max|ranger|f-150|ram|sierra|canyon|r1t|gladiator|cybertruck/.test(text);
+    let group = "Family hatchbacks";
+    if (city) group = "Cheap city cars";
+    else if (small) group = "Small daily cars";
+    else if (wagon) group = "Wagons";
+    else if (pickup || suv) group = "SUVs";
+    if (/sedan|saloon|accord|camry|avensis|passat|mondeo|insignia|508|talisman|arteon|a4|a6|a8|3 series|5 series|7 series|c-class|e-class|s-class|g70|g80|g90|xe|xf|xj|model 3|model s|seal|han|et5|et7|p7|air|quattroporte/.test(text)) group = "Sedans";
+    if (hybrid && !ev) group = "Hybrids";
+    if (ev) group = premium || Number.MAX_SAFE_INTEGER < 0 ? "Common EVs" : "Common EVs";
+    if (ev && (premium || /model s|model x|air|r1|taycan|et7|es8|g9|han|tang|ev9|ex90|q8|e-tron gt|spectre|hummer|cybertruck/.test(text))) group = "Premium EVs";
+    if (ev && /spring|zoe|leaf|500e|twingo|mii|citigo|fortwo|seagull|e-c3|e-208/.test(text)) group = "Cheap EVs";
+    if (premium && !ev && !sports && !luxury) group = "Premium cars";
+    if (luxury && !sports) group = "Luxury cars";
+    if (sports) group = "Sports cars";
+    const category = ev ? "ev" : hybrid ? "hybrid" : luxury ? "luxury" : supercar ? "supercar" : pickup ? "pickup" : "combustion";
+    return { group, category, energyType: ev ? "electricity" : "fuel", fuelType: ev ? null : plugHybrid ? "petrol plug-in hybrid" : hybrid ? "petrol hybrid" : /diesel|d-max|hilux|navara|l200|caddy|rifter|berlingo|kangoo|tourneo/.test(text) ? "diesel" : "petrol/diesel" };
+  }
+
+  function baseValueFor(group, brand, modelName, generationIndex) {
+    const text = `${brand} ${modelName}`.toLowerCase();
+    const brandFactor = /rolls|bentley|maybach/.test(text) ? 3.0 : /ferrari|lamborghini|mclaren|bugatti|pagani|koenigsegg/.test(text) ? 5.5 : /porsche|land rover|jaguar|genesis|bmw|mercedes|audi|lexus|volvo|tesla|lucid|rivian|nio|xpeng|polestar/.test(text) ? 1.55 : /toyota|honda|mazda|subaru|hyundai|kia|volkswagen/.test(text) ? 1.08 : /dacia|fiat|citroen|renault|peugeot|opel|suzuki|mg|chery|geely|great wall/.test(text) ? 0.9 : 1;
+    const groupBase = {
+      "Cheap city cars": 8500,
+      "Small daily cars": 12500,
+      "Family hatchbacks": 17000,
+      Sedans: 23000,
+      Wagons: 21000,
+      Crossovers: 21000,
+      SUVs: 28000,
+      Hybrids: 26000,
+      "Cheap EVs": 21000,
+      "Common EVs": 34000,
+      "Premium cars": 42000,
+      "Premium EVs": 58000,
+      "Luxury cars": 90000,
+      "Sports cars": 85000,
+    }[group] || 18000;
+    const generationFactor = [0.42, 0.68, 1.0][generationIndex] || 0.68;
+    return roundTo(groupBase * brandFactor * generationFactor, group === "Sports cars" || group === "Luxury cars" ? 5000 : 500);
+  }
+
+  function likelyStartYear(brand, modelName) {
+    const text = `${brand} ${modelName}`.toLowerCase();
+    if (/tourbillon|utopia|revuelto|junior electric|ev3|ev5|r2|gravity|spectre|cybertruck|ex30|ex40|ex90|5 e-tech|bigster|600e|seagull|ora 07|galaxy e5|haval jolion|tank 300/.test(text)) return 2024;
+    if (/model y|seal u|seal|dolphin|atto 3|han|tang|song plus|yuan plus|ev9|ev6|ioniq 5|ioniq 6|id\.4|id\.5|id\.7|q4 e-tron|q8 e-tron|eqa|eqb|eqe|eqs|ix1|ix3|ix|i4|i5|i7|taycan|macan electric|mg4|marvel r|zs ev|spring|mokka-e|e-208|e-2008|ë-c3|ë-c4|500e|solterra|bz4x|ariya|scenic e-tech|megane e-tech|evenger electric|hummer ev|air sapphire|nevera|sf90|296 gtb|purosangue|mc20|cyberster/.test(text)) return 2021;
+    if (/model 3|kona electric|niro ev|leaf|zoe|i3|i8|bolt ev|i-pace|e-tron gt|polestar 2|et5|et7|es6|es8|p5|p7|r1t|r1s|air|roadster/.test(text)) return 2018;
+    if (/c-hr|yaris cross|t-roc|t-cross|kamiq|karoq|kodiaq|arona|ateca|tarraco|captur|kadjar|austral|2008|3008|5008|mokka|grandland|puma|bayon|stonic|xceed|cx-30|ux|nx|lbx|xc40|gv60|gv70|gv80|formentor|tonale|grecale|dbx|urus|bentayga/.test(text)) return 2016;
+    if (/gr yaris|gr86|supra|m2|m4|m5 cs|m3 csl|rs3|rs4|rs6|amg gt|amg one|911 gt3 rs|918 spyder|p1|senna|speedtail|765lt|laferrari|enzo|regera|jesko|huayra|chiron|veyron|valkyrie|lfa/.test(text)) return 2014;
+    return 2008;
+  }
+
+  function catalogRows() {
+    const targetRows = 1900;
+    const years = [
+      [2026, 1.12, 2, "new/current Portugal/EU value"],
+      [2024, 1.00, 2, "nearly new Portugal/EU value"],
+      [2022, 0.86, 2, "recent used Portugal/EU value"],
+      [2020, 0.72, 2, "used Portugal/EU value"],
+      [2018, 0.58, 1, "used Portugal/EU value"],
+      [2016, 0.46, 1, "older used Portugal/EU value"],
+      [2014, 0.36, 1, "older used Portugal/EU value"],
+      [2012, 0.29, 0, "older used Portugal/EU value"],
+      [2010, 0.23, 0, "budget used Portugal/EU value"],
+      [2008, 0.19, 0, "budget used Portugal/EU value"],
+    ];
+    const rows = [];
+    const flatModels = Object.entries(BRAND_MODELS).flatMap(([brand, models]) => models.map((modelName) => [brand, modelName]));
+    const addRow = (brand, modelName, year, valueFactor, context, generationIndex) => {
+      const meta = inferGroupAndPowertrain(brand, modelName);
+      const text = `${brand} ${modelName}`.toLowerCase();
+      if (year < likelyStartYear(brand, modelName)) return;
+      if (year < 2022 && /tourbillon|utopia|revuelto|junior electric|ev3|ev5|r2|gravity|spectre|cybertruck|ex30|ex40|ex90|5 e-tech|bigster|600e|seagull|ora 07|galaxy e5/.test(text)) return;
+      const price = roundTo(baseValueFor(meta.group, brand, modelName, generationIndex) * valueFactor, meta.group === "Sports cars" || meta.group === "Luxury cars" ? 5000 : 500);
+      const ev = meta.energyType === "electricity";
+      const ageLoad = Math.max(0, (2026 - year) * 0.03);
+      const liters = ev ? 0 : Number((meta.group === "Sports cars" ? 8.5 + price / 70000 : meta.group === "Luxury cars" ? 8.2 + price / 90000 : meta.category === "hybrid" ? 4.7 + price / 60000 : meta.group === "Cheap city cars" ? 5.3 : meta.group === "SUVs" ? 6.7 : 6.0 + ageLoad).toFixed(1));
+      const kwh = ev ? Number((meta.group === "Premium EVs" ? 19.5 + price / 110000 : meta.group === "Cheap EVs" ? 15.5 : 17.2 + Math.min(ageLoad, 0.5)).toFixed(1)) : 0;
+      const id = `${slug(brand)}-${slug(modelName)}-${year}`;
+      const displayName = `${brand} ${modelName} ${year}`;
+      rows.push(generated(id, displayName, meta.group, meta.category, price, meta.energyType, meta.fuelType, kwh, liters, /toyota|honda|lexus/.test(text) ? 2 : /alfa|jeep|land rover|mclaren/.test(text) ? -1 : 0));
+      const lastModern = generationIndex === 2 && year >= 2020 && !/base|active|tourer|verso|berlingo|combo|caddy|kangoo|tourneo|citan|proace|rifter|partner|doblo/i.test(modelName);
+      if (lastModern && rows.length < targetRows) {
+        const trim = meta.energyType === "electricity" ? "Long Range" : meta.category === "hybrid" ? "Hybrid" : meta.group === "Sports cars" ? "Performance" : "Plus";
+        rows.push(generated(`${id}-${slug(trim)}`, `${brand} ${modelName} ${trim} ${year}`, meta.group, meta.category, Math.round(price * 1.18 / 500) * 500, meta.energyType, meta.fuelType, ev ? Number((kwh * 1.04).toFixed(1)) : 0, ev ? 0 : Number((liters * 1.05).toFixed(1)), /toyota|honda|lexus/.test(text) ? 2 : 0));
+      }
+    };
+    flatModels.forEach(([brand, modelName]) => {
+      years.forEach(([year, valueFactor, generationIndex, context]) => {
+        if (rows.length >= targetRows) return;
+        addRow(brand, modelName, year, valueFactor, context, generationIndex);
+      });
+    });
+    return rows;
+  }
+
+  const LARGE_CATALOG_CARS = catalogRows();
+
+  const CATEGORY_ORDER = [
+    "City car",
+    "Supermini",
+    "Hatchback",
+    "Sedan",
+    "Estate",
+    "MPV",
+    "Crossover",
+    "SUV",
+    "Pickup",
+    "Van",
+    "Coupe",
+    "Convertible",
+    "Sports car",
+    "Supercar",
+    "Hypercar",
+    "Luxury sedan",
+    "Luxury SUV",
+    "Off-road",
+    "EV hatchback",
+    "EV sedan",
+    "EV SUV",
+  ];
+
+  function categoryGroup(car) {
+    const text = `${car.id || ""} ${car.displayName || ""} ${car.model || ""}`.toLowerCase();
+    const original = car.categoryGroup || "";
+    if (CATEGORY_ORDER.includes(original)) return original;
+    const price = Number(car.defaultUpfrontPrice) || 0;
+    const isEv = car.energyType === "electricity";
+    const isLuxury = car.category === "luxury" || price >= 65000;
+    const isSuper = car.category === "supercar" || /supercars|collector/i.test(original);
+    const hyper = price >= 800000 || /bugatti|veyron|chiron|koenigsegg|pagani|rimac|nevera|laferrari|mclaren-p1|porsche-918|amg-one|clk-gtr|speedtail|regera|jesko|huayra/.test(text);
+    const offRoad = /wrangler|defender|land-cruiser|g-class|jimny|tank-300|bronco|grenadier/.test(text);
+    const pickup = car.category === "pickup" || /hilux|f-150|f150|ranger|amarok|navara|l200|d-max|dmax|ram-|sierra|silverado|canyon|colorado|ridgeline|cybertruck/.test(text);
+    const van = /berlingo|rifter|partner|combo|kangoo|caddy|tourneo|transit|trafic|vivaro|citan|sprinter|vito|proace|doblo|porter|express|daily/.test(text);
+    const mpv = /scenic|espace|picasso|c4-spacetourer|zafira|meriva|touran|alhambra|sharan|s-max|galaxy|verso|lodgy|jogger|v-class|b-class|note|modus/.test(text);
+    const estate = /estate|touring|variant|avant|sw|sport-tourer|sports-tourer|wagon|v60|v70|v90|rs6-avant|corolla-touring/.test(text) || /Wagons/i.test(original);
+    const coupe = /coupe|coupé|cayman|supra|gt86|gr86|rx-7|rx-8|brz|tt|r8|gt-r|gtr|911|carrera-gt|continental-gt|mustang|camaro|challenger|corvette|rc-|lc-|z4|slk|sLC/i.test(car.displayName || "");
+    const convertible = /mx-5|roadster|boxster|spyder|cabrio|convertible|spider/.test(text);
+    const sports = /Sports cars/i.test(original) || /m2|m3|m4|m5|amg|rs3|rs4|rs5|rs6|gti|golf-r|gr-yaris|gr86|supra|gt-r|gtr|wrx|sti|i30-n|fiesta-st|focus-st|type-r|shelby|demon|4c|911|cayman|boxster|f-type|vantage|db11|db12|mc20/.test(text);
+    const suv = /suv|x1|x3|x5|x7|xm|gl[a-z]|gle|gls|gla|glb|q2|q3|q4|q5|q7|q8|xc40|xc60|xc90|rav4|cr-v|hr-v|c-hr|yaris-cross|tucson|sportage|sorento|santa-fe|qashqai|x-trail|juke|captur|kadjar|austral|2008|3008|5008|mokka|grandland|puma|kuga|cx-3|cx-5|cx-30|cx-60|tiguan|t-roc|t-cross|ateca|arona|kamiq|karoq|kodiaq|duster|range-rover|defender|discovery|macan|cayenne|model-y|id4|enyaq|ev6|ioniq-5|niro|atto-3|zs-ev|ev9|ex30|i-pace|eletre|levante|stelvio|ur[us]|grecale|tonale|formentor/.test(text) || /SUVs/i.test(original);
+    const crossover = /Crossovers/i.test(original) || /bayon|stonic|xceed|scala|arkana|kona|mok[k]?a|puma|juke|captur|2008|t-roc|t-cross|kamiq|arona|cx-3|cx-30/.test(text);
+    const sedan = /sedan|saloon|passat|arteon|toledo|superb|octavia|logan|corolla|camry|accord|avensis|mazda-6|mondeo|insignia|a3|a4|a5|a6|a7|a8|3-series|5-series|7-series|c-class|e-class|s-class|is-|es-|gs-|ls-|s60|s80|s90|model-3|model-s|seal|i4|eqe|eqs|lucid-air|polestar-2|nio-et|xpeng-p7|genesis-g70|genesis-g80|genesis-g90/.test(text) || /Sedans|Premium sedans/i.test(original);
+    const city = price <= 9000 || /aygo|c1|107|108|i10|picanto|up|panda|twingo|fortwo|ka|spring|500e/.test(text) || /Cheap city/i.test(original);
+    const supermini = /Small daily|Common small/i.test(original) || /fiesta|clio|208|corsa|ibiza|fabia|micra|yaris|jazz|rio|i20|polo|swift|mazda-2|sandero|c3|punto|500/.test(text);
+
+    if (car.energyType === "electricity") {
+      if (suv || offRoad || pickup) return "EV SUV";
+      if (sedan || isLuxury) return "EV sedan";
+      return "EV hatchback";
+    }
+    if (hyper) return "Hypercar";
+    if (isSuper) return price >= 140000 ? "Supercar" : "Sports car";
+    if (convertible) return "Convertible";
+    if (sports) return "Sports car";
+    if (offRoad) return "Off-road";
+    if (pickup) return "Pickup";
+    if (van) return "Van";
+    if (mpv) return "MPV";
+    if (isLuxury && suv) return "Luxury SUV";
+    if (isLuxury && sedan) return "Luxury sedan";
+    if (estate) return "Estate";
+    if (coupe) return price >= 90000 ? "Sports car" : "Coupe";
+    if (suv && !crossover) return "SUV";
+    if (crossover) return "Crossover";
+    if (sedan) return "Sedan";
+    if (city) return "City car";
+    if (supermini) return "Supermini";
+    return "Hatchback";
+  }
+
+  function clampNumber(value, min, max) {
+    return Math.min(max, Math.max(min, Number(value) || 0));
+  }
+
+  function roundTo(value, step) {
+    return Math.round((Number(value) || 0) / step) * step;
+  }
+
+  function brandSignals(car) {
+    const text = `${car.id} ${car.displayName}`.toLowerCase();
+    return {
+      toyotaHonda: /toyota|honda|lexus/.test(text),
+      korean: /hyundai|kia/.test(text),
+      simpleValue: /dacia|suzuki|fiat|mitsubishi/.test(text),
+      germanPremium: /bmw|mercedes|audi|porsche/.test(text),
+      fragilePremium: /alfa|jeep|range-rover|land-rover|mclaren|maserati/.test(text),
+      tesla: /tesla/.test(text),
+      performance: /amg| rs|rs3| m3|gti|golf-r|gr-|c63|turbo|ferrari|lamborghini|mclaren|bugatti|rimac|nevera|porsche/.test(text),
+    };
+  }
+
+  function reviewedScores(car) {
+    const group = categoryGroup(car);
+    const signals = brandSignals(car);
+    const price = Number(car.defaultUpfrontPrice) || 0;
+    const ev = car.energyType === "electricity";
+    const hybrid = car.category === "hybrid";
+    const supercar = car.category === "supercar";
+    const luxury = car.category === "luxury" || /^Luxury/.test(group);
+    const premium = luxury || /^EV (sedan|SUV)$/.test(group) && price >= 36000 || price >= 45000;
+    const cheap = price <= 9000;
+    const oldCheap = price <= 6500 || /206|107|c2|punto|modus|ka|note|toledo/.test(car.id);
+    const suvish = /SUV|Crossover|Estate|MPV|Van|Pickup|Off-road/.test(group);
+    const city = group === "City car";
+
+    let reliability = 6;
+    if (signals.toyotaHonda) reliability += 2.2;
+    if (signals.korean) reliability += 1.2;
+    if (signals.simpleValue) reliability += 0.6;
+    if (signals.germanPremium) reliability -= 0.4;
+    if (signals.fragilePremium) reliability -= 1.4;
+    if (oldCheap) reliability -= 1.3;
+    if (supercar) reliability -= 2.0;
+    if (ev && !signals.fragilePremium) reliability += 0.6;
+
+    let comfort = 5.2 + (premium ? 2.0 : 0) + (luxury ? 1.0 : 0) + (suvish ? 0.8 : 0) + (/Sedan|Estate/.test(group) ? 0.5 : 0) - (city ? 1.2 : 0) - (oldCheap ? 0.6 : 0) - (supercar ? 1.3 : 0);
+    let safety = 6.0 + (price > 25000 ? 1.0 : 0) + (price > 55000 ? 0.7 : 0) + (premium ? 0.5 : 0) + (ev ? 0.5 : 0) - (oldCheap ? 1.9 : 0) - (city && !ev ? 0.4 : 0);
+    let practicality = 6.0 + (suvish ? 1.6 : 0) + (hybrid ? 0.3 : 0) - (city ? 1.1 : 0) - (supercar ? 5.0 : 0) - (/mx-5|cayman|911|f40|aventador|huracan|chiron|nevera|p1|laferrari|918/.test(car.id) ? 2.0 : 0);
+    let tech = 5.0 + (ev ? 1.7 : 0) + (signals.tesla ? 1.5 : 0) + (signals.germanPremium ? 1.0 : 0) + (premium ? 0.8 : 0) - (oldCheap ? 2.2 : 0) - (/dacia-spring|smart-eq|twingo|c1|107|206|fiat-panda|fiat-punto/.test(car.id) ? 1.7 : 0);
+    let driving = 5.1 + (signals.performance ? 2.2 : 0) + (premium ? 0.8 : 0) + (signals.tesla ? 1.4 : 0) - (city ? 1.0 : 0) - (/van|berlingo|rifter|combo|kangoo|caddy|citan|tourneo|jogger/.test(car.id) ? 1.3 : 0);
+    if (supercar) {
+      comfort = Math.max(4, comfort);
+      practicality = Math.min(2, practicality);
+      tech = Math.max(6, tech);
+      driving = Math.max(9, driving);
+    }
+
+    return {
+      reliability: Math.round(clampNumber(reliability, 2, 10)),
+      comfort: Math.round(clampNumber(comfort, 2, 10)),
+      safety: Math.round(clampNumber(safety, 2, 10)),
+      practicality: Math.round(clampNumber(practicality, 1, 10)),
+      tech: Math.round(clampNumber(tech, 1, 10)),
+      drivingEnjoyment: Math.round(clampNumber(driving, 2, 10)),
+    };
+  }
+
+  function reviewedCosts(car) {
+    const group = categoryGroup(car);
+    const signals = brandSignals(car);
+    const price = Number(car.defaultUpfrontPrice) || 0;
+    const band = Math.max(0.4, price / 10000);
+    const ev = car.energyType === "electricity";
+    const hybrid = car.category === "hybrid";
+    const supercar = car.category === "supercar";
+    const luxury = car.category === "luxury" || /^Luxury/.test(group);
+    const premium = luxury || /^EV (sedan|SUV)$/.test(group) && price >= 36000 || price >= 45000;
+    const sports = /Sports car|Supercar|Hypercar|Coupe|Convertible/.test(group);
+    const city = group === "City car";
+    const oldCheap = price <= 6500 || /206|107|c2|punto|modus|ka|note|toledo/.test(car.id);
+    const reliability = reviewedScores(car).reliability;
+
+    let maintenance = (ev ? 260 : hybrid ? 500 : city ? 380 : 520) + band * (supercar ? 360 : luxury ? 150 : premium ? 110 : sports ? 95 : 42);
+    let insurance = (city ? 235 : ev ? 390 : 330) + band * (supercar ? 650 : luxury ? 175 : premium ? 115 : sports ? 105 : 42);
+    let repairs = (ev ? 390 : hybrid ? 460 : city ? 430 : 540) + band * (supercar ? 720 : luxury ? 230 : premium ? 145 : sports ? 125 : 55);
+    let tax = ev ? 0 : (city ? 55 : hybrid ? 105 : 120) + band * (supercar ? 35 : luxury ? 55 : premium ? 35 : sports ? 30 : 18);
+
+    if (signals.toyotaHonda) repairs -= 140;
+    if (signals.korean) repairs -= 80;
+    if (signals.simpleValue) maintenance -= 40;
+    if (signals.germanPremium) {
+      maintenance += 140;
+      repairs += 190;
+      insurance += 90;
+    }
+    if (signals.fragilePremium) {
+      maintenance += 240;
+      repairs += 520;
+      insurance += 140;
+    }
+    if (oldCheap) {
+      insurance -= 70;
+      repairs += 260;
+      maintenance += 40;
+    }
+    repairs += (7 - reliability) * 55;
+
+    return {
+      maintenancePerYear: roundTo(Math.max(car.maintenancePerYear || 0, maintenance), 10),
+      insurancePerYear: roundTo(Math.max(180, Math.max(car.insurancePerYear || 0, insurance)), 10),
+      repairsPerYear: roundTo(Math.max(220, Math.max(car.repairsPerYear || 0, repairs)), 10),
+      taxPerYear: ev ? 0 : roundTo(Math.max(40, Math.max(car.taxPerYear || 0, tax)), 5),
+    };
+  }
+
+  function reviewedConsumption(car) {
+    if (car.energyType === "electricity") {
+      const withChargingLoss = (Number(car.realWorldKwhPer100km) || 15) * 1.06;
+      const min = categoryGroup(car) === "EV hatchback" ? 14.5 : categoryGroup(car) === "EV SUV" ? 18 : 15.5;
+      return { realWorldKwhPer100km: Number(clampNumber(withChargingLoss, min, 28).toFixed(1)), realWorldLitersPer100km: 0 };
+    }
+    const group = categoryGroup(car);
+    const floor = car.category === "hybrid" ? 4.4 : group === "City car" ? 5.2 : /Sports car|Supercar|Hypercar/.test(group) ? 7.0 : /^Luxury/.test(group) ? 8.0 : 5.5;
+    return { realWorldKwhPer100km: 0, realWorldLitersPer100km: Number(Math.max(floor, Number(car.realWorldLitersPer100km) || floor).toFixed(1)) };
+  }
+
+  function reviewedResale(car) {
+    const retention = car.depreciationProfile
+      ? clampNumber(car.depreciationProfile.firstYearRetention * Math.pow(car.depreciationProfile.annualRetention, 6), car.depreciationProfile.minRetention || 0.08, 1.05)
+      : Number(car.resaleRetentionEstimate) || 0.35;
+    return Number(retention.toFixed(2));
+  }
+
+  function representativeYear(car) {
+    const text = `${car.id || ""} ${car.displayName || ""}`.toLowerCase();
+    const exact = text.match(/\b(19[8-9]\d|20[0-2]\d)\b/);
+    if (exact) return Number(exact[1]);
+    const range = text.match(/\((20\d{2})-(20\d{2})\)|\b(20\d{2})-to-(20\d{2})\b/);
+    if (range) return Math.round((Number(range[1] || range[3]) + Number(range[2] || range[4])) / 2);
+    if (/tourbillon|utopia|revuelto|junior electric|ev3|gravity|spectre|cybertruck|ex30|ex90|5 e-tech|600e|ora 03|taycan turbo gt/.test(text)) return 2024;
+    if (/model y|ioniq 5|ioniq 6|ev6|ev9|id\.3|id\.4|id\.5|byd|polestar|lucid|rivian|mg4|spring|mokka-e|e-208|e-2008|ë-c3|ë-c4|500e|bz4x|solterra|ariya|megane e-tech|scenic e-tech|sf90|296 gtb|purosangue/.test(text)) return 2022;
+    if (/model 3|kona electric|niro ev|i-pace|e-tron gt|leaf|zoe|i3|i8|bolt ev/.test(text)) return 2021;
+    if (/206|c2|punto|modus|ka|f40|carrera gt|clk gtr|veyron|murcielago|rx-7|s2000/.test(text)) return 2010;
+    if (/107|accord|passat|3-series|c-class|a4|phantom|continental-gt|911|prius|insight/.test(text)) return 2016;
+    return 2021;
+  }
+
+  function nameWithYear(car) {
+    const year = representativeYear(car);
+    const base = String(car.displayName || "").replace(/\s*\((?:19|20)\d{2}-(?:19|20)\d{2}\)\s*$/, "").replace(/\s+/g, " ").trim();
+    return /\b(19[8-9]\d|20[0-2]\d)\b/.test(base) ? base : `${base} ${year}`.trim();
+  }
+
+  function reviewCar(car) {
+    const displayName = nameWithYear(car);
+    const normalizedCar = Object.assign({}, car, { displayName });
+    const costs = reviewedCosts(car);
+    const consumption = reviewedConsumption(normalizedCar);
+    const identity = carIdentity(normalizedCar);
+    return Object.assign({}, normalizedCar, costs, consumption, {
+      brand: identity.brand,
+      model: identity.model,
+      generation: car.generation || identity.year || "",
+      yearRange: car.yearRange || identity.year || "",
+      year: identity.year,
+      powertrain: car.energyType === "electricity" ? "EV" : car.category === "hybrid" ? (String(car.fuelType || "").includes("plug-in") ? "plug-in hybrid" : "hybrid") : "combustion",
+      segment: car.segment || categoryGroup(car),
+      marketContext: car.marketContext || (identity.year >= 2022 ? "current-ish Portugal/EU value" : "Portugal/EU used-market estimate"),
+      categoryGroup: categoryGroup(normalizedCar),
+      categoryLabel: categoryGroup(normalizedCar),
+      resaleRetentionEstimate: reviewedResale(car),
+      scores: reviewedScores(normalizedCar),
+      sourceNotes: `${car.sourceNotes} Values reviewed against Portugal/EU 2026 market bands, IUC context, official/spec baselines, real-world consumption evidence, and owner/reliability heuristics.`,
+    });
+  }
+
+  function carIdentity(car) {
+    const brands = Object.keys(BRAND_MODELS).concat(["Mercedes-AMG", "Range Rover", "MINI", "Dodge", "Rimac", "DS", "Smart", "CUPRA"]).sort((a, b) => b.length - a.length);
+    const displayName = String(car.displayName || "");
+    const yearMatch = displayName.match(/\b(19[8-9]\d|20[0-2]\d)\b/);
+    const withoutYear = displayName.replace(/\s+\b(19[8-9]\d|20[0-2]\d)\b\s*$/, "").trim();
+    const brand = brands.find((item) => withoutYear.toLowerCase().startsWith(item.toLowerCase())) || withoutYear.split(/\s+/)[0] || "";
+    return {
+      brand,
+      model: withoutYear.replace(new RegExp(`^${brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*`, "i"), "").trim() || withoutYear,
+      year: yearMatch ? Number(yearMatch[1]) : representativeYear(car),
+    };
+  }
+
+  function uniqueById(cars) {
+    const seen = new Set();
+    const unique = [];
+    cars.forEach((car) => {
+      if (seen.has(car.id)) return;
+      seen.add(car.id);
+      unique.push(car);
+    });
+    return unique;
+  }
+
+  return uniqueById([
     {
       id: "toyota-corolla",
       displayName: "Toyota Corolla",
@@ -1165,7 +1873,11 @@
       sourceNotes: "Official hybrid ratings adjusted toward EU/UK owner reports; Portugal luxury ownership costs estimated.",
     },
     ...EXTRA_CARS,
-  ].sort((a, b) => {
+    ...GENERATED_DAILY_DRIVERS,
+    ...ICONIC_EDGE_CARS,
+    ...BRAND_COVERAGE_CARS,
+    ...LARGE_CATALOG_CARS,
+  ]).map(reviewCar).sort((a, b) => {
     const groupDiff = CATEGORY_ORDER.indexOf(categoryGroup(a)) - CATEGORY_ORDER.indexOf(categoryGroup(b));
     return groupDiff || a.defaultUpfrontPrice - b.defaultUpfrontPrice || a.displayName.localeCompare(b.displayName);
   });

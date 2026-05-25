@@ -19,6 +19,18 @@
     monthlyBudget: 300,
     yearsOwned: 7,
     annualKm: 15000,
+    fuelPrice: 2.00,
+    electricityPrice: 0.24,
+    marketReturn: STOCK_RETURN,
+  };
+
+  const DEFAULT_SCORE_WEIGHTS = {
+    reliability: 25,
+    safety: 20,
+    practicality: 20,
+    comfort: 15,
+    tech: 10,
+    drivingEnjoyment: 10,
   };
 
   const TYPE_DEFAULTS = {
@@ -32,10 +44,7 @@
       kwhPer100Km: 15.8,
       litersPer100Km: 0,
       fuelPrice: 1.75,
-      homeElectricityPrice: 0.20,
-      publicElectricityPrice: 0.48,
-      homeChargingPct: 85,
-      publicChargingPct: 15,
+      electricityPrice: 0.24,
       annualMaintenance: 380,
       annualInsurance: 650,
       annualRepairs: 450,
@@ -51,10 +60,7 @@
       // Toyota Corolla-like non-plug-in hybrid, adjusted above WLTP for mixed real use.
       litersPer100Km: 4.9,
       fuelPrice: 1.75,
-      homeElectricityPrice: 0.18,
-      publicElectricityPrice: 0.45,
-      homeChargingPct: 0,
-      publicChargingPct: 0,
+      electricityPrice: 0.24,
       annualMaintenance: 520,
       annualInsurance: 560,
       annualRepairs: 520,
@@ -70,10 +76,7 @@
       // Used compact petrol/diesel blend for Portugal-like mixed driving at 15,000 km/year.
       litersPer100Km: 6.2,
       fuelPrice: 1.75,
-      homeElectricityPrice: 0.18,
-      publicElectricityPrice: 0.45,
-      homeChargingPct: 0,
-      publicChargingPct: 0,
+      electricityPrice: 0.24,
       annualMaintenance: 650,
       annualInsurance: 500,
       annualRepairs: 760,
@@ -87,6 +90,7 @@
   };
 
   const TYPE_FIELDS = [
+    "carValue",
     "upfrontPrice",
     "downPayment",
     "monthlyPayment",
@@ -94,10 +98,7 @@
     "kwhPer100Km",
     "litersPer100Km",
     "fuelPrice",
-    "homeElectricityPrice",
-    "publicElectricityPrice",
-    "homeChargingPct",
-    "publicChargingPct",
+    "electricityPrice",
     "annualMaintenance",
     "annualInsurance",
     "annualRepairs",
@@ -142,11 +143,19 @@
       modelId: model.id,
       modelDisplayName: model.displayName,
       name: model.displayName,
+      brand: model.brand,
+      model: model.model,
+      generation: model.generation,
+      yearRange: model.yearRange,
       category: model.category,
+      powertrain: model.powertrain,
+      segment: model.segment,
+      marketContext: model.marketContext,
       typicalMarket: model.typicalMarket,
       type,
       energyType: model.energyType,
       fuelType: model.fuelType,
+      carValue: model.defaultUpfrontPrice,
       upfrontPrice: model.defaultUpfrontPrice,
       kwhPer100Km: model.realWorldKwhPer100km,
       litersPer100Km: model.realWorldLitersPer100km,
@@ -159,8 +168,40 @@
       modelNotes: model.notes,
       confidence: model.confidence,
       sourceNotes: model.sourceNotes,
+      scores: Object.assign(defaultScores(model), model.scores || {}),
       loadedFromDatabase: true,
     });
+  }
+
+  function defaultScores(model) {
+    const category = model && model.category;
+    const ev = model && model.energyType === "electricity";
+    const group = model && model.categoryGroup || "";
+    const price = num(model && model.defaultUpfrontPrice);
+    const premium = category === "luxury" || category === "supercar" || price >= 45000;
+    const cheap = price > 0 && price < 9000;
+    const toyotaHonda = /toyota|honda|lexus/i.test(model && (model.id || model.displayName) || "");
+    const germanPremium = /bmw|mercedes|audi|porsche/i.test(model && (model.id || model.displayName) || "");
+    return {
+      reliability: clamp(category === "supercar" ? 4 : toyotaHonda ? 9 : premium ? 6 : cheap ? 5 : 7, 0, 10),
+      comfort: clamp(category === "supercar" ? 4 : premium ? 9 : /SUV|Sedans|Wagons/i.test(group) ? 7 : cheap ? 4 : 6, 0, 10),
+      safety: clamp(premium || ev ? 8 : cheap ? 5 : 7, 0, 10),
+      practicality: clamp(category === "supercar" ? 1 : /Wagons|SUVs|Crossovers/i.test(group) ? 8 : /city/i.test(group) ? 5 : 7, 0, 10),
+      tech: clamp(ev ? (premium ? 9 : 8) : germanPremium ? 8 : cheap ? 4 : 6, 0, 10),
+      drivingEnjoyment: clamp(category === "supercar" ? 10 : germanPremium || premium ? 8 : cheap ? 4 : 6, 0, 10),
+    };
+  }
+
+  function weightedQualityScore(carInput, weightsInput) {
+    const car = withCarDefaults(carInput);
+    const weights = Object.assign({}, DEFAULT_SCORE_WEIGHTS, weightsInput || {});
+    const scores = Object.assign(defaultScores(car), car.scores || {});
+    const totalWeight = Object.keys(DEFAULT_SCORE_WEIGHTS).reduce((sum, field) => sum + Math.max(0, num(weights[field])), 0);
+    if (totalWeight <= 0) return 0;
+    const weighted = Object.keys(DEFAULT_SCORE_WEIGHTS).reduce((sum, field) => {
+      return sum + clamp(scores[field], 0, 10) * Math.max(0, num(weights[field]));
+    }, 0);
+    return weighted / totalWeight;
   }
 
   function displayCarName(carInput) {
@@ -171,8 +212,8 @@
     return String(car.modelDisplayName || (model && model.displayName) || car.name || "Unnamed option").trim() || "Unnamed option";
   }
 
-  function monthlyInvestmentRate() {
-    return Math.pow(1 + STOCK_RETURN / 100, 1 / 12) - 1;
+  function monthlyInvestmentRate(returnPct = STOCK_RETURN) {
+    return Math.pow(1 + num(returnPct, STOCK_RETURN) / 100, 1 / 12) - 1;
   }
 
   function normalizeYears(years) {
@@ -231,7 +272,14 @@
       const modelDefaults = carDefaultsFromModel(model.id);
       [
         "modelDisplayName",
+        "brand",
+        "model",
+        "generation",
+        "yearRange",
         "category",
+        "powertrain",
+        "segment",
+        "marketContext",
         "typicalMarket",
         "energyType",
         "fuelType",
@@ -240,12 +288,15 @@
         "modelNotes",
         "confidence",
         "sourceNotes",
+        "scores",
         "loadedFromDatabase",
       ].forEach((field) => {
         if (merged[field] === undefined || merged[field] === null || field === "modelDisplayName") merged[field] = clone(modelDefaults[field]);
       });
       merged.type = typeFromModel(model);
     }
+    if (merged.carValue === undefined || merged.carValue === null) merged.carValue = merged.upfrontPrice;
+    merged.scores = Object.assign(defaultScores(model || merged), merged.scores || {});
     merged.type = cleanType(merged.type);
     merged.paymentMode = merged.paymentMode === PAYMENT_MODES.finance ? PAYMENT_MODES.finance : PAYMENT_MODES.upfront;
     merged.customFields = Array.isArray(merged.customFields) ? merged.customFields.slice() : [];
@@ -292,7 +343,7 @@
 
   function estimatedResaleValue(carInput, yearsInput) {
     const car = withCarDefaults(carInput);
-    return Math.round(Math.max(0, num(car.upfrontPrice) * modelRetentionRate(car, yearsInput)) / 100) * 100;
+    return Math.round(Math.max(0, num(car.carValue, car.upfrontPrice) * modelRetentionRate(car, yearsInput)) / 100) * 100;
   }
 
   function effectiveResaleValue(carInput, yearsInput) {
@@ -328,22 +379,20 @@
     return Math.max(0, owed);
   }
 
-  function weightedElectricityPrice(carInput) {
+  function weightedElectricityPrice(carInput, assumptionsInput) {
+    const assumptions = assumptionsInput || {};
     const car = withCarDefaults(carInput);
-    const homePct = clamp(car.homeChargingPct, 0, 100) / 100;
-    const publicPct = clamp(car.publicChargingPct, 0, 100) / 100;
-    const total = homePct + publicPct;
-    const homeShare = total > 0 ? homePct / total : 1;
-    const publicShare = total > 0 ? publicPct / total : 0;
-    return homeShare * Math.max(0, num(car.homeElectricityPrice)) + publicShare * Math.max(0, num(car.publicElectricityPrice));
+    if (Object.prototype.hasOwnProperty.call(assumptions, "electricityPrice")) return Math.max(0, num(assumptions.electricityPrice));
+    return Math.max(0, num(car.electricityPrice, DEFAULT_ASSUMPTIONS.electricityPrice));
   }
 
   function annualEnergyCost(carInput, assumptionsInput) {
     const car = withCarDefaults(carInput);
     const assumptions = Object.assign({}, DEFAULT_ASSUMPTIONS, assumptionsInput || {});
     const km = Math.max(0, num(assumptions.annualKm));
-    if (car.type === "ev") return km / 100 * Math.max(0, num(car.kwhPer100Km)) * weightedElectricityPrice(car);
-    return km / 100 * Math.max(0, num(car.litersPer100Km)) * Math.max(0, num(car.fuelPrice));
+    if (car.type === "ev") return km / 100 * Math.max(0, num(car.kwhPer100Km)) * weightedElectricityPrice(car, assumptions);
+    const fuelPrice = assumptionsInput && Object.prototype.hasOwnProperty.call(assumptionsInput, "fuelPrice") ? assumptionsInput.fuelPrice : car.fuelPrice;
+    return km / 100 * Math.max(0, num(car.litersPer100Km)) * Math.max(0, num(fuelPrice));
   }
 
   function annualRunningBreakdown(carInput, assumptions) {
@@ -410,7 +459,7 @@
     if (row.resaleValue < 0 || !Number.isFinite(row.resaleValue)) {
       warnings.push(warning("resale-invalid", "no", "Resale value is missing or negative.", row.carKey, row.option));
     }
-    if (row.resaleValue > num(car.upfrontPrice) * 0.9 && normalizeYears(assumptions.yearsOwned) >= 2) {
+    if (row.resaleValue > num(car.carValue, car.upfrontPrice) * 0.9 && normalizeYears(assumptions.yearsOwned) >= 2) {
       warnings.push(warning("resale-high", "warning", "Resale value looks suspiciously high.", row.carKey, row.option));
     }
     return warnings;
@@ -420,7 +469,7 @@
     const assumptions = Object.assign({}, DEFAULT_ASSUMPTIONS, assumptionsInput || {});
     const years = normalizeYears(yearsInput === undefined ? assumptions.yearsOwned : yearsInput);
     const months = analysisMonths(years);
-    const monthlyRate = monthlyInvestmentRate();
+    const monthlyRate = monthlyInvestmentRate(assumptions.marketReturn);
     const car = withCarDefaults(carInput, carKeyInput);
     const mode = modeInput === PAYMENT_MODES.finance ? PAYMENT_MODES.finance : PAYMENT_MODES.upfront;
     const finance = financeSummary(car);
@@ -484,6 +533,7 @@
       possible: "Yes",
       warnings: [],
       upfrontPrice: num(car.upfrontPrice),
+      carValue: num(car.carValue, car.upfrontPrice),
       initialSpent,
       carPaidDisplay: isFinance && finance.loanMonths > months ? paidByEnd : (isFinance ? finance.financeTotal : num(car.upfrontPrice)),
       carPaidNote: isFinance && finance.loanMonths > months ? "paid by selected year" : (isFinance ? "full finance term" : "paid upfront"),
@@ -519,7 +569,7 @@
       monthlyPaymentUsed: isFinance ? finance.monthlyPayment : 0,
       finance,
       yearly,
-      resaleRisk: resaleValue > num(car.upfrontPrice) * 0.9 && years >= 2,
+      resaleRisk: resaleValue > num(car.carValue, car.upfrontPrice) * 0.9 && years >= 2,
     };
     row.option = scenarioLabel(row);
     row.warnings = buildWarnings(row, car, assumptions, months);
@@ -564,25 +614,142 @@
       runnerUp,
       difference: winner && runnerUp ? winner.finalMoney - runnerUp.finalMoney : 0,
       warnings,
-      stockReturn: STOCK_RETURN,
+      stockReturn: num(assumptions.marketReturn, STOCK_RETURN),
     };
   }
 
-  function rankCarDatabase(assumptionsInput) {
+  function normalizedValue(value, min, max) {
+    if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) return 1;
+    return clamp((num(value) - min) / (max - min), 0, 1);
+  }
+
+  function rankCarDatabase(assumptionsInput, scoreWeightsInput) {
     const assumptions = Object.assign({}, DEFAULT_ASSUMPTIONS, assumptionsInput || {});
     assumptions.yearsOwned = normalizeYears(assumptions.yearsOwned);
-    return CAR_DATABASE.map((entry) => {
-      const car = applyCarModelDefaults({}, entry.id, { keepPayment: false });
-      const row = simulateScenario(car, assumptions, PAYMENT_MODES.upfront, assumptions.yearsOwned, entry.id);
-      row.id = entry.id;
-      row.modelId = entry.id;
-      row.carName = entry.displayName;
-      row.category = entry.category;
-      row.categoryGroup = entry.categoryGroup || entry.category;
-      row.categoryLabel = entry.categoryLabel || entry.categoryGroup || entry.category;
-      row.option = entry.displayName;
-      return row;
-    }).sort((a, b) => b.finalMoney - a.finalMoney);
+    const scoreWeights = Object.assign({}, DEFAULT_SCORE_WEIGHTS, scoreWeightsInput || {});
+    const totalScoreWeight = Object.keys(DEFAULT_SCORE_WEIGHTS).reduce((sum, field) => sum + Math.max(0, num(scoreWeights[field])), 0);
+    const directQualityScore = (entry) => {
+      if (totalScoreWeight <= 0) return 0;
+      const scores = entry.scores || defaultScores(entry);
+      return Object.keys(DEFAULT_SCORE_WEIGHTS).reduce((sum, field) => {
+        return sum + clamp(scores[field], 0, 10) * Math.max(0, num(scoreWeights[field]));
+      }, 0) / totalScoreWeight;
+    };
+    const directRetentionRate = (entry, years) => {
+      const type = typeFromModel(entry);
+      const profile = entry.depreciationProfile;
+      if (!profile || !Number.isFinite(Number(profile.firstYearRetention)) || !Number.isFinite(Number(profile.annualRetention))) {
+        return retentionRate(type, years);
+      }
+      const firstYearRetention = num(profile.firstYearRetention, retentionRate(type, 1));
+      const annualRetention = num(profile.annualRetention, 0.9);
+      const minRetention = num(profile.minRetention, 0.08);
+      if (years <= 1) return Math.min(0.98, firstYearRetention + (1 - years) * 0.06);
+      return clamp(firstYearRetention * Math.pow(annualRetention, years - 1), minRetention, 1.15);
+    };
+    const rows = CAR_DATABASE.map((entry) => {
+      const type = typeFromModel(entry);
+      const years = assumptions.yearsOwned;
+      const months = analysisMonths(years);
+      const monthlyRate = monthlyInvestmentRate(assumptions.marketReturn);
+      const initialSpent = Math.max(0, num(entry.defaultUpfrontPrice));
+      const energy = type === "ev"
+        ? Math.max(0, num(assumptions.annualKm)) / 100 * Math.max(0, num(entry.realWorldKwhPer100km)) * Math.max(0, num(assumptions.electricityPrice))
+        : Math.max(0, num(assumptions.annualKm)) / 100 * Math.max(0, num(entry.realWorldLitersPer100km)) * Math.max(0, num(assumptions.fuelPrice));
+      const running = {
+        energy,
+        maintenance: Math.max(0, num(entry.maintenancePerYear)),
+        insurance: Math.max(0, num(entry.insurancePerYear)),
+        repairs: Math.max(0, num(entry.repairsPerYear)),
+        tax: Math.max(0, num(entry.taxPerYear)),
+      };
+      running.total = running.energy + running.maintenance + running.insurance + running.repairs + running.tax;
+      const monthlyRunning = running.total / 12;
+      const startingInvestment = Math.max(0, num(assumptions.initialCashBudget) - initialSpent);
+      const monthlyInvestment = Math.max(0, num(assumptions.monthlyBudget) - monthlyRunning);
+      const growth = Math.pow(1 + monthlyRate, months);
+      const contributionGrowth = monthlyRate === 0 ? months : (growth - 1) / monthlyRate;
+      const investmentBalance = startingInvestment * growth + monthlyInvestment * contributionGrowth;
+      const totalDeficits = Math.max(0, initialSpent - num(assumptions.initialCashBudget)) + Math.max(0, monthlyRunning - num(assumptions.monthlyBudget)) * months;
+      const runningPaid = monthlyRunning * months;
+      const resaleValue = Math.round(Math.max(0, num(entry.defaultUpfrontPrice) * directRetentionRate(entry, years)) / 100) * 100;
+      const totalPaid = initialSpent + runningPaid;
+      const finalMoney = investmentBalance + resaleValue - totalDeficits;
+      const qualityScore = directQualityScore(entry);
+      return {
+        id: entry.id,
+        modelId: entry.id,
+        carKey: entry.id,
+        carName: entry.displayName,
+        option: entry.displayName,
+        mode: PAYMENT_MODES.upfront,
+        type,
+        category: entry.category,
+        categoryGroup: entry.categoryGroup || entry.category,
+        categoryLabel: entry.categoryLabel || entry.categoryGroup || entry.category,
+        years,
+        months,
+        possible: initialSpent > num(assumptions.initialCashBudget) ? "No" : totalDeficits > 0 ? "Warning" : "Yes",
+        warnings: [],
+        upfrontPrice: initialSpent,
+        carValue: num(entry.defaultUpfrontPrice),
+        initialSpent,
+        carPaidDisplay: initialSpent,
+        carPaidNote: "paid upfront",
+        carMonthlyPaymentDisplay: 0,
+        carTotalDisplay: initialSpent,
+        carPaymentsPaid: initialSpent,
+        financeTotal: initialSpent,
+        financingCost: 0,
+        monthlyRunningCost: monthlyRunning,
+        extraMonth: monthlyRunning,
+        extraTotal: runningPaid,
+        totalPaid,
+        investedResult: investmentBalance,
+        investmentBalance,
+        resaleValue,
+        resaleSource: "estimated",
+        loanLeft: 0,
+        loanStillOwed: 0,
+        finalMoney,
+        finalMoneyLeft: finalMoney,
+        totalDeficits,
+        budgetDeficit: totalDeficits,
+        averageMonthlyInvested: months > 0 ? Math.max(0, num(assumptions.monthlyBudget) - monthlyRunning) : 0,
+        averageMonthlyCarCost: months > 0 ? runningPaid / months : 0,
+        maxMonthlyCarCost: monthlyRunning,
+        running,
+        runningPaid,
+        energyPaid: running.energy / 12 * months,
+        maintenancePaid: running.maintenance / 12 * months,
+        insurancePaid: running.insurance / 12 * months,
+        repairsPaid: running.repairs / 12 * months,
+        taxPaid: running.tax / 12 * months,
+        monthlyPaymentUsed: 0,
+        finance: {
+          downPayment: 0,
+          monthlyPayment: 0,
+          loanMonths: 0,
+          financeTotal: initialSpent,
+          financeTotalPaid: initialSpent,
+          financingCost: 0,
+        },
+        qualityScore,
+        rankingScore: 0,
+        globalRank: 0,
+        yearly: [],
+        resaleRisk: resaleValue > num(entry.defaultUpfrontPrice) * 0.9 && years >= 2,
+      };
+    });
+    const netWorthValues = rows.map((row) => row.finalMoney);
+    const minNetWorth = Math.min(...netWorthValues);
+    const maxNetWorth = Math.max(...netWorthValues);
+    rows.forEach((row) => {
+      row.netWorthScore = normalizedValue(row.finalMoney, minNetWorth, maxNetWorth);
+      row.qualityScoreNormalized = clamp(row.qualityScore / 10, 0, 1);
+      row.rankingScore = 0.65 * row.netWorthScore + 0.35 * row.qualityScoreNormalized;
+    });
+    return rows.sort((a, b) => b.rankingScore - a.rankingScore || b.finalMoney - a.finalMoney || a.carName.localeCompare(b.carName)).map((row, index) => Object.assign(row, { globalRank: index + 1 }));
   }
 
   function formatEuro(value) {
@@ -596,12 +763,14 @@
     CAR_DATABASE,
     CAR_BY_ID,
     DEFAULT_ASSUMPTIONS,
+    DEFAULT_SCORE_WEIGHTS,
     TYPE_DEFAULTS,
     DEFAULT_CARS,
     TYPE_FIELDS,
     clone,
     num,
     defaultCar,
+    weightedQualityScore,
     carModelById,
     carDefaultsFromModel,
     applyCarModelDefaults,
