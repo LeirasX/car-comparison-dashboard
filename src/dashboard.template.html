@@ -100,7 +100,7 @@
     .button:hover, .small-button:hover { transform:translateY(-1px); box-shadow:var(--shadow-soft); border-color:rgba(49,95,82,.36); }
     .button.primary { background:var(--ink); border-color:var(--ink); color:#fff; }
     .small-button { min-height:34px; padding:7px 11px; font-size:12px; }
-    .hero-card { border-radius:30px; padding:22px; display:flex; flex-direction:column; gap:14px; }
+    .hero-card { position:relative; border-radius:30px; padding:22px 22px 68px; display:flex; flex-direction:column; gap:14px; }
     .hero-metric {
       padding:16px;
       border-radius:17px;
@@ -117,6 +117,20 @@
     .badge { display:inline-flex; align-items:center; gap:6px; align-self:flex-start; border-radius:999px; padding:7px 10px; background:var(--good-soft); color:var(--good); font-size:12px; font-weight:850; }
     .badge.warn { background:var(--amber-soft); color:var(--amber); }
     .badge.no { background:var(--red-soft); color:var(--red); }
+    .rank-toggle {
+      position:absolute;
+      right:18px;
+      bottom:18px;
+      min-height:34px;
+      padding:7px 13px;
+      border-radius:999px;
+      border:1px solid var(--line-strong);
+      background:var(--solid);
+      color:var(--accent);
+      font-size:12px;
+      font-weight:850;
+      cursor:pointer;
+    }
     .panel { border-radius:var(--radius); padding:18px; margin-bottom:18px; overflow:hidden; animation:rise .34s ease both; transition:box-shadow .2s ease, transform .2s ease, border-color .2s ease; }
     .panel:hover, .car-panel:hover { transform:translateY(-1px); box-shadow:var(--shadow-soft); border-color:rgba(49,95,82,.24); }
     .panel > summary {
@@ -217,6 +231,10 @@
     }
     .help-bubble.show { opacity:1; transform:translateY(0); pointer-events:auto; }
     .warnings { display:grid; gap:7px; margin:0 0 18px; }
+    .ranking-panel[hidden] { display:none; }
+    .ranking-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:14px; }
+    .ranking-head h2 { font-size:18px; font-weight:850; letter-spacing:-.01em; }
+    .ranking-head p { margin-top:4px; color:var(--muted); font-size:12px; }
     .notice {
       display:flex;
       gap:8px;
@@ -283,6 +301,8 @@
       .hero-copy, .hero-card, .panel { border-radius:19px; }
       .hero-copy { min-height:auto; padding:22px; }
       .hero-card, .panel { padding:15px; }
+      .hero-card { padding-bottom:62px; }
+      .rank-toggle { right:14px; bottom:14px; }
       .controls { grid-template-columns:1fr; }
       .panel > summary { font-size:16px; }
       input, select { min-height:46px; font-size:16px; }
@@ -313,6 +333,17 @@
   </header>
 
   <main>
+    <section id="rankingPanel" class="panel ranking-panel" hidden>
+      <div class="ranking-head">
+        <div>
+          <h2>Database ranking</h2>
+          <p id="rankingSummary">All cars ranked with the current setup.</p>
+        </div>
+        <button class="small-button" id="rankingClose" type="button">Hide</button>
+      </div>
+      <div id="rankingTable" class="table-wrap"></div>
+    </section>
+
     <div id="warningBox" class="warnings" aria-live="polite"></div>
 
     <details id="setup" class="panel" open>
@@ -350,6 +381,7 @@
     const state = {
       assumptions: structuredClone(M.DEFAULT_ASSUMPTIONS),
       cars: { car1: M.defaultCar("car1"), car2: M.defaultCar("car2") },
+      rankingOpen: false,
     };
     let latestResult = null;
 
@@ -363,8 +395,8 @@
       monthlyBudget: "Each month, leftover budget after car costs is invested. If costs exceed budget, the deficit is subtracted at the end.",
       yearsOwned: "Any number of years. The simulation runs month by month for years owned x 12 months.",
       annualKm: "Used only for fuel or electricity cost. 0 km makes energy cost 0.",
-      name: "Used as the option name in the hero and results.",
-      type: "EV uses electricity. Hybrid and combustion use fuel. Hidden energy fields do not affect results.",
+      modelId: "Select a real model. Changing the model loads database defaults for price, consumption, ownership costs, tax, and resale.",
+      customName: "Optional label shown in the hero and results. Leave blank to use the selected model name.",
       paymentMode: "Upfront shows cash price only. Finance shows cash price, down payment, monthly payment, and months.",
       upfrontPrice: "Cash price / car value. Used for upfront payment, finance cost comparison, and default resale estimate.",
       downPayment: "Cash paid at month 0 for finance.",
@@ -410,6 +442,7 @@
       combustion: [["litersPer100Km", "L/100km", 0.1], ["fuelPrice", "Fuel €/L", 0.01]],
     };
     const commonCostFields = [["annualMaintenance", "Maintenance/year", 50], ["annualInsurance", "Insurance/year", 50], ["annualRepairs", "Repairs/year", 50], ["annualTax", "Tax/year", 25], ["resaleValue", "Resale after years", 100]];
+    const categoryOrder = ["Cheap city cars", "Common small cars", "Common family cars", "Hybrids", "Cheap EVs", "Common EVs", "SUVs", "Premium sedans", "Premium EVs", "Sports cars", "Luxury cars", "Supercars / collector cars"];
 
     function euro(value) {
       return new Intl.NumberFormat("en-IE", { style:"currency", currency:"EUR", maximumFractionDigits:0 }).format(finite(value));
@@ -441,7 +474,7 @@
       return `<label class="field-label help-target" for="${id}"${helpAttrs(`${carKey}.${field}`)}>${escapeHtml(label)}</label>`;
     }
     function carTitle(carKey) {
-      return escapeHtml(state.cars[carKey].name || "Unnamed option");
+      return escapeHtml(M.displayCarName(state.cars[carKey]));
     }
 
     function init() {
@@ -483,13 +516,38 @@
       document.getElementById("choiceInputs").innerHTML = ["car1", "car2"].map((carKey) => {
         const car = state.cars[carKey];
         const html = `
-          ${inputRow(carKey, "name", "Name", `<input id="${carKey}-name" data-car="${carKey}" data-field="name" type="text" value="${escapeHtml(car.name || "")}">`)}
-          ${inputRow(carKey, "type", "Type", `<select id="${carKey}-type" data-car="${carKey}" data-field="type"><option value="ev" ${car.type === "ev" ? "selected" : ""}>EV</option><option value="hybrid" ${car.type === "hybrid" ? "selected" : ""}>Hybrid</option><option value="combustion" ${car.type === "combustion" ? "selected" : ""}>Combustion</option></select>`)}
+          ${inputRow(carKey, "modelId", "Car model", modelSelect(carKey, car))}
+          ${inputRow(carKey, "customName", "Custom display name", `<input id="${carKey}-customName" data-car="${carKey}" data-field="customName" type="text" placeholder="${escapeHtml(car.modelDisplayName || "")}" value="${escapeHtml(car.customName || "")}">`)}
           ${inputRow(carKey, "paymentMode", "Payment", `<select id="${carKey}-paymentMode" data-car="${carKey}" data-field="paymentMode"><option value="upfront" ${car.paymentMode === "upfront" ? "selected" : ""}>Upfront</option><option value="finance" ${car.paymentMode === "finance" ? "selected" : ""}>Finance</option></select>`)}
         `;
         return carPanel(carKey, html);
       }).join("");
       bindCarInputs("choiceInputs");
+    }
+
+    function modelSelect(carKey, car) {
+      const options = categoryOrder.map((label) => {
+        const entries = M.CAR_DATABASE.filter((item) => carCategoryGroup(item) === label).sort((a, b) => a.defaultUpfrontPrice - b.defaultUpfrontPrice || a.displayName.localeCompare(b.displayName));
+        if (!entries.length) return "";
+        return `<optgroup label="${escapeHtml(label)}">${entries.map((item) => `<option value="${escapeHtml(item.id)}" ${car.modelId === item.id ? "selected" : ""}>${escapeHtml(item.displayName)}</option>`).join("")}</optgroup>`;
+      }).join("");
+      return `<select id="${carKey}-modelId" data-car="${carKey}" data-field="modelId" aria-label="Search or choose car model">${options}</select>`;
+    }
+
+    function carCategoryGroup(car) {
+      if (car.categoryGroup) return car.categoryGroup;
+      if (car.category === "hybrid") return "Hybrids";
+      if (car.energyType === "electricity") {
+        if (car.category === "luxury" || car.category === "supercar" || car.defaultUpfrontPrice >= 36000) return "Premium EVs";
+        return car.defaultUpfrontPrice <= 22000 ? "Cheap EVs" : "Common EVs";
+      }
+      if (car.category === "supercar") return "Supercars / collector cars";
+      if (car.category === "luxury" && car.defaultUpfrontPrice >= 60000) return "Luxury cars";
+      if (car.category === "luxury" || ["bmw-3-series", "mercedes-c-class", "audi-a4"].includes(car.id)) return "Premium sedans";
+      if (car.category === "pickup" || /hilux|f150|rav4|cr-v|rx/i.test(car.id)) return "SUVs";
+      if (car.defaultUpfrontPrice <= 9000 || /panda|aygo|picanto|i10|up|206/i.test(car.id)) return "Cheap city cars";
+      if (car.defaultUpfrontPrice <= 14500 || /fiesta|clio|sandero|corsa|ibiza|fabia|micra|208/i.test(car.id)) return "Common small cars";
+      return "Common family cars";
     }
 
     function renderPayment() {
@@ -603,10 +661,13 @@
     }
 
     function carName(carKey, cars = state.cars) {
-      return String(cars[carKey]?.name || "Unnamed option").trim() || "Unnamed option";
+      return M.displayCarName(cars[carKey]);
     }
 
     function typeLabel(car) {
+      if (car?.category === "supercar") return "a supercar";
+      if (car?.category === "luxury") return car?.type === "ev" ? "a luxury EV" : "a luxury car";
+      if (car?.category === "pickup") return "a pickup";
       return ({ ev:"an EV", hybrid:"a hybrid", combustion:"a combustion car" }[car?.type] || "a car");
     }
 
@@ -624,27 +685,32 @@
       const running = M.annualRunningBreakdown(car, result.assumptions);
       const map = {
         panel: `${name} is ${typeLabel(car)}, ${paymentLabel(car)}, and currently leaves ${euro(row?.finalMoney || 0)} after ${years} years.`,
-        name: `This option is shown as ${name} in the hero, table, and all help bubbles.`,
-        type: `${name} is set as ${typeLabel(car)}. Changing type updates untouched type defaults while preserving fields you edited.`,
+        modelId: `${name} is loaded from the local car database as ${typeLabel(car)}. Selecting a different model reloads realistic defaults for price, energy use, maintenance, insurance, repairs, tax, and resale.`,
+        customName: car.customName ? `This option is shown as ${name} in the hero, table, and all help bubbles.` : `${name} is using the selected model name. Add a custom display name only if you want a clearer offer label.`,
         paymentMode: `${name} is currently ${paymentLabel(car)}.`,
-        upfrontPrice: `${name} price is ${euro(car.upfrontPrice)}. This drives upfront cost, finance comparison, and resale estimate.`,
+        upfrontPrice: `${name} price is ${euro(car.upfrontPrice)}. This drives upfront cost, finance comparison, and resale estimate.${sourceText(car, "price")}`,
         downPayment: `${name} down payment is ${euro(car.downPayment)}.`,
         monthlyPayment: `${name} finance payment is ${euro(car.monthlyPayment)}/month while the loan is active.`,
         loanMonths: `${name} loan term is ${number(car.loanMonths, 0)} months. If it extends beyond ${years} years, loan left is subtracted from net worth.`,
-        kwhPer100Km: `${name} uses ${number(car.kwhPer100Km, 1)} kWh/100 km. Current electricity cost is ${euro(running.energy / 12)}/month.`,
-        litersPer100Km: `${name} uses ${number(car.litersPer100Km, 1)} L/100 km. Current fuel cost is ${euro(running.energy / 12)}/month.`,
+        kwhPer100Km: `${name} uses ${number(car.kwhPer100Km, 1)} kWh/100 km. Current electricity cost is ${euro(running.energy / 12)}/month.${sourceText(car, "electricity use")}`,
+        litersPer100Km: `${name} uses ${number(car.litersPer100Km, 1)} L/100 km. Current fuel cost is ${euro(running.energy / 12)}/month.${sourceText(car, "fuel use")}`,
         fuelPrice: `${name} fuel price is ${euroPrecise(car.fuelPrice)}/L. Current fuel cost is ${euro(running.energy / 12)}/month.`,
         homeElectricityPrice: `${name} home electricity is ${euroPrecise(car.homeElectricityPrice)}/kWh with ${number(car.homeChargingPct, 0)}% home charging.`,
         publicElectricityPrice: `${name} public electricity is ${euroPrecise(car.publicElectricityPrice)}/kWh with ${number(car.publicChargingPct, 0)}% public charging.`,
         homeChargingPct: `${name} currently charges ${number(car.homeChargingPct, 0)}% at home.`,
         publicChargingPct: `${name} currently charges ${number(car.publicChargingPct, 0)}% publicly.`,
-        annualMaintenance: `${name} maintenance is ${euro(car.annualMaintenance)}/year.`,
-        annualInsurance: `${name} insurance is ${euro(car.annualInsurance)}/year.`,
-        annualRepairs: `${name} repair reserve is ${euro(car.annualRepairs)}/year.`,
-        annualTax: `${name} road tax is ${euro(car.annualTax)}/year.`,
-        resaleValue: `${name} resale after ${years} years is ${euro(car.resaleValue)}. Net worth includes this value.`,
+        annualMaintenance: `${name} maintenance is ${euro(car.annualMaintenance)}/year.${sourceText(car, "maintenance")}`,
+        annualInsurance: `${name} insurance is ${euro(car.annualInsurance)}/year.${sourceText(car, "insurance")}`,
+        annualRepairs: `${name} repair reserve is ${euro(car.annualRepairs)}/year.${sourceText(car, "repairs")}`,
+        annualTax: `${name} road tax is ${euro(car.annualTax)}/year.${sourceText(car, "Portugal IUC/tax")}`,
+        resaleValue: `${name} resale after ${years} years is ${euro(car.resaleValue)}. Net worth includes this value.${sourceText(car, "depreciation/resale")}`,
       };
       return map[field] || "";
+    }
+
+    function sourceText(car, fieldLabel) {
+      if (!car.loadedFromDatabase) return "";
+      return ` ${car.modelDisplayName || car.name} ${fieldLabel} is based on: ${car.sourceNotes || "local database assumptions"}. It may differ with trim, year, mileage, driver profile, location, battery health, and service history.`;
     }
 
     function rowHelp(carKey, field, rows, result) {
@@ -667,21 +733,23 @@
 
     function bindCarInputs(rootId) {
       document.getElementById(rootId).querySelectorAll("[data-car]").forEach((input) => {
-        input.addEventListener("input", () => {
+        const handleInput = () => {
           const carKey = input.dataset.car;
           const car = state.cars[carKey];
           const field = input.dataset.field;
           if (input.tagName === "SELECT" || input.type === "text") {
-            car[field] = input.value;
-            if (field === "type") {
-              state.cars[carKey] = M.applyTypeDefaults(car, { respectCustom:true });
+            if (field === "modelId") {
+              state.cars[carKey] = M.applyCarModelDefaults(car, input.value, { keepPayment:true });
               refreshAutoResale();
               renderAllInputs();
               bindHelp();
             } else if (field === "paymentMode") {
+              car[field] = input.value;
               renderPayment();
               bindHelp();
             } else {
+              car[field] = input.value;
+              car.name = M.displayCarName(car);
               updateCarTitles(carKey);
             }
           } else {
@@ -696,7 +764,9 @@
             if (["upfrontPrice", "resaleValue", "kwhPer100Km", "litersPer100Km", "fuelPrice", "homeElectricityPrice", "publicElectricityPrice", "homeChargingPct", "publicChargingPct", "annualMaintenance", "annualInsurance", "annualRepairs", "annualTax"].includes(field)) updateRunningMeta(carKey);
           }
           update();
-        });
+        };
+        input.addEventListener("input", handleInput);
+        if (input.tagName === "SELECT") input.addEventListener("change", handleInput);
       });
     }
 
@@ -791,6 +861,7 @@
       const result = M.analyze(state);
       latestResult = result;
       renderHero(result);
+      renderRanking(result);
       renderWarnings(result);
       renderMobileResults(result);
       renderTable(result);
@@ -803,8 +874,62 @@
         <div class="hero-metric help-target flow" ${helpAttrs("heroWinner")}><span>${icon("winner")}Winner</span><strong>${escapeHtml(winner.option)}</strong></div>
         <div class="hero-metric help-target flow" ${helpAttrs("heroCostDiff")}><span>${icon("budget")}Cost difference</span><strong>${formatCostDifferencePct(winner, runnerUp)}</strong></div>
         <div class="hero-metric help-target flow" ${helpAttrs("heroNetWorthDiff")}><span>${icon("car")}Net worth difference</span><strong>${formatNetWorthDifferencePct(winner, runnerUp)}</strong></div>
+        <button class="rank-toggle" type="button" data-rank-toggle>${state.rankingOpen ? "Hide rank" : "Rank"}</button>
       ` : "";
+      bindRankButton();
       bindHelp();
+    }
+
+    function bindRankButton() {
+      if (!document.querySelectorAll) return;
+      document.querySelectorAll("[data-rank-toggle]").forEach((button) => {
+        if (button.dataset.rankBound) return;
+        button.dataset.rankBound = "1";
+        button.addEventListener("click", toggleRanking);
+      });
+      const close = document.getElementById("rankingClose");
+      if (close && !close.dataset.rankBound) {
+        close.dataset.rankBound = "1";
+        close.addEventListener("click", () => toggleRanking(false));
+      }
+    }
+
+    function toggleRanking(forceOpen) {
+      state.rankingOpen = typeof forceOpen === "boolean" ? forceOpen : !state.rankingOpen;
+      update();
+      const panel = document.getElementById("rankingPanel");
+      if (state.rankingOpen && panel && panel.scrollIntoView) panel.scrollIntoView({ behavior:"smooth", block:"start" });
+    }
+
+    function renderRanking() {
+      const panel = document.getElementById("rankingPanel");
+      const table = document.getElementById("rankingTable");
+      const summary = document.getElementById("rankingSummary");
+      if (!panel || !table) return;
+      panel.hidden = !state.rankingOpen;
+      if (!state.rankingOpen) return;
+      const rows = M.rankCarDatabase(state.assumptions);
+      const top = rows[0];
+      if (summary) summary.textContent = top ? `${rows.length} cars ranked. Best current default: ${top.carName} at ${euro(top.finalMoney)} net worth.` : "No cars available.";
+      table.innerHTML = `<table><thead><tr>
+        <th>Rank</th>
+        <th>Car</th>
+        <th>Type/category</th>
+        <th>Upfront price</th>
+        <th>Monthly costs</th>
+        <th>Total paid</th>
+        <th>Final net worth</th>
+      </tr></thead><tbody>${rows.map((row, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td><strong class="${index === 0 ? "winner" : ""}">${escapeHtml(row.carName)}</strong></td>
+          <td>${escapeHtml(carCategoryGroup(M.carModelById(row.modelId) || row))}</td>
+          <td>${euro(row.upfrontPrice)}</td>
+          <td>${euro(row.monthlyRunningCost)}/mo</td>
+          <td>${euro(row.totalPaid)}</td>
+          <td class="${index === 0 ? "winner" : ""}">${euro(row.finalMoney)}</td>
+        </tr>
+      `).join("")}</tbody></table>`;
     }
 
     function formatPct(value) {

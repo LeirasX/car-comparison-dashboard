@@ -16,6 +16,9 @@ function assumptions(overrides = {}) {
 
 function car(overrides = {}) {
   return Object.assign(model.defaultCar("car1"), {
+    modelId: null,
+    modelDisplayName: "",
+    customName: "",
     name: "Test option",
     type: "combustion",
     paymentMode: "upfront",
@@ -54,21 +57,23 @@ run("stock return is fixed at 8% yearly and compounded monthly", () => {
   approx(model.monthlyInvestmentRate(), Math.pow(1.08, 1 / 12) - 1, 1e-12);
 });
 
-run("default comparison uses requested cash Tesla vs combustion setup", () => {
+run("default comparison uses real database-backed car models", () => {
   assert.equal(model.DEFAULT_ASSUMPTIONS.initialCashBudget, 20000);
   assert.equal(model.DEFAULT_ASSUMPTIONS.monthlyBudget, 300);
   assert.equal(model.DEFAULT_ASSUMPTIONS.yearsOwned, 7);
   assert.equal(model.DEFAULT_ASSUMPTIONS.annualKm, 15000);
   const tesla = model.defaultCar("car1");
-  const combustion = model.defaultCar("car2");
-  assert.equal(tesla.name, "Used Tesla");
+  const golf = model.defaultCar("car2");
+  assert.equal(tesla.modelId, "tesla-model-3");
+  assert.equal(tesla.name, "Tesla Model 3");
   assert.equal(tesla.type, "ev");
   assert.equal(tesla.paymentMode, "upfront");
-  assert.equal(tesla.upfrontPrice, 20000);
-  assert.equal(combustion.name, "Used Combustion");
-  assert.equal(combustion.type, "combustion");
-  assert.equal(combustion.paymentMode, "upfront");
-  assert.equal(combustion.upfrontPrice, 10000);
+  assert.equal(tesla.upfrontPrice, 28000);
+  assert.equal(golf.modelId, "volkswagen-golf");
+  assert.equal(golf.name, "Volkswagen Golf");
+  assert.equal(golf.type, "combustion");
+  assert.equal(golf.paymentMode, "upfront");
+  assert.equal(golf.upfrontPrice, 15500);
 });
 
 run("changing years updates winner, final money, resale estimate, loan left, summary, and warnings", () => {
@@ -136,6 +141,7 @@ run("initial cash exceeded marks impossible for upfront and finance down payment
 
 run("type switching updates visible-relevant defaults while preserving custom edits", () => {
   const edited = model.markCustom(model.defaultCar("car1"), "annualInsurance");
+  edited.modelId = null;
   edited.annualInsurance = 999;
   edited.type = "combustion";
   const switched = model.applyTypeDefaults(edited, { respectCustom: true });
@@ -164,6 +170,189 @@ run("custom names are used and never fall back to Custom, Car 1, or Car 2", () =
   assert.match(labels, /Used EV upfront upfront/);
   assert.match(labels, /Tesla finance finance/);
   assert.doesNotMatch(labels, /Custom|Car 1|Car 2/);
+});
+
+run("selecting each model loads non-empty valid values", () => {
+  assert.equal(model.CAR_DATABASE.length, 114);
+  ["opel-corsa", "seat-ibiza", "skoda-octavia", "volvo-ex30", "porsche-macan-electric", "lamborghini-huracan"].forEach((id) => {
+    assert.ok(model.carModelById(id), `${id} should exist`);
+  });
+  model.CAR_DATABASE.forEach((entry) => {
+    const loaded = model.applyCarModelDefaults({}, entry.id);
+    assert.equal(loaded.modelId, entry.id);
+    assert.equal(model.displayCarName(loaded), entry.displayName);
+    ["upfrontPrice", "annualMaintenance", "annualInsurance", "annualRepairs", "annualTax", "resaleRetentionEstimate"].forEach((field) => {
+      assert.ok(Number.isFinite(Number(loaded[field])), `${entry.id} ${field} should be finite`);
+      assert.ok(Number(loaded[field]) >= 0, `${entry.id} ${field} should be non-negative`);
+    });
+    assert.ok(["high", "medium", "low"].includes(loaded.confidence), `${entry.id} confidence`);
+    assert.ok(loaded.sourceNotes, `${entry.id} sourceNotes`);
+  });
+});
+
+run("database is ordered from common cheap categories to rare expensive categories", () => {
+  const categoryOrder = ["Cheap city cars", "Common small cars", "Common family cars", "Hybrids", "Cheap EVs", "Common EVs", "SUVs", "Premium sedans", "Premium EVs", "Sports cars", "Luxury cars", "Supercars / collector cars"];
+  function group(entry) {
+    if (entry.categoryGroup) return entry.categoryGroup;
+    if (entry.category === "hybrid") return "Hybrids";
+    if (entry.energyType === "electricity") {
+      if (entry.category === "luxury" || entry.category === "supercar" || entry.defaultUpfrontPrice >= 36000) return "Premium EVs";
+      return entry.defaultUpfrontPrice <= 22000 ? "Cheap EVs" : "Common EVs";
+    }
+    if (entry.category === "supercar") return "Supercars / collector cars";
+    if (entry.category === "luxury" && entry.defaultUpfrontPrice >= 60000) return "Luxury cars";
+    if (entry.category === "luxury" || ["bmw-3-series", "mercedes-c-class", "audi-a4"].includes(entry.id)) return "Premium sedans";
+    if (entry.category === "pickup" || /hilux|f150|rav4|cr-v|rx/i.test(entry.id)) return "SUVs";
+    if (entry.defaultUpfrontPrice <= 9000 || /panda|aygo|picanto|i10|up|206/i.test(entry.id)) return "Cheap city cars";
+    if (entry.defaultUpfrontPrice <= 14500 || /fiesta|clio|sandero|corsa|ibiza|fabia|micra|208/i.test(entry.id)) return "Common small cars";
+    return "Common family cars";
+  }
+  let previous = -1;
+  model.CAR_DATABASE.forEach((entry) => {
+    const current = categoryOrder.indexOf(group(entry));
+    assert.ok(current >= previous, `${entry.id} should not move backwards in category order`);
+    previous = current;
+  });
+});
+
+run("EV models use kWh/100km and ignore L/100km", () => {
+  model.CAR_DATABASE.filter((entry) => entry.energyType === "electricity").forEach((entry) => {
+    const ev = model.applyCarModelDefaults({}, entry.id);
+    assert.equal(ev.type, "ev", entry.id);
+    assert.ok(ev.kwhPer100Km > 0, entry.id);
+    assert.equal(ev.litersPer100Km, 0, entry.id);
+    const base = model.annualEnergyCost(ev, assumptions({ annualKm: 10000 }));
+    const polluted = model.annualEnergyCost(Object.assign({}, ev, { litersPer100Km: 99, fuelPrice: 99 }), assumptions({ annualKm: 10000 }));
+    approx(polluted, base, 1e-9, entry.id);
+  });
+});
+
+run("combustion models use L/100km and ignore kWh/100km", () => {
+  model.CAR_DATABASE.filter((entry) => !["ev", "hybrid"].includes(entry.category) && entry.energyType !== "electricity").forEach((entry) => {
+    const gas = model.applyCarModelDefaults({}, entry.id);
+    assert.equal(gas.type, "combustion", entry.id);
+    assert.ok(gas.litersPer100Km > 0, entry.id);
+    assert.equal(gas.kwhPer100Km, 0, entry.id);
+    const base = model.annualEnergyCost(gas, assumptions({ annualKm: 10000 }));
+    const polluted = model.annualEnergyCost(Object.assign({}, gas, { kwhPer100Km: 99, homeElectricityPrice: 99, publicElectricityPrice: 99 }), assumptions({ annualKm: 10000 }));
+    approx(polluted, base, 1e-9, entry.id);
+  });
+});
+
+run("hybrid models use L/100km by default", () => {
+  model.CAR_DATABASE.filter((entry) => entry.category === "hybrid").forEach((entry) => {
+    const hybrid = model.applyCarModelDefaults({}, entry.id);
+    assert.equal(hybrid.type, "hybrid", entry.id);
+    assert.ok(hybrid.litersPer100Km > 0, entry.id);
+    assert.equal(hybrid.kwhPer100Km, 0, entry.id);
+  });
+});
+
+run("same model can be selected on both sides with different prices and terms", () => {
+  const car1 = model.applyCarModelDefaults({}, "tesla-model-3");
+  const car2 = model.applyCarModelDefaults({}, "tesla-model-3");
+  car1.upfrontPrice = 20000;
+  car2.upfrontPrice = 28800;
+  car2.paymentMode = "finance";
+  car2.downPayment = 3000;
+  car2.monthlyPayment = 420;
+  car2.loanMonths = 72;
+  const result = model.analyze({ assumptions: assumptions(), cars: { car1, car2 } });
+  assert.equal(result.cars.car1.modelId, "tesla-model-3");
+  assert.equal(result.cars.car2.modelId, "tesla-model-3");
+  assert.equal(result.cars.car1.upfrontPrice, 20000);
+  assert.equal(result.cars.car2.upfrontPrice, 28800);
+  assert.match(result.rows.map((row) => row.option).join(" | "), /Tesla Model 3 upfront[\s\S]*Tesla Model 3 finance/);
+});
+
+run("changing price does not reset loaded model costs", () => {
+  const loaded = model.applyCarModelDefaults({}, "toyota-corolla-hybrid");
+  const before = {
+    litersPer100Km: loaded.litersPer100Km,
+    annualMaintenance: loaded.annualMaintenance,
+    annualInsurance: loaded.annualInsurance,
+    annualRepairs: loaded.annualRepairs,
+    annualTax: loaded.annualTax,
+  };
+  loaded.upfrontPrice = 12345;
+  const analyzed = model.analyze({ assumptions: assumptions(), cars: { car1: loaded, car2: model.applyCarModelDefaults({}, "dacia-sandero") } }).cars.car1;
+  Object.entries(before).forEach(([field, value]) => assert.equal(analyzed[field], value, field));
+});
+
+run("changing car model reloads model defaults", () => {
+  const corolla = model.applyCarModelDefaults({}, "toyota-corolla");
+  corolla.annualInsurance = 999;
+  model.markCustom(corolla, "annualInsurance");
+  const phantom = model.applyCarModelDefaults(corolla, "rolls-royce-phantom");
+  assert.equal(phantom.modelId, "rolls-royce-phantom");
+  assert.equal(phantom.annualInsurance, 9000);
+  assert.equal(phantom.customFields.length, 0);
+});
+
+run("custom display name appears in labels and results", () => {
+  const named = model.applyCarModelDefaults({}, "tesla-model-3", { customName: "Blue Tesla offer" });
+  const other = model.applyCarModelDefaults({}, "volkswagen-golf");
+  const result = model.analyze({ assumptions: assumptions(), cars: { car1: named, car2: other } });
+  assert.match(result.rows.map((row) => row.option).join(" | "), /Blue Tesla offer upfront/);
+  assert.doesNotMatch(JSON.stringify(result.rows), /Car 1|Car 2|Custom/);
+});
+
+run("luxury and supercar models have dramatically higher ownership costs", () => {
+  const dacia = model.applyCarModelDefaults({}, "dacia-sandero");
+  const toyota = model.applyCarModelDefaults({}, "toyota-corolla");
+  const honda = model.applyCarModelDefaults({}, "honda-civic");
+  const mainstreamAverage = [dacia, toyota, honda].reduce((sum, item) => sum + item.annualMaintenance + item.annualInsurance + item.annualRepairs, 0) / 3;
+  ["mercedes-s-class", "rolls-royce-phantom", "lamborghini-aventador", "bugatti-chiron", "rimac-nevera"].forEach((id) => {
+    const exotic = model.applyCarModelDefaults({}, id);
+    const annual = exotic.annualMaintenance + exotic.annualInsurance + exotic.annualRepairs;
+    assert.ok(annual > mainstreamAverage * 3, `${id} should be far above mainstream costs`);
+  });
+});
+
+run("fuel, electricity, and annual km changes affect the appropriate models", () => {
+  const gas = model.applyCarModelDefaults({}, "volkswagen-golf");
+  const hybrid = model.applyCarModelDefaults({}, "toyota-prius");
+  const ev = model.applyCarModelDefaults({}, "tesla-model-3");
+  assert.ok(model.annualEnergyCost(Object.assign({}, gas, { fuelPrice: 2.2 }), assumptions()) > model.annualEnergyCost(gas, assumptions()));
+  assert.ok(model.annualEnergyCost(Object.assign({}, hybrid, { fuelPrice: 2.2 }), assumptions()) > model.annualEnergyCost(hybrid, assumptions()));
+  assert.ok(model.annualEnergyCost(Object.assign({}, ev, { homeElectricityPrice: 0.4, publicElectricityPrice: 0.8 }), assumptions()) > model.annualEnergyCost(ev, assumptions()));
+  assert.ok(model.annualEnergyCost(gas, assumptions({ annualKm: 30000 })) > model.annualEnergyCost(gas, assumptions({ annualKm: 10000 })));
+  assert.ok(model.annualEnergyCost(ev, assumptions({ annualKm: 30000 })) > model.annualEnergyCost(ev, assumptions({ annualKm: 10000 })));
+});
+
+run("no NaN, undefined, or missing values for any model analysis", () => {
+  model.CAR_DATABASE.forEach((entry) => {
+    const result = model.analyze({
+      assumptions: assumptions({ yearsOwned: 7 }),
+      cars: {
+        car1: model.applyCarModelDefaults({}, entry.id),
+        car2: model.applyCarModelDefaults({}, "dacia-sandero"),
+      },
+    });
+    const serialized = JSON.stringify(result);
+    assert.doesNotMatch(serialized, /NaN|undefined|Infinity/, entry.id);
+    assert.ok(result.rows.every((row) => row.option && row.carName), entry.id);
+  });
+});
+
+run("ranking uses the same formulas as main comparison", () => {
+  const setup = assumptions({ initialCashBudget: 35000, monthlyBudget: 450, yearsOwned: 6, annualKm: 18000 });
+  const ranking = model.rankCarDatabase(setup);
+  assert.equal(ranking.length, model.CAR_DATABASE.length);
+  assert.ok(ranking[0].finalMoney >= ranking[1].finalMoney);
+  const rankedTesla = ranking.find((row) => row.modelId === "tesla-model-3");
+  const car1 = model.applyCarModelDefaults({}, "tesla-model-3");
+  const comparison = model.analyze({ assumptions: setup, cars: { car1, car2: model.applyCarModelDefaults({}, "volkswagen-golf") } });
+  const comparedTesla = comparison.rows.find((row) => row.carKey === "car1");
+  approx(rankedTesla.finalMoney, comparedTesla.finalMoney, 1e-9);
+  approx(rankedTesla.totalPaid, comparedTesla.totalPaid, 1e-9);
+});
+
+run("ranking updates when setup values change", () => {
+  const lowKm = model.rankCarDatabase(assumptions({ annualKm: 5000 }));
+  const highKm = model.rankCarDatabase(assumptions({ annualKm: 40000 }));
+  assert.notEqual(JSON.stringify(lowKm.slice(0, 10).map((row) => [row.modelId, Math.round(row.finalMoney)])), JSON.stringify(highKm.slice(0, 10).map((row) => [row.modelId, Math.round(row.finalMoney)])));
+  assert.doesNotMatch(JSON.stringify(highKm), /NaN|undefined|Infinity/);
 });
 
 run("auto resale updates with years unless custom override is active", () => {

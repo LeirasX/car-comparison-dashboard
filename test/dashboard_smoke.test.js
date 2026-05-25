@@ -69,7 +69,7 @@ function parseChildren(html) {
   return children;
 }
 
-const ids = ["setupInputs", "choiceInputs", "financeInputs", "runningInputs", "heroSummary", "warningBox", "primaryTable", "mobileResultCards"];
+const ids = ["setupInputs", "choiceInputs", "financeInputs", "runningInputs", "heroSummary", "rankingPanel", "rankingTable", "rankingSummary", "rankingClose", "warningBox", "primaryTable", "mobileResultCards"];
 const elements = Object.fromEntries(ids.map((id) => [id, new FakeElement(id)]));
 const document = {
   activeElement: null,
@@ -105,7 +105,7 @@ assert.match(html, /id="cars"/);
 assert.match(html, /id="payment"/);
 assert.match(html, /id="costs"/);
 assert.match(html, /id="results"/);
-assert.match(html, /<main>\s*<div id="warningBox" class="warnings" aria-live="polite"><\/div>\s*<details id="setup"/);
+assert.match(html, /<main>\s*<section id="rankingPanel"[\s\S]*?<\/section>\s*<div id="warningBox" class="warnings" aria-live="polite"><\/div>\s*<details id="setup"/);
 assert.doesNotMatch(html, /No Car Baseline|Charts|Quality|Preset|Balloon|Opening fee|Financed price|Explanation|Sensitivity|Car Comparison Inputs|Resale Values/i);
 assert.doesNotMatch(html, /data-assumption="investmentReturn"/);
 assert.doesNotMatch(html, /stock return|Reset type defaults/i);
@@ -119,6 +119,7 @@ assert.equal((elements.heroSummary.innerHTML.match(/class="hero-metric/g) || [])
 assert.match(elements.heroSummary.innerHTML, /Winner/);
 assert.match(elements.heroSummary.innerHTML, /Cost difference/);
 assert.match(elements.heroSummary.innerHTML, /Net worth difference/);
+assert.match(elements.heroSummary.innerHTML, /data-rank-toggle[\s\S]*Rank/);
 assert.match(elements.heroSummary.innerHTML, /[-+]\d+(?:\.\d)?%/);
 assert.doesNotMatch(elements.heroSummary.innerHTML, /Warnings|Clean run|Check inputs|Final money|wins with|€[0-9,]+ vs|Difference[\s\S]*€[0-9,]+/);
 const defaultResult = context.CarCompareModel.analyze({
@@ -132,8 +133,8 @@ const expectedCostPct = (defaultResult.winner.totalPaid - defaultResult.runnerUp
 const expectedNetPct = (defaultResult.winner.finalMoney - defaultResult.runnerUp.finalMoney) / Math.abs(defaultResult.runnerUp.finalMoney) * 100;
 assert.match(elements.heroSummary.innerHTML, new RegExp(`${expectedCostPct >= 0 ? "\\+" : ""}${expectedCostPct.toLocaleString("en-IE", { maximumFractionDigits:1 })}%`));
 assert.match(elements.heroSummary.innerHTML, new RegExp(`${expectedNetPct >= 0 ? "\\+" : ""}${expectedNetPct.toLocaleString("en-IE", { maximumFractionDigits:1 })}%`));
-assert.match(context.helpText("heroWinner"), /Used Tesla upfront leaves €[\d,]+ after 7 years/);
-assert.match(context.helpText("heroWinner"), /Used Combustion upfront leaves €[\d,]+/);
+assert.match(context.helpText("heroWinner"), /(Tesla Model 3|Volkswagen Golf) upfront leaves €[\d,]+ after 7 years/);
+assert.match(context.helpText("heroWinner"), /(Tesla Model 3|Volkswagen Golf) upfront leaves €[\d,]+/);
 assert.match(context.helpText("heroWinner"), /Total paid:/);
 assert.doesNotMatch(context.helpText("heroWinner"), /Car 1|Car 2/);
 assert.match(html, /heroComparisonText/);
@@ -162,20 +163,54 @@ assert.ok(field(elements.runningInputs, "car1", "kwhPer100Km"), "EV shows electr
 assert.ok(!field(elements.runningInputs, "car1", "litersPer100Km"), "EV hides fuel use");
 assert.ok(field(elements.runningInputs, "car2", "litersPer100Km"), "Combustion shows fuel use");
 assert.ok(!field(elements.runningInputs, "car2", "kwhPer100Km"), "Combustion hides electricity use");
-assert.equal(field(elements.choiceInputs, "car1", "name").value, "Used Tesla");
-assert.equal(field(elements.choiceInputs, "car2", "name").value, "Used Combustion");
-assert.match(elements.choiceInputs.innerHTML, /id="car1-type"[\s\S]*value="ev" selected/);
-assert.match(elements.choiceInputs.innerHTML, /id="car2-type"[\s\S]*value="combustion" selected/);
+assert.ok(field(elements.choiceInputs, "car1", "modelId"), "car1 model selector should exist");
+assert.ok(field(elements.choiceInputs, "car2", "modelId"), "car2 model selector should exist");
+assert.ok(field(elements.choiceInputs, "car1", "customName"), "car1 custom name should exist");
+assert.ok(field(elements.choiceInputs, "car2", "customName"), "car2 custom name should exist");
+assert.match(elements.choiceInputs.innerHTML, /id="car1-modelId"[\s\S]*value="tesla-model-3" selected/);
+assert.match(elements.choiceInputs.innerHTML, /id="car2-modelId"[\s\S]*value="volkswagen-golf" selected/);
+assert.match(elements.choiceInputs.innerHTML, /Toyota Corolla/);
+assert.match(elements.choiceInputs.innerHTML, /Bugatti Chiron/);
+assert.match(elements.choiceInputs.innerHTML, /Cheap city cars/);
+assert.match(elements.choiceInputs.innerHTML, /Supercars \/ collector cars/);
+assert.match(elements.choiceInputs.innerHTML, /aria-label="Search or choose car model"/);
 assert.match(elements.choiceInputs.innerHTML, /id="car1-paymentMode"[\s\S]*value="upfront" selected/);
 assert.match(elements.choiceInputs.innerHTML, /id="car2-paymentMode"[\s\S]*value="upfront" selected/);
-assert.equal(field(elements.financeInputs, "car1", "upfrontPrice").value, "20000");
-assert.equal(field(elements.financeInputs, "car2", "upfrontPrice").value, "10000");
+assert.equal(field(elements.financeInputs, "car1", "upfrontPrice").value, "28000");
+assert.equal(field(elements.financeInputs, "car2", "upfrontPrice").value, "15500");
 assert.match(elements.runningInputs.innerHTML, /Electricity:/);
 assert.match(elements.runningInputs.innerHTML, /Fuel:/);
 assert.match(elements.runningInputs.innerHTML, /Monthly running:/);
 assert.match(elements.runningInputs.innerHTML, /Annual running:/);
-assert.doesNotMatch(elements.runningInputs.innerHTML, /Retention:|Depreciation:|>Estimated<|>Custom</);
+assert.doesNotMatch(elements.runningInputs.innerHTML, /high confidence|medium confidence|low confidence|>estimated<|Retention:|Depreciation:|>Custom</);
 assert.doesNotMatch(output(), /Car 1|Car 2/);
+assert.equal(elements.rankingPanel.hidden, true, "ranking starts closed");
+context.toggleRanking(true);
+assert.equal(elements.rankingPanel.hidden, false, "ranking opens");
+assert.match(elements.rankingTable.innerHTML, /Rank[\s\S]*Car[\s\S]*Type\/category[\s\S]*Final net worth/);
+assert.doesNotMatch(elements.rankingTable.innerHTML, /NaN|undefined|Infinity/);
+const rankingBeforeSetupChange = elements.rankingTable.innerHTML;
+assumption("annualKm").value = "30000";
+assumption("annualKm").dispatch("input", { target: assumption("annualKm") });
+assert.notEqual(elements.rankingTable.innerHTML, rankingBeforeSetupChange, "ranking updates when setup values change");
+context.toggleRanking(false);
+assert.equal(elements.rankingPanel.hidden, true, "ranking closes");
+
+const maintenanceBeforePriceEdit = field(elements.runningInputs, "car1", "annualMaintenance").value;
+const car1Price = field(elements.financeInputs, "car1", "upfrontPrice");
+car1Price.value = "20000";
+car1Price.dispatch("input", { target: car1Price });
+assert.equal(field(elements.runningInputs, "car1", "annualMaintenance").value, maintenanceBeforePriceEdit, "price edit should not reset model costs");
+
+const car2ModelSame = field(elements.choiceInputs, "car2", "modelId");
+car2ModelSame.value = "tesla-model-3";
+car2ModelSame.dispatch("input", { target: car2ModelSame });
+const car2Price = field(elements.financeInputs, "car2", "upfrontPrice");
+car2Price.value = "28800";
+car2Price.dispatch("input", { target: car2Price });
+assert.match(output(), /Tesla Model 3 upfront[\s\S]*Tesla Model 3 upfront/);
+assert.equal(field(elements.financeInputs, "car1", "upfrontPrice").value, "20000");
+assert.equal(field(elements.financeInputs, "car2", "upfrontPrice").value, "28800");
 
 const beforeYear = output();
 const resaleBefore = field(elements.runningInputs, "car1", "resaleValue").value;
@@ -199,19 +234,19 @@ focusedMonthly.dispatch("input", { target: focusedMonthly });
 assert.equal(document.activeElement, focusedMonthly, "finance input keeps focus while typing");
 assert.ok(elements.financeInputs.children.includes(focusedMonthly), "finance input is not remounted while typing");
 
-const car1Type = field(elements.choiceInputs, "car1", "type");
-car1Type.value = "combustion";
-car1Type.dispatch("input", { target: car1Type });
+const car1Model = field(elements.choiceInputs, "car1", "modelId");
+car1Model.value = "toyota-corolla";
+car1Model.dispatch("input", { target: car1Model });
 assert.ok(field(elements.runningInputs, "car1", "litersPer100Km"), "combustion shows fuel field");
 assert.ok(!field(elements.runningInputs, "car1", "kwhPer100Km"), "combustion hides EV field");
-assert.match(elements.primaryTable.innerHTML, /Used Tesla finance/);
+assert.match(elements.primaryTable.innerHTML, /Toyota Corolla finance/);
 
-const name = field(elements.choiceInputs, "car1", "name");
+const name = field(elements.choiceInputs, "car1", "customName");
 name.focus();
 name.value = "My actual car";
 name.dispatch("input", { target: name });
-assert.equal(document.activeElement, name, "name input keeps focus while typing");
-assert.ok(elements.choiceInputs.children.includes(name), "name input is not remounted while typing");
+assert.equal(document.activeElement, name, "custom name input keeps focus while typing");
+assert.ok(elements.choiceInputs.children.includes(name), "custom name input is not remounted while typing");
 assert.match(output(), /My actual car finance/);
 assert.doesNotMatch(output(), /Car 1|Car 2|Custom/);
 assert.match(context.helpText("heroWinner"), /My actual car finance/);
@@ -224,7 +259,7 @@ highPayment.dispatch("input", { target: highPayment });
 assert.equal(document.activeElement, highPayment, "monthly payment keeps focus after live recalculation");
 assert.match(elements.warningBox.innerHTML, /Monthly cost exceeds monthly budget/);
 assert.doesNotMatch(elements.heroSummary.innerHTML, /Warnings|Clean run|Check inputs/);
-assert.doesNotMatch(elements.warningBox.innerHTML, /Used Tesla finance:/);
+assert.doesNotMatch(elements.warningBox.innerHTML, /Toyota Corolla finance:/);
 assert.match(context.helpText("car1.monthlyPayment"), /My actual car finance payment is €3,000\/month/);
 const fuelPrice = field(elements.runningInputs, "car1", "fuelPrice");
 fuelPrice.focus();

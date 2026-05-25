@@ -8,6 +8,11 @@
   const STOCK_RETURN = 8;
   const PAYMENT_MODES = { upfront: "upfront", finance: "finance" };
   const VEHICLE_TYPES = { ev: "EV", hybrid: "Hybrid", combustion: "Combustion" };
+  const CAR_DATABASE = (function loadCars() {
+    if (typeof module !== "undefined" && module.exports) return require("./data/cars.js");
+    return (typeof globalThis !== "undefined" && globalThis.CarCompareDatabase) || [];
+  })();
+  const CAR_BY_ID = Object.fromEntries(CAR_DATABASE.map((car) => [car.id, car]));
 
   const DEFAULT_ASSUMPTIONS = {
     initialCashBudget: 20000,
@@ -77,8 +82,8 @@
   };
 
   const DEFAULT_CARS = {
-    car1: Object.assign({ name: "Used Tesla", paymentMode: PAYMENT_MODES.upfront }, TYPE_DEFAULTS.ev),
-    car2: Object.assign({ name: "Used Combustion", paymentMode: PAYMENT_MODES.upfront }, TYPE_DEFAULTS.combustion),
+    car1: Object.assign({ modelId: "tesla-model-3", customName: "", paymentMode: PAYMENT_MODES.upfront }, carDefaultsFromModel("tesla-model-3")),
+    car2: Object.assign({ modelId: "volkswagen-golf", customName: "", paymentMode: PAYMENT_MODES.upfront }, carDefaultsFromModel("volkswagen-golf")),
   };
 
   const TYPE_FIELDS = [
@@ -115,6 +120,55 @@
   function cleanType(type) {
     if (type === "electric") return "ev";
     return Object.prototype.hasOwnProperty.call(TYPE_DEFAULTS, type) ? type : "combustion";
+  }
+
+  function carModelById(modelId) {
+    return CAR_BY_ID[modelId] || null;
+  }
+
+  function typeFromModel(model) {
+    if (!model) return "combustion";
+    if (model.energyType === "electricity" || model.category === "ev") return "ev";
+    if (model.category === "hybrid") return "hybrid";
+    return "combustion";
+  }
+
+  function carDefaultsFromModel(modelId) {
+    const model = carModelById(modelId) || CAR_DATABASE[0] || null;
+    if (!model) return clone(TYPE_DEFAULTS.combustion);
+    const type = typeFromModel(model);
+    const defaults = clone(TYPE_DEFAULTS[type] || TYPE_DEFAULTS.combustion);
+    return Object.assign(defaults, {
+      modelId: model.id,
+      modelDisplayName: model.displayName,
+      name: model.displayName,
+      category: model.category,
+      typicalMarket: model.typicalMarket,
+      type,
+      energyType: model.energyType,
+      fuelType: model.fuelType,
+      upfrontPrice: model.defaultUpfrontPrice,
+      kwhPer100Km: model.realWorldKwhPer100km,
+      litersPer100Km: model.realWorldLitersPer100km,
+      annualMaintenance: model.maintenancePerYear,
+      annualInsurance: model.insurancePerYear,
+      annualRepairs: model.repairsPerYear,
+      annualTax: model.taxPerYear,
+      depreciationProfile: clone(model.depreciationProfile),
+      resaleRetentionEstimate: model.resaleRetentionEstimate,
+      modelNotes: model.notes,
+      confidence: model.confidence,
+      sourceNotes: model.sourceNotes,
+      loadedFromDatabase: true,
+    });
+  }
+
+  function displayCarName(carInput) {
+    const car = carInput || {};
+    const customName = String(car.customName || "").trim();
+    if (customName) return customName;
+    const model = carModelById(car.modelId);
+    return String(car.modelDisplayName || (model && model.displayName) || car.name || "Unnamed option").trim() || "Unnamed option";
   }
 
   function monthlyInvestmentRate() {
@@ -154,12 +208,48 @@
     return car;
   }
 
+  function applyCarModelDefaults(carInput, modelId, options) {
+    const current = Object.assign({}, carInput || {});
+    const modelDefaults = carDefaultsFromModel(modelId);
+    const keepPayment = !options || options.keepPayment !== false;
+    const next = Object.assign({}, current, modelDefaults, {
+      modelId: modelDefaults.modelId,
+      customName: options && Object.prototype.hasOwnProperty.call(options, "customName") ? options.customName : "",
+      paymentMode: keepPayment ? (current.paymentMode === PAYMENT_MODES.finance ? PAYMENT_MODES.finance : PAYMENT_MODES.upfront) : PAYMENT_MODES.upfront,
+      customFields: [],
+      resaleCustom: false,
+    });
+    next.name = displayCarName(next);
+    return next;
+  }
+
   function withCarDefaults(carInput, carKey) {
     const base = defaultCar(carKey);
     const merged = Object.assign({}, base, clone(carInput || {}));
+    const model = carModelById(merged.modelId);
+    if (model) {
+      const modelDefaults = carDefaultsFromModel(model.id);
+      [
+        "modelDisplayName",
+        "category",
+        "typicalMarket",
+        "energyType",
+        "fuelType",
+        "depreciationProfile",
+        "resaleRetentionEstimate",
+        "modelNotes",
+        "confidence",
+        "sourceNotes",
+        "loadedFromDatabase",
+      ].forEach((field) => {
+        if (merged[field] === undefined || merged[field] === null || field === "modelDisplayName") merged[field] = clone(modelDefaults[field]);
+      });
+      merged.type = typeFromModel(model);
+    }
     merged.type = cleanType(merged.type);
     merged.paymentMode = merged.paymentMode === PAYMENT_MODES.finance ? PAYMENT_MODES.finance : PAYMENT_MODES.upfront;
     merged.customFields = Array.isArray(merged.customFields) ? merged.customFields.slice() : [];
+    merged.name = displayCarName(merged);
     return merged;
   }
 
@@ -186,9 +276,23 @@
     return clamp(firstYearDrop * Math.pow(yearlyRetention, years - 1), 0.08, 0.92);
   }
 
+  function modelRetentionRate(carInput, yearsInput) {
+    const car = withCarDefaults(carInput);
+    const profile = car.depreciationProfile;
+    const years = normalizeYears(yearsInput);
+    if (!profile || !Number.isFinite(Number(profile.firstYearRetention)) || !Number.isFinite(Number(profile.annualRetention))) {
+      return retentionRate(car.type, years);
+    }
+    const firstYearRetention = num(profile.firstYearRetention, retentionRate(car.type, 1));
+    const annualRetention = num(profile.annualRetention, 0.9);
+    const minRetention = num(profile.minRetention, 0.08);
+    if (years <= 1) return Math.min(0.98, firstYearRetention + (1 - years) * 0.06);
+    return clamp(firstYearRetention * Math.pow(annualRetention, years - 1), minRetention, 1.15);
+  }
+
   function estimatedResaleValue(carInput, yearsInput) {
     const car = withCarDefaults(carInput);
-    return Math.round(Math.max(0, num(car.upfrontPrice) * retentionRate(car.type, yearsInput)) / 100) * 100;
+    return Math.round(Math.max(0, num(car.upfrontPrice) * modelRetentionRate(car, yearsInput)) / 100) * 100;
   }
 
   function effectiveResaleValue(carInput, yearsInput) {
@@ -464,6 +568,23 @@
     };
   }
 
+  function rankCarDatabase(assumptionsInput) {
+    const assumptions = Object.assign({}, DEFAULT_ASSUMPTIONS, assumptionsInput || {});
+    assumptions.yearsOwned = normalizeYears(assumptions.yearsOwned);
+    return CAR_DATABASE.map((entry) => {
+      const car = applyCarModelDefaults({}, entry.id, { keepPayment: false });
+      const row = simulateScenario(car, assumptions, PAYMENT_MODES.upfront, assumptions.yearsOwned, entry.id);
+      row.id = entry.id;
+      row.modelId = entry.id;
+      row.carName = entry.displayName;
+      row.category = entry.category;
+      row.categoryGroup = entry.categoryGroup || entry.category;
+      row.categoryLabel = entry.categoryLabel || entry.categoryGroup || entry.category;
+      row.option = entry.displayName;
+      return row;
+    }).sort((a, b) => b.finalMoney - a.finalMoney);
+  }
+
   function formatEuro(value) {
     return `€${Math.round(num(value)).toLocaleString("en-IE")}`;
   }
@@ -472,6 +593,8 @@
     STOCK_RETURN,
     PAYMENT_MODES,
     VEHICLE_TYPES,
+    CAR_DATABASE,
+    CAR_BY_ID,
     DEFAULT_ASSUMPTIONS,
     TYPE_DEFAULTS,
     DEFAULT_CARS,
@@ -479,11 +602,16 @@
     clone,
     num,
     defaultCar,
+    carModelById,
+    carDefaultsFromModel,
+    applyCarModelDefaults,
+    displayCarName,
     applyTypeDefaults,
     markCustom,
     clearCustom,
     monthlyInvestmentRate,
     retentionRate,
+    modelRetentionRate,
     estimatedResaleValue,
     effectiveResaleValue,
     financeSummary,
@@ -493,6 +621,7 @@
     annualRunningBreakdown,
     simulateScenario,
     analyze,
+    rankCarDatabase,
     scenarioLabel,
     formatEuro,
   };
