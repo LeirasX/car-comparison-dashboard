@@ -371,7 +371,6 @@
     }
     th:first-child .sort-button { justify-content:flex-start; }
     .ranking-pager { display:flex; justify-content:space-between; gap:10px; padding:12px; border-top:1px solid var(--line); background:#fbfaf6; }
-    .weight-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:14px; }
     .toast {
       position:fixed;
       left:50%;
@@ -3502,7 +3501,7 @@
       savedOffers: { car1: {}, car2: {} },
       modelSearch: { car1: "", car2: "" },
       modelDropdownOpen: { car1: false, car2: false },
-      rankingFilters: { search: "" },
+      rankingFilters: { search: "", category: "" },
       rankingSort: { field: "finalMoney", direction: "desc" },
       rankingVisibleCount: 250,
       rankingShowAll: false,
@@ -3666,7 +3665,7 @@
         <input type="hidden" data-car="${carKey}" data-field="modelId" value="${escapeHtml(car.modelId || "")}">
         ${open ? `<div class="model-menu" data-car-dropdown="${carKey}">
           <label class="search-control" for="${carKey}-modelSearch"><span class="icon">${iconOnly("search")}</span><input id="${carKey}-modelSearch" data-car-search="${carKey}" type="search" placeholder="Search" value="${escapeHtml(value)}" autocomplete="off"></label>
-          ${modelOptions(carKey, car)}
+          <div class="model-options" data-car-options="${carKey}">${modelOptions(carKey, car)}</div>
         </div>` : ""}
       </div>`;
     }
@@ -3781,11 +3780,10 @@
       const scores = `<div class="info-block"><h3>Scores</h3><div class="grid two">${["car1", "car2"].map((carKey) => {
         const rows = scoreFields.map(([field, label]) => scoreInput(carKey, field, label)).join("");
         return carPanel(carKey, rows);
-      }).join("")}</div><div class="weight-grid">${scoreFields.map(([field, label]) => scoreWeightInput(field, label)).join("")}</div></div>`;
+      }).join("")}</div></div>`;
       document.getElementById("runningInputs").innerHTML = market + carInfo + scores;
       bindCarInputs("runningInputs");
       bindMarketInputs();
-      bindScoreWeightInputs();
     }
 
     function refreshAutoResale() {
@@ -3806,10 +3804,6 @@
     function scoreInput(carKey, field, label) {
       const value = state.cars[carKey].scores?.[field] ?? 0;
       return inputRow(carKey, `score-${field}`, label, `<input id="${carKey}-score-${field}" data-car="${carKey}" data-score="${field}" type="number" min="0" max="10" step="1" value="${value}">`);
-    }
-
-    function scoreWeightInput(field, label) {
-      return `<label>${escapeHtml(label)} weight<input data-score-weight="${field}" type="number" min="0" max="100" step="1" value="${state.scoreWeights[field] ?? 0}"></label>`;
     }
 
     function inputRow(carKey, field, label, control, chips = "") {
@@ -3851,18 +3845,6 @@
       });
     }
 
-    function bindScoreWeightInputs() {
-      if (!document.querySelectorAll) return;
-      document.querySelectorAll("[data-score-weight]").forEach((input) => {
-        if (input.dataset.weightBound) return;
-        input.dataset.weightBound = "1";
-        input.addEventListener("input", () => {
-          state.scoreWeights[input.dataset.scoreWeight] = input.value === "" ? "" : Number(input.value);
-          renderRanking();
-        });
-      });
-    }
-
     function bindCarSearchInputs() {
       if (!document.querySelectorAll) return;
       document.querySelectorAll("[data-car-search]").forEach((input) => {
@@ -3871,17 +3853,16 @@
         input.addEventListener("input", () => {
           const carKey = input.dataset.carSearch;
           state.modelSearch[carKey] = input.value;
-          const activeId = input.id;
-          const cursor = input.selectionStart;
-          renderCars();
-          bindHelp();
-          const next = document.getElementById(activeId);
-          if (next) {
-            next.focus();
-            if (Number.isFinite(cursor)) next.setSelectionRange(cursor, cursor);
-          }
+          renderModelOptions(carKey);
         });
       });
+    }
+
+    function renderModelOptions(carKey) {
+      const optionsHost = document.querySelectorAll(`[data-car-options="${carKey}"]`)[0];
+      if (!optionsHost) return;
+      optionsHost.innerHTML = modelOptions(carKey, state.cars[carKey]);
+      bindModelPickerInputs();
     }
 
     function bindModelPickerInputs() {
@@ -4271,11 +4252,21 @@
       if (state.rankingControlsRendered && tools.querySelector("[data-ranking-filter]")) return;
       tools.innerHTML = `
         <label class="search-control" for="rankingSearch"><span class="icon">${iconOnly("search")}</span><input id="rankingSearch" data-ranking-filter="search" type="search" placeholder="Search" value="${escapeHtml(state.rankingFilters.search)}"></label>
+        <select id="rankingCategory" data-ranking-filter="category" aria-label="Category">
+          <option value="">All categories</option>
+          ${rankingCategoryOptions()}
+        </select>
         <button class="small-button" id="rankingClose" type="button">Hide</button>
       `;
       state.rankingControlsRendered = true;
       bindRankingControls();
       bindRankButton();
+    }
+
+    function rankingCategoryOptions() {
+      const categories = [...new Set(M.CAR_DATABASE.map(carCategoryGroup))]
+        .sort((a, b) => categoryOrder.indexOf(a) - categoryOrder.indexOf(b) || a.localeCompare(b));
+      return categories.map((category) => `<option value="${escapeHtml(category)}" ${state.rankingFilters.category === category ? "selected" : ""}>${escapeHtml(category)}</option>`).join("");
     }
 
     function bindRankingControls() {
@@ -4290,11 +4281,6 @@
           state.rankingShowAll = false;
           renderRankingResults();
         });
-        if (input.dataset.rankingFilter === "search") {
-          input.addEventListener("keydown", (event) => {
-            if (event.key === "Enter") input.blur();
-          });
-        }
       });
       document.querySelectorAll("[data-ranking-sort]").forEach((button) => {
         if (button.dataset.sortBound) return;
@@ -4375,6 +4361,7 @@
       const filters = state.rankingFilters;
       const query = (filters.search || "").trim().toLowerCase();
       if (query && !modelMatchesSearch(model, query)) return false;
+      if (filters.category && carCategoryGroup(model) !== filters.category) return false;
       return true;
     }
 
