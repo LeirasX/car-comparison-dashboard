@@ -3,1499 +3,1051 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Car Money Left Comparison</title>
+  <title>Car Value Studio</title>
   <style>
     :root {
-      --bg:#f4f1ec;
-      --panel:rgba(255,255,255,.88);
-      --solid:#fffdfa;
-      --ink:#171a1d;
-      --muted:#65706c;
-      --line:rgba(31,38,35,.13);
-      --line-strong:rgba(31,38,35,.22);
-      --accent:#315f52;
-      --accent-soft:#e7efeb;
-      --good:#14714f;
-      --good-soft:#e8f4ee;
-      --amber:#98610d;
-      --amber-soft:#fff4dc;
-      --red:#a93a32;
-      --red-soft:#fff0ee;
-      --shadow:0 18px 54px rgba(28,31,30,.08);
-      --shadow-soft:0 9px 26px rgba(28,31,30,.06);
-      --radius:20px;
-      --max:1160px;
+      color-scheme: light;
+      --bg:#f7f8f6;
+      --surface:rgba(255,255,255,.78);
+      --solid:#ffffff;
+      --ink:#111416;
+      --muted:#687178;
+      --soft:#eef1ee;
+      --line:rgba(20,24,26,.12);
+      --line-strong:rgba(20,24,26,.2);
+      --green:#2f6253;
+      --blue:#355f8d;
+      --gold:#9a6b20;
+      --rose:#94515d;
+      --good:#167253;
+      --warn:#986a13;
+      --bad:#a9443c;
+      --shadow:0 22px 70px rgba(23,27,30,.1);
+      --shadow-soft:0 12px 34px rgba(23,27,30,.08);
+      --radius:8px;
+      --pill:999px;
+      --max:1180px;
+      font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, Segoe UI, ui-sans-serif, system-ui, sans-serif;
       color:var(--ink);
       background:var(--bg);
-      font-family:Avenir Next, Optima, Candara, Segoe UI, sans-serif;
     }
     * { box-sizing:border-box; }
-    html { background:var(--bg); scroll-behavior:smooth; }
+    html { min-width:320px; background:var(--bg); scroll-behavior:smooth; }
     body {
       margin:0;
       min-width:320px;
       color:var(--ink);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.95) 0%, rgba(244,247,248,.92) 42%, rgba(240,239,234,.92) 100%),
+        repeating-linear-gradient(90deg, rgba(17,20,22,.025) 0 1px, transparent 1px 80px);
       font-size:15px;
       line-height:1.45;
-      background:
-        radial-gradient(circle at 8% -8%, rgba(255,255,255,.96), transparent 36rem),
-        radial-gradient(circle at 90% 8%, rgba(231,239,235,.9), transparent 28rem),
-        linear-gradient(180deg, #fbfaf7 0%, var(--bg) 52%, #f8f5ef 100%);
     }
     body::before {
       content:"";
       position:fixed;
       inset:0;
       pointer-events:none;
-      background-image:linear-gradient(rgba(23,26,29,.028) 1px, transparent 1px);
-      background-size:100% 34px;
-      mask-image:linear-gradient(to bottom, rgba(0,0,0,.7), transparent 430px);
+      background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,0) 360px);
+      z-index:-1;
     }
-    header, main { width:min(var(--max), calc(100% - clamp(24px,5vw,72px))); margin:0 auto; }
-    header { padding:34px 0 20px; }
-    main { padding:0 0 54px; }
-    h1 { margin:0; max-width:780px; font-size:clamp(34px,6vw,64px); line-height:.98; letter-spacing:-.035em; font-weight:760; }
-    h2, h3, p { margin:0; }
+    a { color:inherit; text-decoration:none; }
     button, input, select { font:inherit; }
-    .hero {
-      display:grid;
-      grid-template-columns:minmax(0,1.35fr) minmax(280px,.75fr);
-      gap:22px;
-      align-items:stretch;
-      margin-bottom:22px;
-    }
-    .hero-copy, .hero-card, .panel {
-      background:var(--panel);
+    button { cursor:pointer; }
+    h1, h2, h3, p { margin:0; }
+    h1 { font-size:clamp(42px,7vw,82px); line-height:.92; letter-spacing:0; font-weight:690; }
+    h2 { font-size:clamp(26px,4vw,44px); line-height:1; letter-spacing:0; font-weight:680; }
+    h3 { font-size:18px; line-height:1.15; font-weight:670; }
+    img { max-width:100%; display:block; }
+    .shell { width:min(var(--max), calc(100% - clamp(22px,5vw,72px))); margin:0 auto; }
+    .topbar {
+      position:sticky;
+      top:10px;
+      z-index:30;
+      margin:10px auto 18px;
+      padding:8px;
       border:1px solid var(--line);
-      box-shadow:var(--shadow-soft);
-      backdrop-filter:blur(18px);
-      -webkit-backdrop-filter:blur(18px);
-    }
-    .hero-copy {
-      min-height:280px;
-      border-radius:30px;
-      padding:clamp(24px,4vw,42px);
+      border-radius:var(--pill);
+      background:rgba(255,255,255,.72);
+      box-shadow:0 8px 24px rgba(17,20,22,.06);
+      backdrop-filter:blur(22px) saturate(1.18);
+      -webkit-backdrop-filter:blur(22px) saturate(1.18);
       display:flex;
-      flex-direction:column;
+      align-items:center;
       justify-content:space-between;
+      gap:8px;
     }
-    .eyebrow { display:inline-flex; align-items:center; gap:8px; margin-bottom:18px; color:var(--accent); font-size:12px; font-weight:850; text-transform:uppercase; letter-spacing:.08em; }
-    .hero-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:26px; }
-    .button, .small-button {
+    .brand { display:flex; align-items:center; gap:9px; padding:8px 12px; font-weight:720; letter-spacing:0; }
+    .brand-mark { width:24px; height:24px; border-radius:50%; background:linear-gradient(145deg,var(--ink),#49545c); box-shadow:inset 0 1px 0 rgba(255,255,255,.35); }
+    .nav { display:flex; align-items:center; gap:3px; }
+    .nav a, .mobile-nav a {
+      min-height:36px;
+      padding:8px 13px;
+      border-radius:var(--pill);
+      color:#3b4348;
+      font-size:13px;
+      font-weight:680;
+    }
+    .nav a.active, .mobile-nav a.active { background:var(--ink); color:white; }
+    main { padding:8px 0 84px; }
+    .page { animation:fadeUp .28s ease both; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .hero {
+      min-height:min(740px, calc(100vh - 96px));
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(310px,.86fr);
+      align-items:center;
+      gap:26px;
+      padding:28px 0 36px;
+    }
+    .hero-copy { display:grid; gap:24px; align-content:center; }
+    .eyebrow { display:inline-flex; width:max-content; align-items:center; gap:8px; color:var(--green); font-size:12px; text-transform:uppercase; font-weight:760; letter-spacing:.08em; }
+    .hero p, .section-lead { max-width:640px; color:#5e6870; font-size:clamp(16px,2vw,20px); line-height:1.45; }
+    .actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+    .button, .icon-button, .chip, .mode-button {
+      border:1px solid var(--line-strong);
+      background:rgba(255,255,255,.82);
+      color:var(--ink);
+      box-shadow:0 1px 0 rgba(255,255,255,.8) inset;
+      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease;
+    }
+    .button {
+      min-height:44px;
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      gap:8px;
-      min-height:42px;
-      padding:10px 14px;
-      border-radius:999px;
-      border:1px solid var(--line-strong);
-      background:#fff;
-      color:var(--ink);
-      text-decoration:none;
-      font-weight:820;
-      cursor:pointer;
-      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease;
-    }
-    .button:hover, .small-button:hover { transform:translateY(-1px); box-shadow:var(--shadow-soft); border-color:rgba(49,95,82,.36); }
-    .button.primary { background:var(--ink); border-color:var(--ink); color:#fff; }
-    .small-button { min-height:34px; padding:7px 11px; font-size:12px; }
-    .hero-card { border-radius:30px; padding:22px; display:flex; flex-direction:column; gap:14px; }
-    .hero-metric {
-      padding:16px;
-      border-radius:17px;
-      background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,250,248,.86));
-      border:1px solid var(--line);
-      backdrop-filter:blur(14px);
-      -webkit-backdrop-filter:blur(14px);
-      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
-    }
-    .hero-metric:hover { transform:translateY(-2px); box-shadow:var(--shadow-soft); border-color:rgba(49,95,82,.28); }
-    .hero-metric.flow { animation:softFlow .42s ease both; }
-    .hero-metric span { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px; font-weight:850; text-transform:uppercase; letter-spacing:.04em; }
-    .hero-metric strong { display:block; margin-top:7px; font-size:clamp(22px,3vw,34px); letter-spacing:-.025em; transition:opacity .18s ease, transform .18s ease; }
-    .badge { display:inline-flex; align-items:center; gap:6px; align-self:flex-start; border-radius:999px; padding:7px 10px; background:var(--good-soft); color:var(--good); font-size:12px; font-weight:850; }
-    .badge.warn { background:var(--amber-soft); color:var(--amber); }
-    .badge.no { background:var(--red-soft); color:var(--red); }
-    .rank-toggle {
-      min-height:34px;
-      padding:7px 13px;
-      border-radius:999px;
-      border:1px solid var(--line-strong);
-      background:var(--solid);
-      color:var(--accent);
-      font-size:12px;
-      font-weight:850;
-      cursor:pointer;
-      margin-left:auto;
-    }
-    .panel { border-radius:var(--radius); padding:18px; margin-bottom:18px; overflow:hidden; animation:rise .34s ease both; transition:box-shadow .2s ease, transform .2s ease, border-color .2s ease; }
-    .panel:hover, .car-panel:hover { transform:translateY(-1px); box-shadow:var(--shadow-soft); border-color:rgba(49,95,82,.24); }
-    .panel > summary {
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-height:46px;
-      list-style:none;
-      cursor:pointer;
-      font-size:18px;
-      font-weight:850;
-      margin:-4px -4px 16px;
-      padding:4px;
-      border-radius:14px;
-      outline:none;
-      transition:background .16s ease, transform .16s ease;
-    }
-    .panel > summary::-webkit-details-marker { display:none; }
-    .panel > summary::after {
-      content:"";
-      width:9px;
-      height:9px;
-      margin-left:auto;
-      border-right:2px solid var(--muted);
-      border-bottom:2px solid var(--muted);
-      transform:rotate(45deg);
-      transition:transform .18s ease;
-    }
-    .panel[open] > summary::after { transform:rotate(225deg); }
-    .panel > summary:hover, .help-target:hover { background:rgba(49,95,82,.06); }
-    .section-icon, .icon { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; }
-    .section-icon { width:32px; height:32px; border-radius:11px; background:var(--accent-soft); color:var(--accent); }
-    .icon svg, .section-icon svg, [data-icon] > svg { width:18px; height:18px; stroke:currentColor; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; display:block; }
-    .grid { display:grid; gap:16px; }
-    .two { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; align-items:start; }
-    .car-panel {
-      background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(253,251,247,.9));
-      border:1px solid var(--line);
-      border-radius:17px;
-      padding:16px;
-      box-shadow:0 1px 0 rgba(255,255,255,.7) inset;
-      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
-    }
-    .car-panel h3 { display:flex; align-items:center; gap:8px; margin-bottom:14px; font-size:16px; letter-spacing:-.01em; }
-    label { display:grid; gap:6px; color:#303835; font-size:13px; font-weight:780; }
-    .field-label {
-      display:flex;
-      align-items:center;
-      gap:6px;
-      color:#303835;
-      font-size:13px;
-      font-weight:780;
-      border-radius:10px;
-      padding:2px 4px;
-      margin-left:-4px;
-      cursor:help;
-    }
-    .field-row { display:grid; grid-template-columns:minmax(150px,1fr) minmax(120px,180px); gap:10px; align-items:start; margin-bottom:12px; }
-    .field-copy, .setup-field { display:grid; gap:7px; align-content:start; }
-    input, select {
-      width:100%;
-      min-height:42px;
-      border:1px solid var(--line-strong);
-      border-radius:12px;
-      padding:10px 12px;
-      background:rgba(255,255,255,.94);
-      color:var(--ink);
-      box-shadow:0 1px 0 rgba(255,255,255,.75) inset;
-      transition:border-color .16s ease, box-shadow .16s ease, transform .16s ease, background .16s ease;
-    }
-    select { appearance:auto; color-scheme:light; }
-    option { color:var(--ink); background:#fffdfa; }
-    input:hover, select:hover { border-color:rgba(49,95,82,.34); background:#fff; }
-    input:focus, select:focus, button:focus-visible, summary:focus-visible, a:focus-visible {
-      outline:3px solid rgba(49,95,82,.2);
-      outline-offset:2px;
-      border-color:var(--accent);
-      box-shadow:0 0 0 4px rgba(49,95,82,.09);
-    }
-    .hint { color:var(--muted); font-size:12px; line-height:1.35; font-weight:520; }
-    .help-bubble {
-      position:fixed;
-      z-index:20;
-      width:min(260px,calc(100vw - 28px));
-      padding:10px 12px;
-      border:1px solid rgba(49,95,82,.18);
-      border-radius:12px;
-      background:rgba(255,253,250,.98);
-      box-shadow:var(--shadow-soft);
-      color:#45514d;
-      font-size:12px;
-      line-height:1.35;
-      opacity:0;
-      pointer-events:none;
-      transform:translateY(4px);
-      transition:opacity .14s ease, transform .14s ease;
-    }
-    .help-bubble.show { opacity:1; transform:translateY(0); pointer-events:auto; }
-    .warnings { display:grid; gap:7px; margin:0 0 18px; }
-    .ranking-panel[hidden] { display:none; }
-    .ranking-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:14px; }
-    .ranking-head h2 { font-size:18px; font-weight:850; letter-spacing:-.01em; }
-    .ranking-head p { margin-top:4px; color:var(--muted); font-size:12px; }
-    .ranking-tools { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; min-width:min(360px,100%); }
-    .info-block { margin-bottom:16px; }
-    .info-block h3 { margin:0 0 10px; color:var(--accent); font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
-    .offer-actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; margin-top:8px; }
-    .notice {
-      display:flex;
-      gap:8px;
-      align-items:center;
-      min-height:32px;
-      padding:6px 2px 7px;
-      border-top:1px solid rgba(152,97,13,.28);
-      color:#704b0a;
-      font-size:12px;
+      gap:9px;
+      padding:11px 16px;
+      border-radius:var(--pill);
       font-weight:720;
     }
-    .notice.no { border-top-color:rgba(169,58,50,.28); color:#7c2b25; }
-    .table-wrap { overflow-x:auto; border:1px solid var(--line); border-radius:16px; background:var(--solid); box-shadow:0 1px 0 rgba(255,255,255,.7) inset; -webkit-overflow-scrolling:touch; }
-    table { width:100%; min-width:860px; border-collapse:separate; border-spacing:0; }
-    th, td { padding:12px 13px; border-bottom:1px solid var(--line); text-align:right; font-size:13px; vertical-align:top; }
-    th:first-child, td:first-child { text-align:left; position:sticky; left:0; z-index:1; background:var(--solid); }
-    th { background:#f0eee8; color:#3e4643; font-size:12px; font-weight:850; text-transform:uppercase; letter-spacing:.035em; white-space:nowrap; }
-    th:first-child { background:#f0eee8; z-index:2; }
-    tbody tr:hover td { background:#fbfaf6; }
-    tbody tr:last-child td { border-bottom:0; }
-    .winner { color:var(--good); font-weight:900; }
-    .status-yes { color:var(--good); font-weight:900; }
-    .status-warning { color:var(--amber); font-weight:900; }
-    .status-no { color:var(--red); font-weight:900; }
-    .mobile-card-list { display:none; }
-    .meta, .chip-row { display:flex; flex-wrap:wrap; gap:6px; }
-    .meta { margin-top:10px; }
-    .pill {
+    .button.primary { background:var(--ink); border-color:var(--ink); color:white; }
+    .button:hover, .icon-button:hover, .chip:hover, .mode-button:hover, .card:hover { transform:translateY(-2px); box-shadow:var(--shadow-soft); }
+    .button:focus-visible, .icon-button:focus-visible, input:focus-visible, select:focus-visible, .card:focus-visible, .chip:focus-visible, .mode-button:focus-visible {
+      outline:3px solid rgba(53,95,141,.2);
+      outline-offset:2px;
+      border-color:var(--blue);
+    }
+    .icon-button {
+      width:42px;
+      height:42px;
+      display:inline-grid;
+      place-items:center;
+      border-radius:50%;
+    }
+    .icon-button svg, .button svg, .tool-icon svg, .eyebrow svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .glass {
+      border:1px solid var(--line);
+      background:var(--surface);
+      box-shadow:var(--shadow-soft);
+      backdrop-filter:blur(24px) saturate(1.16);
+      -webkit-backdrop-filter:blur(24px) saturate(1.16);
+    }
+    .feature-stage {
+      min-height:500px;
+      border-radius:28px;
+      overflow:hidden;
+      display:grid;
+      grid-template-rows:minmax(260px,1fr) auto;
+    }
+    .car-art {
+      min-height:260px;
+      background:#eef1ef;
+      display:grid;
+      place-items:center;
+      position:relative;
+      overflow:hidden;
+    }
+    .car-art img { width:100%; height:100%; object-fit:cover; }
+    .feature-caption { padding:18px; display:grid; gap:12px; }
+    .caption-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    .muted { color:var(--muted); }
+    .mini { color:var(--muted); font-size:12px; font-weight:560; }
+    .stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .stat, .score-card, .metric {
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:rgba(255,255,255,.64);
+      padding:12px;
+      min-width:0;
+    }
+    .stat span, .metric span { display:block; color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+    .stat strong, .metric strong { display:block; margin-top:4px; font-size:17px; line-height:1.12; letter-spacing:0; overflow-wrap:anywhere; }
+    .section { padding:42px 0; }
+    .section-head { display:flex; align-items:end; justify-content:space-between; gap:18px; margin-bottom:18px; }
+    .grid { display:grid; gap:14px; }
+    .cards { grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); }
+    .car-grid { grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); }
+    .card {
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:rgba(255,255,255,.72);
+      box-shadow:0 1px 0 rgba(255,255,255,.85) inset;
+      overflow:hidden;
+      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+    .card-body { padding:15px; display:grid; gap:13px; }
+    .card-art { height:150px; background:#edf0ef; }
+    .card-art img { width:100%; height:100%; object-fit:cover; }
+    .card-title { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .tag-row { display:flex; flex-wrap:wrap; gap:7px; }
+    .tag, .chip {
       display:inline-flex;
       align-items:center;
-      gap:5px;
-      min-height:24px;
-      border:1px solid var(--line);
-      border-radius:999px;
-      padding:4px 8px;
-      background:#fff;
-      color:var(--muted);
-      font-size:11px;
-      font-weight:780;
-      line-height:1;
-      white-space:nowrap;
-    }
-    .pill.warn { border-color:rgba(152,97,13,.22); background:var(--amber-soft); color:var(--amber); }
-    .pill.no { border-color:rgba(169,58,50,.2); background:var(--red-soft); color:var(--red); }
-    .search-control { position:relative; display:block; }
-    .search-control .icon {
-      position:absolute;
-      left:11px;
-      top:50%;
-      transform:translateY(-50%);
-      color:var(--muted);
-      pointer-events:none;
-      z-index:1;
-    }
-    .search-control input { padding-left:38px; }
-    .select-stack { display:grid; gap:8px; }
-    .model-picker { position:relative; }
-    .model-trigger {
-      width:100%;
-      min-height:42px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      border:1px solid var(--line-strong);
-      border-radius:12px;
-      padding:10px 12px;
-      background:rgba(255,255,255,.94);
-      color:var(--ink);
-      text-align:left;
-      font-weight:780;
-      cursor:pointer;
-      transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
-    }
-    .model-trigger:hover { border-color:rgba(49,95,82,.34); background:#fff; }
-    .model-trigger::after {
-      content:"";
-      width:8px;
-      height:8px;
-      border-right:2px solid var(--muted);
-      border-bottom:2px solid var(--muted);
-      transform:rotate(45deg);
-      transition:transform .16s ease;
-      flex:0 0 auto;
-    }
-    .model-picker.open .model-trigger::after { transform:rotate(225deg); }
-    .model-menu {
-      position:absolute;
-      z-index:12;
-      top:calc(100% + 8px);
-      left:0;
-      right:0;
-      display:grid;
-      gap:8px;
-      max-height:min(430px,70vh);
-      padding:10px;
-      border:1px solid var(--line);
-      border-radius:16px;
-      background:rgba(255,253,250,.98);
-      box-shadow:var(--shadow-soft);
-      overflow:auto;
-    }
-    .model-option {
-      width:100%;
-      display:grid;
-      gap:2px;
-      border:0;
-      border-radius:12px;
-      padding:10px 11px;
-      background:transparent;
-      color:var(--ink);
-      text-align:left;
-      cursor:pointer;
-    }
-    .model-option:hover, .model-option.selected { background:rgba(49,95,82,.08); }
-    .model-option small { color:var(--muted); font-size:11px; font-weight:720; }
-    .model-more { padding:4px 2px 0; color:var(--muted); font-size:12px; }
-    .sort-button {
-      display:inline-flex;
-      align-items:center;
-      justify-content:flex-end;
-      width:100%;
-      border:0;
-      background:transparent;
-      color:inherit;
-      padding:0;
-      font:inherit;
-      font-weight:inherit;
-      text-transform:inherit;
-      letter-spacing:inherit;
-      cursor:pointer;
-    }
-    th:first-child .sort-button { justify-content:flex-start; }
-    .ranking-pager { display:flex; justify-content:space-between; gap:10px; padding:12px; border-top:1px solid var(--line); background:#fbfaf6; }
-    .toast {
-      position:fixed;
-      left:50%;
-      bottom:18px;
-      z-index:30;
-      transform:translate(-50%, 10px);
-      min-height:34px;
-      padding:8px 12px;
-      border:1px solid var(--line);
-      border-radius:999px;
-      background:rgba(255,253,250,.98);
-      color:var(--accent);
-      box-shadow:var(--shadow-soft);
+      min-height:28px;
+      border-radius:var(--pill);
+      padding:6px 10px;
       font-size:12px;
-      font-weight:850;
-      opacity:0;
-      pointer-events:none;
-      transition:opacity .18s ease, transform .18s ease;
+      font-weight:650;
     }
-    .toast.show { opacity:1; transform:translate(-50%, 0); }
-    .button.is-feedback, .small-button.is-feedback, .rank-toggle.is-feedback { background:var(--good-soft); color:var(--good); border-color:rgba(20,113,79,.24); }
-    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
-    @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-    @keyframes softFlow {
-      from { opacity:.64; transform:translateY(4px) scale(.992); }
-      to { opacity:1; transform:translateY(0) scale(1); }
+    .tag { color:#4b555c; background:#edf1f0; border:1px solid rgba(17,20,22,.06); }
+    .tag.green { background:#e6f2ed; color:var(--green); }
+    .tag.blue { background:#e8eef7; color:var(--blue); }
+    .tag.gold { background:#f5eddd; color:var(--gold); }
+    .tag.rose { background:#f3e8eb; color:var(--rose); }
+    .toolbar {
+      display:grid;
+      grid-template-columns:minmax(180px,1fr) minmax(150px,240px) auto;
+      gap:10px;
+      align-items:center;
+      margin:0 0 16px;
     }
-    @media (prefers-reduced-motion:reduce) {
-      *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.001ms !important; }
+    input, select {
+      width:100%;
+      min-height:44px;
+      border:1px solid var(--line-strong);
+      border-radius:var(--pill);
+      padding:10px 14px;
+      background:rgba(255,255,255,.84);
+      color:var(--ink);
+      box-shadow:0 1px 0 rgba(255,255,255,.8) inset;
     }
-    @media (max-width:980px) {
-      .hero { grid-template-columns:1fr; }
-      .two { grid-template-columns:1fr; }
-      .field-row { grid-template-columns:1fr; }
-      th:first-child, td:first-child { position:static; }
-      table { min-width:820px; }
+    select { appearance:auto; }
+    label { display:grid; gap:7px; color:#333c42; font-size:13px; font-weight:650; }
+    .label-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+    .panel {
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:rgba(255,255,255,.72);
+      padding:16px;
+      box-shadow:var(--shadow-soft);
     }
-    @media (max-width:680px) {
-      header, main { width:min(100% - 24px, var(--max)); }
-      header { padding-top:18px; }
-      .hero-copy, .hero-card, .panel { border-radius:19px; }
-      .hero-copy { min-height:auto; padding:22px; }
-      .hero-card, .panel { padding:15px; }
-      .controls { grid-template-columns:1fr; }
-      .panel > summary { font-size:16px; }
-      input, select { min-height:46px; font-size:16px; }
-      .model-trigger { min-height:46px; font-size:16px; }
-      .model-menu { position:fixed; inset:auto 12px 12px; max-height:min(72vh,560px); }
-      .rank-toggle { margin-left:0; }
-      .ranking-head { display:grid; }
-      .ranking-tools { justify-content:stretch; min-width:0; }
-      .ranking-tools .search-control { width:100%; }
-      .table-wrap { border-radius:14px; }
-      table { min-width:780px; }
-      th, td { padding:10px; font-size:12px; }
-      .mobile-card-list { display:grid; gap:10px; margin-bottom:12px; }
-      .mobile-card { border:1px solid var(--line); border-radius:16px; padding:13px; background:linear-gradient(180deg,#fff,#fbfaf6); box-shadow:var(--shadow-soft); }
-      .mobile-card strong { display:block; margin-top:5px; font-size:20px; }
+    .wide-layout { display:grid; grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr); gap:16px; align-items:start; }
+    .tool-layout { display:grid; grid-template-columns:minmax(260px,.78fr) minmax(0,1.22fr); gap:16px; align-items:start; }
+    .compact-row { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; }
+    .compare-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; }
+    .comparison-table { display:grid; gap:8px; }
+    .compare-line {
+      display:grid;
+      grid-template-columns:minmax(110px,.7fr) repeat(var(--cols,2),minmax(0,1fr));
+      gap:8px;
+      align-items:stretch;
+    }
+    .compare-line > div {
+      min-width:0;
+      min-height:42px;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:10px;
+      background:rgba(255,255,255,.64);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      overflow-wrap:anywhere;
+    }
+    .score-bar {
+      height:8px;
+      border-radius:var(--pill);
+      background:#e7ebe9;
+      overflow:hidden;
+      margin-top:8px;
+    }
+    .score-bar i { display:block; height:100%; width:var(--w,50%); background:linear-gradient(90deg,var(--green),var(--blue)); border-radius:inherit; }
+    .detail-hero {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(300px,.92fr);
+      gap:18px;
+      align-items:stretch;
+      padding:18px 0 24px;
+    }
+    .detail-title { display:grid; align-content:center; gap:18px; padding:28px; border-radius:28px; min-height:320px; }
+    .detail-art { border-radius:28px; overflow:hidden; min-height:320px; }
+    .spec-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+    .ranking-list { display:grid; gap:10px; }
+    .rank-row {
+      display:grid;
+      grid-template-columns:54px minmax(190px,1.1fr) repeat(4,minmax(110px,.7fr));
+      gap:8px;
+      align-items:center;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:rgba(255,255,255,.72);
+      padding:10px;
+    }
+    .rank-num { font-size:22px; font-weight:720; color:var(--blue); }
+    .mode-bar { display:flex; flex-wrap:wrap; gap:8px; }
+    .mode-button { min-height:38px; border-radius:var(--pill); padding:8px 12px; font-weight:680; }
+    .mode-button.active { background:var(--ink); border-color:var(--ink); color:white; }
+    .mobile-nav {
+      display:none;
+      position:fixed;
+      left:10px;
+      right:10px;
+      bottom:10px;
+      z-index:35;
+      padding:7px;
+      border:1px solid var(--line);
+      border-radius:var(--pill);
+      background:rgba(255,255,255,.82);
+      box-shadow:0 12px 32px rgba(17,20,22,.14);
+      backdrop-filter:blur(22px);
+      -webkit-backdrop-filter:blur(22px);
+      justify-content:space-between;
+    }
+    .empty { padding:24px; text-align:center; color:var(--muted); }
+    [hidden] { display:none !important; }
+    @media (max-width:860px) {
+      .nav { display:none; }
+      .mobile-nav { display:flex; }
+      .topbar { top:0; margin-top:0; border-radius:0 0 18px 18px; width:100%; }
+      .hero, .wide-layout, .tool-layout, .detail-hero { grid-template-columns:1fr; }
+      .hero { min-height:auto; padding-top:18px; }
+      .feature-stage, .detail-title, .detail-art { min-height:300px; }
+      .toolbar { grid-template-columns:1fr; }
+      .compare-line { grid-template-columns:1fr; }
+      .rank-row { grid-template-columns:42px minmax(0,1fr); }
+      .rank-row .hide-mobile { display:none; }
+      .section-head { display:grid; align-items:start; }
+    }
+    @media (max-width:520px) {
+      .shell { width:min(100% - 20px, var(--max)); }
+      h1 { font-size:42px; }
+      .stats, .spec-strip { grid-template-columns:1fr 1fr; }
+      .card-art { height:132px; }
+      .actions .button { width:100%; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <section class="hero" aria-labelledby="pageTitle">
-      <div class="hero-copy">
-        <div>
-          <div class="eyebrow"><span class="section-icon" data-icon="car"></span>Car money model</div>
-          <h1 id="pageTitle">Which car leaves more money?</h1>
-        </div>
-        <div class="hero-actions">
-          <a class="button primary" href="#results"><span data-icon="winner"></span>Winner</a>
-          <a class="button" href="#setup"><span data-icon="budget"></span>Inputs</a>
-          <button class="rank-toggle" type="button" data-rank-toggle>Rank</button>
-        </div>
-      </div>
-      <aside class="hero-card" id="heroSummary" aria-label="Winner summary"></aside>
-    </section>
+  <header class="topbar shell" aria-label="Main navigation">
+    <a class="brand" href="#home" aria-label="Car Value Studio home"><span class="brand-mark" aria-hidden="true"></span><span>Car Value Studio</span></a>
+    <nav class="nav">
+      <a href="#home" data-nav="home">Home</a>
+      <a href="#cars" data-nav="cars">Cars</a>
+      <a href="#tools" data-nav="tools">Tools</a>
+      <a href="#ranking" data-nav="ranking">Ranking</a>
+    </nav>
   </header>
-
-  <main>
-    <section id="rankingPanel" class="panel ranking-panel" hidden>
-      <div class="ranking-head">
-        <div>
-          <h2>Ranking</h2>
-          <p id="rankingSummary">Current setup.</p>
-        </div>
-        <div class="ranking-tools" id="rankingTools"></div>
-      </div>
-      <div id="rankingTable" class="table-wrap"></div>
-    </section>
-
-    <div id="warningBox" class="warnings" aria-live="polite"></div>
-
-    <details id="setup" class="panel" open>
-      <summary class="help-target" data-help-key="setup"><span class="section-icon" data-icon="settings"></span>Setup</summary>
-      <div id="setupInputs" class="controls"></div>
-    </details>
-
-    <details id="cars" class="panel" open>
-      <summary class="help-target" data-help-key="cars"><span class="section-icon" data-icon="car"></span>Cars</summary>
-      <div id="choiceInputs" class="grid two"></div>
-    </details>
-
-    <details id="payment" class="panel" open>
-      <summary class="help-target" data-help-key="payment"><span class="section-icon" data-icon="loan"></span>Offers</summary>
-      <div id="financeInputs" class="grid two"></div>
-    </details>
-
-    <details id="costs" class="panel" open>
-      <summary class="help-target" data-help-key="costs"><span class="section-icon" data-icon="fuel"></span>Info</summary>
-      <div id="runningInputs"></div>
-    </details>
-
-    <details id="results" class="panel" open>
-      <summary class="help-target" data-help-key="results"><span class="section-icon" data-icon="winner"></span>Results</summary>
-      <div id="mobileResultCards" class="mobile-card-list"></div>
-      <div id="primaryTable" class="table-wrap"></div>
-    </details>
-  </main>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
+  <main id="app" class="shell"></main>
+  <nav class="mobile-nav" aria-label="Mobile navigation">
+    <a href="#home" data-nav="home">Home</a>
+    <a href="#cars" data-nav="cars">Cars</a>
+    <a href="#tools" data-nav="tools">Tools</a>
+    <a href="#ranking" data-nav="ranking">Rank</a>
+  </nav>
+  <datalist id="carChoices"></datalist>
   <script>
 /* __MODEL_JS__ */
   </script>
   <script>
     const M = window.CarCompareModel;
+    const cars = M.CAR_DATABASE;
+    const byId = M.CAR_BY_ID;
+    const categoryList = ["All"].concat([...new Set(cars.map((car) => car.categoryGroup || car.categoryLabel || car.category).filter(Boolean))].sort());
     const state = {
-      assumptions: structuredClone(M.DEFAULT_ASSUMPTIONS),
-      cars: { car1: M.defaultCar("car1"), car2: M.defaultCar("car2") },
-      savedOffers: { car1: {}, car2: {} },
-      modelSearch: { car1: "", car2: "" },
-      modelDropdownOpen: { car1: false, car2: false },
-      rankingFilters: { search: "", category: "" },
-      rankingSort: { field: "finalMoney", direction: "desc" },
-      rankingVisibleCount: 250,
-      rankingShowAll: false,
-      scoreWeights: structuredClone(M.DEFAULT_SCORE_WEIGHTS),
-      rankingControlsRendered: false,
-      rankingOpen: false,
-    };
-    let latestResult = null;
-
-    const HELP = {
-      setup: "Budget, time, and distance.",
-      cars: "Choose models and payment mode.",
-      payment: "Your actual offers.",
-      costs: "Market, car costs, and scores.",
-      results: "Money left after everything.",
-      initialCashBudget: "Cash available at the start.",
-      monthlyBudget: "Monthly money available for car costs.",
-      yearsOwned: "How long you keep the car.",
-      annualKm: "Distance driven per year.",
-      fuelPrice: "Fuel price for petrol/diesel/hybrid cars.",
-      electricityPrice: "EV charging price. Assumes 100% home charging.",
-      marketReturn: "Annual investment return used for leftover money.",
-      modelId: "Search by brand, model, category, or fuel.",
-      carValue: "Realistic value used for resale. Offer price can differ.",
-      paymentMode: "Upfront shows offer price. Finance shows down payment, monthly payment, and months.",
-      upfrontPrice: "Actual upfront offer price. This is the cash paid at month 0 for an upfront deal.",
-      downPayment: "Cash paid at month 0 for finance.",
-      monthlyPayment: "Monthly finance payment for the current offer.",
-      loanMonths: "If this is longer than years owned, loan left is subtracted from final money.",
-      kwhPer100Km: "Real EV electricity use, including conservative losses.",
-      litersPer100Km: "Real fuel use.",
-      annualMaintenance: "Annual service reserve.",
-      annualInsurance: "Annual insurance estimate.",
-      annualRepairs: "Annual repair reserve.",
-      annualTax: "Annual IUC estimate.",
-      resaleValue: "Estimated resale unless edited.",
+      route: parseRoute(),
+      carSearch: "",
+      carCategory: "All",
+      carVisible: 48,
+      carView: "grid",
+      assumptions: Object.assign({}, M.DEFAULT_ASSUMPTIONS),
+      financialCars: {
+        car1: M.defaultCar("car1"),
+        car2: M.defaultCar("car2"),
+      },
+      specIds: ["tesla-model-3", "volkswagen-golf", "toyota-corolla"].filter((id) => byId[id]),
+      usedOffers: [
+        { modelId:"tesla-model-3", mileage:65000, condition:8, batteryHealth:92, warranty:12, service:8, risk:2, repairs:600, offerPrice:25000 },
+        { modelId:"volkswagen-golf", mileage:90000, condition:7, batteryHealth:100, warranty:3, service:7, risk:3, repairs:850, offerPrice:14500 },
+      ],
+      valueIds: ["tesla-model-3", "toyota-corolla", "skoda-octavia", "hyundai-kona-electric"].filter((id) => byId[id]),
+      rankingMode: "value",
+      rankingSearch: "",
+      rankingCategory: "All",
+      rankingLimit: 80,
+      rankingRows: null,
     };
 
-    const ICON_PATHS = {
-      budget: '<path d="M3 7h18v10H3z"/><path d="M7 7V5h10v2"/><path d="M7 12h.01M17 12h.01M12 12a2 2 0 1 0 0 .01"/>',
-      car: '<path d="M5 17h14"/><path d="M6 17l1-5 3-4h4l3 4 1 5"/><path d="M8 17v1"/><path d="M16 17v1"/><path d="M8 12h8"/>',
-      fuel: '<path d="M5 21V4h9v17"/><path d="M5 9h9"/><path d="M14 7h2l3 3v8a2 2 0 0 1-4 0v-5h-1"/>',
-      loan: '<path d="M4 7h16v12H4z"/><path d="M4 11h16"/><path d="M8 15h4"/><path d="M16 15h.01"/>',
-      winner: '<path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 3"/><path d="M17 6h3a3 3 0 0 1-3 3"/>',
-      warning: '<path d="M12 3 2.5 20h19z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
-      settings: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a8 8 0 0 0-1.7-1L15.5 3h-4l-.3 3a8 8 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a8 8 0 0 0 1.7 1l.3 3h4l.3-3a8 8 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5c.1-.3.1-.7.1-1z"/>',
-      search: '<path d="m21 21-4.3-4.3"/><circle cx="11" cy="11" r="7"/>',
+    const icons = {
+      arrow:"M5 12h14M13 5l7 7-7 7",
+      car:"M5 17h14M7 17l1.6-5.2A3 3 0 0 1 11.5 10h1A3 3 0 0 1 15.4 11.8L17 17M7 17a2 2 0 1 0 0 .1M17 17a2 2 0 1 0 0 .1",
+      search:"M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15ZM16 16l5 5",
+      tools:"M14.7 6.3l3-3 3 3-3 3M4 20l8.5-8.5M7 17l-3 3M12 4h5M4 12h5",
+      rank:"M7 20V10M12 20V4M17 20v-7",
+      bolt:"M13 2 5 13h6l-2 9 8-12h-6l2-8",
+      gauge:"M4 14a8 8 0 1 1 16 0M12 14l4-4",
     };
 
-    const setupFields = [
-      ["initialCashBudget", "Initial budget", 0, 300000, 100],
-      ["monthlyBudget", "Monthly budget", 0, 5000, 10],
-      ["yearsOwned", "Years", 1, 40, 1],
-      ["annualKm", "Km/year", 0, 100000, 1000],
-    ];
-    const marketFields = [["fuelPrice", "Fuel", 0.01], ["electricityPrice", "Electricity", 0.01], ["marketReturn", "Return", 0.1]];
-    const paymentFields = {
-      upfront: [["upfrontPrice", "Upfront offer price", 100]],
-      finance: [["downPayment", "Down payment", 100], ["monthlyPayment", "Monthly payment", 1], ["loanMonths", "Months", 1]],
-    };
-    const costFields = {
-      ev: [["kwhPer100Km", "kWh/100km", 0.1]],
-      hybrid: [["litersPer100Km", "L/100km", 0.1]],
-      combustion: [["litersPer100Km", "L/100km", 0.1]],
-    };
-    const commonCostFields = [["annualMaintenance", "Maintenance", 50], ["annualInsurance", "Insurance", 50], ["annualRepairs", "Repairs", 50], ["annualTax", "Tax", 25], ["resaleValue", "Resale", 100]];
-    const scoreFields = [["reliability", "Reliability"], ["comfort", "Comfort"], ["safety", "Safety"], ["practicality", "Practicality"], ["tech", "Tech"], ["drivingEnjoyment", "Driving"]];
-    const categoryOrder = ["City car", "Supermini", "Hatchback", "Sedan", "Estate", "MPV", "Crossover", "SUV", "Pickup", "Van", "Coupe", "Convertible", "Sports car", "Supercar", "Hypercar", "Luxury sedan", "Luxury SUV", "Off-road", "EV hatchback", "EV sedan", "EV SUV"];
-    const rankingPageSize = 250;
-
-    function euro(value) {
-      return new Intl.NumberFormat("en-IE", { style:"currency", currency:"EUR", maximumFractionDigits:0 }).format(finite(value));
+    function svgIcon(name) {
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${icons[name] || icons.arrow}"></path></svg>`;
     }
-    function euroPrecise(value) {
-      return new Intl.NumberFormat("en-IE", { style:"currency", currency:"EUR", minimumFractionDigits:2, maximumFractionDigits:2 }).format(finite(value));
-    }
-    function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : 0; }
-    function number(value, digits = 1) { return finite(value).toLocaleString("en-IE", { maximumFractionDigits:digits }); }
+
     function escapeHtml(value) {
-      return String(value).replace(/[&<>"']/g, (char) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[char]));
-    }
-    function icon(name) {
-      return `<span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24">${ICON_PATHS[name] || ICON_PATHS.car}</svg></span>`;
-    }
-    function iconOnly(name) {
-      return `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[name] || ICON_PATHS.car}</svg>`;
-    }
-    function renderStaticIcons() {
-      if (!document.querySelectorAll) return;
-      document.querySelectorAll("[data-icon]").forEach((node) => { node.innerHTML = iconOnly(node.dataset.icon); });
-    }
-    function helpText(key) { return dynamicHelpText(key) || HELP[key] || ""; }
-    function helpAttrs(key) {
-      return helpText(key) ? ` data-help-key="${key}"` : "";
-    }
-    function fieldLabel(carKey, field, label) {
-      const id = `${carKey}-${field}`;
-      return `<label class="field-label help-target" for="${id}"${helpAttrs(`${carKey}.${field}`)}>${escapeHtml(label)}</label>`;
-    }
-    function carTitle(carKey) {
-      return escapeHtml(M.displayCarName(state.cars[carKey]));
+      return String(value == null ? "" : value).replace(/[&<>"']/g, (char) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[char]));
     }
 
-    function init() {
-      renderStaticIcons();
-      renderSetup();
-      renderAllInputs();
-      bindHelp();
-      bindModelPickerDismiss();
-      bindPanelFeedback();
-      update();
+    function normalize(value) {
+      return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     }
 
-    function renderSetup() {
-      document.getElementById("setupInputs").innerHTML = setupFields.map(([field, label, min, max, step]) => `
-        <div class="setup-field">
-          <label class="field-label help-target" for="setup-${field}"${helpAttrs(field)}>${escapeHtml(label)}</label>
-          <input id="setup-${field}" data-assumption="${field}" type="number" min="${min}" max="${max}" step="${step}" value="${state.assumptions[field]}">
-        </div>
-      `).join("");
-      document.getElementById("setupInputs").querySelectorAll("[data-assumption]").forEach((input) => {
-        input.addEventListener("input", () => {
-          state.assumptions[input.dataset.assumption] = input.value === "" ? "" : Number(input.value);
-          refreshAutoResale();
-          renderCosts();
-          update();
-        });
+    function money(value) {
+      return `€${Math.round(Number(value) || 0).toLocaleString("en-IE")}`;
+    }
+
+    function number(value, digits = 1) {
+      return (Number(value) || 0).toLocaleString("en-IE", { maximumFractionDigits: digits });
+    }
+
+    function pct(value) {
+      return `${Math.round((Number(value) || 0) * 100)}%`;
+    }
+
+    function avgScore(car) {
+      const scores = car.scores || {};
+      const values = [scores.reliability, scores.comfort, scores.safety, scores.practicality, scores.tech, scores.drivingEnjoyment].map(Number).filter(Number.isFinite);
+      return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+    }
+
+    function energyLabel(car) {
+      if (car.energyType === "electricity") return `${number(car.realWorldKwhPer100km)} kWh/100km`;
+      return `${number(car.realWorldLitersPer100km)} L/100km`;
+    }
+
+    function runningMonthly(car) {
+      return Number(car.estimatedMonthlyRunningCost) || Math.round(((car.maintenancePerYear || 0) + (car.insurancePerYear || 0) + (car.repairsPerYear || 0) + (car.taxPerYear || 0)) / 12);
+    }
+
+    function artSvg(key, label) {
+      const palettes = {
+        ev:["#dfeaf2","#355f8d","#b7d2ec"],
+        suv:["#e6ebe6","#2f6253","#ccd8d0"],
+        sports:["#f2e8ea","#94515d","#e8c7cf"],
+        supercar:["#ede8dd","#9a6b20","#ead8a8"],
+        practical:["#e7ebee","#586774","#ccd6dc"],
+        sedan:["#eef0f3","#20262b","#cbd3d8"],
+        city:["#edf1ed","#5c7a66","#d8e5d9"],
+        hatch:["#eceff1","#42505a","#d6dde2"],
+      };
+      const p = palettes[key] || palettes.hatch;
+      const safeLabel = escapeHtml(label || "Car");
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${p[0]}"/><stop offset="1" stop-color="#fff"/></linearGradient><filter id="s"><feDropShadow dx="0" dy="24" stdDeviation="18" flood-color="#111416" flood-opacity=".16"/></filter></defs><rect width="900" height="560" fill="url(#g)"/><path d="M106 360c34-78 92-126 174-144h258c70 10 124 57 166 144h58c28 0 50 22 50 50v14H78v-16c0-26 21-48 48-48h-20Z" fill="${p[1]}" filter="url(#s)"/><path d="M265 238h240c50 10 90 42 118 90H188c20-46 46-75 77-90Z" fill="${p[2]}" opacity=".9"/><path d="M298 250h86v78H214c19-37 47-63 84-78Zm108 0h89c39 9 71 35 95 78H406v-78Z" fill="#f8fbfb" opacity=".72"/><circle cx="242" cy="421" r="51" fill="#15191d"/><circle cx="242" cy="421" r="22" fill="#dfe4e7"/><circle cx="648" cy="421" r="51" fill="#15191d"/><circle cx="648" cy="421" r="22" fill="#dfe4e7"/><path d="M132 389h646" stroke="#fff" stroke-opacity=".46" stroke-width="8" stroke-linecap="round"/><text x="50%" y="86" text-anchor="middle" fill="#111416" opacity=".68" font-family="Avenir Next, Arial" font-size="28" font-weight="700">${safeLabel}</text></svg>`;
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    }
+
+    function imageFor(car) {
+      const src = car.image || (Array.isArray(car.gallery) && car.gallery[0]) || artSvg(car.fallbackCategoryImage, car.categoryGroup || car.powertrain);
+      return escapeHtml(src);
+    }
+
+    function parseRoute() {
+      const loc = typeof location !== "undefined" ? location : { hash:"#home" };
+      const hash = (loc.hash || "#home").replace(/^#\/?/, "").split("?")[0];
+      const parts = hash.split("/").filter(Boolean);
+      return { page: parts[0] || "home", sub: parts[1] || "", id: parts[1] || "" };
+    }
+
+    function setActiveNav() {
+      const page = state.route.page === "car" ? "cars" : state.route.page === "tools" ? "tools" : state.route.page;
+      document.querySelectorAll("[data-nav]").forEach((link) => link.classList.toggle("active", link.dataset.nav === page));
+    }
+
+    function fillDatalist() {
+      const list = document.getElementById("carChoices");
+      const fragment = document.createDocumentFragment();
+      cars.forEach((car) => {
+        const option = document.createElement("option");
+        option.value = car.fullName || car.displayName;
+        option.label = `${car.categoryGroup || car.category} · ${money(car.defaultUpfrontPrice || 0)}`;
+        fragment.appendChild(option);
       });
+      list.appendChild(fragment);
     }
 
-    function renderAllInputs() {
-      renderCars();
-      renderPayment();
-      renderCosts();
+    function findCarByInput(value) {
+      const q = normalize(value);
+      if (!q) return null;
+      return cars.find((car) => normalize(car.fullName || car.displayName) === q)
+        || byId[value]
+        || cars.find((car) => car.searchText && car.searchText.includes(q))
+        || null;
     }
 
-    function carPanel(carKey, html) {
-      return `<div class="car-panel" data-car-panel="${carKey}"><h3 class="help-target" ${helpAttrs(`${carKey}.panel`)}>${icon("car")}<span data-car-title="${carKey}">${carTitle(carKey)}</span></h3>${html}</div>`;
+    function carInput(name, value, placeholder = "Search car") {
+      const car = byId[value] || findCarByInput(value);
+      return `<input data-car-input="${escapeHtml(name)}" list="carChoices" type="search" placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(car ? car.fullName || car.displayName : value || "")}">`;
     }
 
-    function renderCars() {
-      document.getElementById("choiceInputs").innerHTML = ["car1", "car2"].map((carKey) => {
-        const car = state.cars[carKey];
-        const html = `
-          ${inputRow(carKey, "modelId", "Car model", modelSearchControl(carKey, car))}
-          ${numberInput(carKey, "carValue", "Car value", 100)}
-          ${inputRow(carKey, "paymentMode", "Payment", `<select id="${carKey}-paymentMode" data-car="${carKey}" data-field="paymentMode"><option value="upfront" ${car.paymentMode === "upfront" ? "selected" : ""}>Upfront</option><option value="finance" ${car.paymentMode === "finance" ? "selected" : ""}>Finance</option></select>`)}
-        `;
-        return carPanel(carKey, html);
-      }).join("");
-      bindCarInputs("choiceInputs");
-      bindCarSearchInputs();
-      bindModelPickerInputs();
+    function carCard(car, compact = false) {
+      return `<a class="card" href="#car/${escapeHtml(car.id)}" aria-label="Open ${escapeHtml(car.fullName || car.displayName)}">
+        <div class="card-art"><img loading="lazy" alt="" src="${imageFor(car)}"></div>
+        <div class="card-body">
+          <div class="card-title">
+            <div>
+              <h3>${escapeHtml(car.fullName || car.displayName)}</h3>
+              <p class="mini">${escapeHtml(car.categoryGroup || car.category)} · ${escapeHtml(car.powertrain || "")}</p>
+            </div>
+            <span class="tag blue">${money(car.defaultUpfrontPrice)}</span>
+          </div>
+          <div class="stats">
+            <div class="stat"><span>Use</span><strong>${escapeHtml(energyLabel(car))}</strong></div>
+            <div class="stat"><span>Score</span><strong>${number(avgScore(car), 1)}/10</strong></div>
+            <div class="stat"><span>Run</span><strong>${money(runningMonthly(car))}/mo</strong></div>
+          </div>
+          ${compact ? "" : `<div class="tag-row"><span class="tag green">${escapeHtml(car.bodyStyle || car.categoryGroup || "")}</span><span class="tag">${number(car.horsepower, 0)} hp</span><span class="tag">${number(car.acceleration0to100, 1)}s</span></div>`}
+        </div>
+      </a>`;
     }
 
-    function modelSearchControl(carKey, car) {
-      const open = Boolean(state.modelDropdownOpen[carKey]);
-      const value = state.modelSearch[carKey] || "";
-      return `<div class="model-picker ${open ? "open" : ""}" data-model-picker="${carKey}">
-        <button class="model-trigger" id="${carKey}-modelId" type="button" data-car-select-toggle="${carKey}" aria-expanded="${open ? "true" : "false"}" aria-label="Choose car model">${escapeHtml(M.displayCarName(car))}</button>
-        <input type="hidden" data-car="${carKey}" data-field="modelId" value="${escapeHtml(car.modelId || "")}">
-        ${open ? `<div class="model-menu" data-car-dropdown="${carKey}">
-          <label class="search-control" for="${carKey}-modelSearch"><span class="icon">${iconOnly("search")}</span><input id="${carKey}-modelSearch" data-car-search="${carKey}" type="search" placeholder="Search" value="${escapeHtml(value)}" autocomplete="off"></label>
-          <div class="model-options" data-car-options="${carKey}">${modelOptions(carKey, car)}</div>
-        </div>` : ""}
+    function pageHome() {
+      const featured = byId["tesla-model-3"] || cars.find((car) => /Tesla Model 3 2021/.test(car.fullName)) || cars[0];
+      const previews = ["tesla-model-3", "toyota-corolla", "skoda-octavia", "porsche-cayman"].map((id) => byId[id]).filter(Boolean);
+      const cats = ["EV sedan", "SUV", "City car", "Sports car", "Estate", "Luxury SUV"].filter((cat) => categoryList.includes(cat));
+      return `<div class="page">
+        <section class="hero">
+          <div class="hero-copy">
+            <span class="eyebrow">${svgIcon("car")} Car discovery and value</span>
+            <h1>Find the car that makes sense.</h1>
+            <p>Browse cars, inspect ownership costs, compare specs, model used offers, and rank the best value without turning the site into a spreadsheet.</p>
+            <div class="actions">
+              <a class="button primary" href="#cars">Explore Cars ${svgIcon("arrow")}</a>
+              <a class="button" href="#tools">Open Tools</a>
+              <a class="button" href="#ranking">Rank Cars</a>
+            </div>
+          </div>
+          <a class="feature-stage glass" href="#car/${escapeHtml(featured.id)}">
+            <div class="car-art"><img alt="" src="${imageFor(featured)}"></div>
+            <div class="feature-caption">
+              <div class="caption-top">
+                <div><h3>${escapeHtml(featured.fullName)}</h3><p class="mini">${escapeHtml(featured.categoryGroup)} · ${escapeHtml(featured.powertrain)}</p></div>
+                <span class="tag green">Featured</span>
+              </div>
+              <div class="stats">
+                <div class="stat"><span>Value</span><strong>${money(featured.defaultUpfrontPrice)}</strong></div>
+                <div class="stat"><span>Score</span><strong>${number(avgScore(featured), 1)}/10</strong></div>
+                <div class="stat"><span>Run</span><strong>${money(runningMonthly(featured))}/mo</strong></div>
+              </div>
+            </div>
+          </a>
+        </section>
+        <section class="section">
+          <div class="section-head">
+            <div><h2>Cars</h2><p class="section-lead">Search from the database or start with a category.</p></div>
+            <a class="button" href="#cars">Explore all</a>
+          </div>
+          <div class="toolbar">
+            <input data-home-search type="search" placeholder="Search brand, model, year">
+            <select data-home-category>${cats.map((cat) => `<option>${escapeHtml(cat)}</option>`).join("")}</select>
+            <button class="button primary" data-home-explore type="button">Search</button>
+          </div>
+          <div class="tag-row">${cats.map((cat) => `<a class="chip" href="#cars?category=${encodeURIComponent(cat)}">${escapeHtml(cat)}</a>`).join("")}</div>
+          <div class="grid car-grid" style="margin-top:16px">${previews.map((car) => carCard(car, true)).join("")}</div>
+        </section>
+        <section class="section">
+          <div class="section-head"><div><h2>Tools</h2><p class="section-lead">Money, specs, used-market risk, and total value.</p></div></div>
+          ${toolCards()}
+        </section>
       </div>`;
     }
 
-    function modelOptions(carKey, car) {
-      const query = (state.modelSearch[carKey] || "").trim().toLowerCase();
-      const allMatches = M.CAR_DATABASE.filter((item) => modelMatchesSearch(item, query) || item.id === car.modelId)
-        .sort((a, b) => categoryOrder.indexOf(carCategoryGroup(a)) - categoryOrder.indexOf(carCategoryGroup(b)) || a.defaultUpfrontPrice - b.defaultUpfrontPrice || a.displayName.localeCompare(b.displayName));
-      const visibleCars = query ? allMatches.slice(0, 120) : allMatches.slice(0, 80);
-      const options = visibleCars.map((item) => `
-        <button class="model-option ${car.modelId === item.id ? "selected" : ""}" type="button" data-car-option="${carKey}" data-model-id="${escapeHtml(item.id)}">
-          <span>${escapeHtml(item.displayName)}</span>
-          <small>${escapeHtml([item.brand, carCategoryGroup(item), item.powertrain].filter(Boolean).join(" · "))}</small>
-        </button>
-      `).join("");
-      const more = allMatches.length > visibleCars.length ? `<div class="model-more">Showing ${visibleCars.length} of ${allMatches.length}. Type to narrow.</div>` : "";
-      return options ? options + more : `<div class="model-more">No matches.</div>`;
+    function toolCards() {
+      const tools = [
+        ["financial", "Financial Compare", "Which car leaves you with the most money?", "bolt"],
+        ["spec", "Spec Compare", "Acceleration, power, range, efficiency, space, and scores.", "gauge"],
+        ["used", "Used Market Compare", "Offer price, mileage, condition, battery, warranty, and risk.", "search"],
+        ["value", "Value Compare", "Financial outcome plus quality and spec value.", "rank"],
+      ];
+      return `<div class="grid cards">${tools.map(([id, title, desc, icon]) => `<a class="card" href="#tools/${id}">
+        <div class="card-body">
+          <span class="tool-icon tag blue">${svgIcon(icon)}</span>
+          <h3>${escapeHtml(title)}</h3>
+          <p class="muted">${escapeHtml(desc)}</p>
+        </div>
+      </a>`).join("")}</div>`;
     }
 
-    function modelMatchesSearch(car, query) {
-      if (!query) return true;
-      const haystack = car.searchText || normalizeSearch([car.displayName, car.brand, car.model, car.year, car.yearRange, car.id, carCategoryGroup(car), car.category, car.powertrain, car.segment, car.energyType, car.fuelType, car.typicalMarket].filter(Boolean).join(" "));
-      return normalizeSearch(query).split(/\s+/).filter(Boolean).every((term) => haystack.includes(term));
+    function pageCars() {
+      const params = new URLSearchParams((location.hash.split("?")[1] || ""));
+      if (params.get("category") && state.carCategory === "All") state.carCategory = params.get("category");
+      const filtered = filteredCars();
+      const visible = filtered.slice(0, state.carVisible);
+      return `<div class="page">
+        <section class="section">
+          <div class="section-head">
+            <div><span class="eyebrow">${svgIcon("search")} Browse</span><h2>Cars</h2><p class="section-lead">${filtered.length.toLocaleString("en-IE")} matches from ${cars.length.toLocaleString("en-IE")} cars.</p></div>
+          </div>
+          <div class="toolbar">
+            <input data-cars-search type="search" placeholder="Search brand, model, year" value="${escapeHtml(state.carSearch)}">
+            <select data-cars-category>${categoryList.map((cat) => `<option value="${escapeHtml(cat)}" ${cat === state.carCategory ? "selected" : ""}>${escapeHtml(cat)}</option>`).join("")}</select>
+            <button class="button" data-view-toggle type="button">${state.carView === "grid" ? "Compact" : "Grid"}</button>
+          </div>
+          ${visible.length ? `<div class="grid ${state.carView === "grid" ? "car-grid" : ""}">${visible.map((car) => carCard(car, state.carView !== "grid")).join("")}</div>` : `<div class="empty panel">No cars match that search.</div>`}
+          ${filtered.length > visible.length ? `<div class="actions" style="justify-content:center;margin-top:18px"><button class="button" data-show-more-cars type="button">Show more</button></div>` : ""}
+        </section>
+      </div>`;
     }
 
-    function normalizeSearch(value) {
-      return String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    }
-
-    function carCategoryGroup(car) {
-      if (car.categoryGroup) return car.categoryGroup;
-      if (car.energyType === "electricity") {
-        if (/suv|crossover|pickup|off-road/i.test(car.segment || car.model || car.displayName || "")) return "EV SUV";
-        if (/sedan|saloon|model 3|model s|seal|taycan|air|eqs|eqe/i.test(car.segment || car.model || car.displayName || "")) return "EV sedan";
-        return "EV hatchback";
-      }
-      if (car.category === "supercar") return "Supercar";
-      if (car.category === "luxury") return /suv/i.test(car.segment || car.model || car.displayName || "") ? "Luxury SUV" : "Luxury sedan";
-      if (car.category === "pickup") return "Pickup";
-      if (car.defaultUpfrontPrice <= 9000 || /panda|aygo|picanto|i10|up|206/i.test(car.id)) return "City car";
-      if (car.defaultUpfrontPrice <= 14500 || /fiesta|clio|sandero|corsa|ibiza|fabia|micra|208/i.test(car.id)) return "Supermini";
-      return "Hatchback";
-    }
-
-    function renderPayment() {
-      document.getElementById("financeInputs").innerHTML = ["car1", "car2"].map((carKey) => {
-        const car = state.cars[carKey];
-        const fields = paymentFields[car.paymentMode] || paymentFields.upfront;
-        const rows = fields.map(([field, label, step]) => numberInput(carKey, field, label, step)).join("");
-        const actions = `<div class="offer-actions"><button class="small-button" type="button" data-offer-action="save" data-car="${carKey}">Save</button><button class="small-button" type="button" data-offer-action="reset" data-car="${carKey}">Reset</button></div>`;
-        return carPanel(carKey, rows + actions);
-      }).join("");
-      bindCarInputs("financeInputs");
-      bindOfferActions();
-    }
-
-    function offerSnapshot(car) {
-      return {
-        paymentMode: car.paymentMode,
-        upfrontPrice: car.upfrontPrice,
-        downPayment: car.downPayment,
-        monthlyPayment: car.monthlyPayment,
-        loanMonths: car.loanMonths,
-      };
-    }
-
-    function saveOffer(carKey) {
-      const car = state.cars[carKey];
-      if (!car || !car.modelId) return;
-      state.savedOffers[carKey][car.modelId] = offerSnapshot(car);
-      showToast("Saved");
-    }
-
-    function resetOffer(carKey) {
-      const current = state.cars[carKey];
-      const defaults = M.carDefaultsFromModel(current.modelId);
-      ["upfrontPrice", "downPayment", "monthlyPayment", "loanMonths"].forEach((field) => {
-        current[field] = defaults[field];
-      });
-      renderPayment();
-      update();
-      showToast("Reset");
-    }
-
-    function bindOfferActions() {
-      if (!document.querySelectorAll) return;
-      document.querySelectorAll("[data-offer-action]").forEach((button) => {
-        if (button.dataset.offerBound) return;
-        button.dataset.offerBound = "1";
-        button.addEventListener("click", () => {
-          if (button.dataset.offerAction === "save") {
-            saveOffer(button.dataset.car);
-            buttonFeedback(button, "Saved");
-          }
-          if (button.dataset.offerAction === "reset") {
-            resetOffer(button.dataset.car);
-            buttonFeedback(button, "Reset");
-          }
-        });
+    function filteredCars() {
+      const terms = normalize(state.carSearch).split(/\s+/).filter(Boolean);
+      return cars.filter((car) => {
+        if (state.carCategory !== "All" && (car.categoryGroup || car.categoryLabel || car.category) !== state.carCategory) return false;
+        if (!terms.length) return true;
+        const haystack = car.searchText || normalize([car.fullName, car.brand, car.model, car.year, car.categoryGroup, car.powertrain].join(" "));
+        return terms.every((term) => haystack.includes(term));
       });
     }
 
-    function renderCosts() {
-      refreshAutoResale();
-      const market = `<div class="info-block"><h3>Market</h3><div class="controls">${marketFields.map(([field, label, step]) => marketInput(field, label, step)).join("")}</div></div>`;
-      const carInfo = `<div class="info-block"><h3>Car</h3><div class="grid two">${["car1", "car2"].map((carKey) => {
-        const car = state.cars[carKey];
-        const fields = (costFields[car.type] || costFields.combustion).concat(commonCostFields);
-        const rows = fields.map(([field, label, step]) => numberInput(carKey, field, label, step)).join("");
-        return carPanel(carKey, `${rows}<div class="meta" data-running-meta="${carKey}">${runningChips(car)}</div>`);
-      }).join("")}</div></div>`;
-      const scores = `<div class="info-block"><h3>Scores</h3><div class="grid two">${["car1", "car2"].map((carKey) => {
-        const rows = scoreFields.map(([field, label]) => scoreInput(carKey, field, label)).join("");
-        return carPanel(carKey, rows);
-      }).join("")}</div></div>`;
-      document.getElementById("runningInputs").innerHTML = market + carInfo + scores;
-      bindCarInputs("runningInputs");
-      bindMarketInputs();
+    function pageCarDetail(id) {
+      const car = byId[id] || cars[0];
+      const scores = car.scores || {};
+      const specs = [
+        ["Value", money(car.defaultUpfrontPrice)],
+        ["Powertrain", car.powertrain],
+        ["Power", `${number(car.horsepower, 0)} hp`],
+        ["0-100", `${number(car.acceleration0to100, 1)} s`],
+        ["Top speed", `${number(car.topSpeed, 0)} km/h`],
+        ["Range", car.rangeKm ? `${number(car.rangeKm, 0)} km` : "Fuel"],
+        ["Consumption", energyLabel(car)],
+        ["Drivetrain", car.drivetrain],
+        ["Transmission", car.transmission],
+        ["Seats", number(car.seats, 0)],
+        ["Boot", `${number(car.bootLiters, 0)} L`],
+      ];
+      const ownership = [
+        ["Energy/year", car.energyType === "electricity" ? money((car.realWorldKwhPer100km || 0) * state.assumptions.annualKm / 100 * state.assumptions.electricityPrice) : money((car.realWorldLitersPer100km || 0) * state.assumptions.annualKm / 100 * state.assumptions.fuelPrice)],
+        ["Maintenance", money(car.maintenancePerYear)],
+        ["Insurance", money(car.insurancePerYear)],
+        ["Repairs", money(car.repairsPerYear)],
+        ["Tax", money(car.taxPerYear)],
+        ["Resale est.", money(car.resaleEstimate || car.defaultUpfrontPrice * car.resaleRetentionEstimate)],
+        ["Depreciation", pct(car.depreciation)],
+        ["Monthly run", `${money(runningMonthly(car))}/mo`],
+      ];
+      return `<div class="page">
+        <section class="detail-hero">
+          <div class="detail-title glass">
+            <span class="eyebrow">${escapeHtml(car.categoryGroup)} · ${escapeHtml(car.powertrain)}</span>
+            <h1>${escapeHtml(car.fullName || car.displayName)}</h1>
+            <p class="section-lead">${escapeHtml(car.marketContext || car.typicalMarket || "Portugal/EU estimate")}</p>
+            <div class="actions">
+              <a class="button primary" href="#tools/financial?car=${encodeURIComponent(car.id)}">Compare financially</a>
+              <a class="button" href="#tools/spec?car=${encodeURIComponent(car.id)}">Compare specs</a>
+              <a class="button" href="#ranking">Add to ranking</a>
+            </div>
+          </div>
+          <div class="detail-art glass"><img alt="" src="${imageFor(car)}"></div>
+        </section>
+        <section class="section"><div class="section-head"><h2>Main Specs</h2></div><div class="spec-strip">${specs.map(([label, value]) => metric(label, value)).join("")}</div></section>
+        <section class="section"><div class="section-head"><h2>Ownership</h2></div><div class="spec-strip">${ownership.map(([label, value]) => metric(label, value)).join("")}</div></section>
+        <section class="section"><div class="section-head"><h2>Scores</h2></div><div class="grid cards">
+          ${scoreCard("Reliability", scores.reliability)}
+          ${scoreCard("Comfort", scores.comfort)}
+          ${scoreCard("Safety", scores.safety)}
+          ${scoreCard("Practicality", scores.practicality)}
+          ${scoreCard("Tech", scores.tech)}
+          ${scoreCard("Driving", scores.drivingEnjoyment)}
+        </div></section>
+      </div>`;
     }
 
-    function refreshAutoResale() {
-      ["car1", "car2"].forEach((carKey) => {
-        const car = state.cars[carKey];
-        if (!car.resaleCustom) car.resaleValue = M.estimatedResaleValue(car, state.assumptions.yearsOwned);
+    function metric(label, value) {
+      return `<div class="metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+    }
+
+    function scoreCard(label, value) {
+      const width = Math.max(0, Math.min(100, (Number(value) || 0) * 10));
+      return `<div class="score-card"><span class="mini">${escapeHtml(label)}</span><strong>${number(value, 1)}/10</strong><div class="score-bar" style="--w:${width}%"><i></i></div></div>`;
+    }
+
+    function pageTools() {
+      if (state.route.sub === "financial") return toolFinancial();
+      if (state.route.sub === "spec") return toolSpec();
+      if (state.route.sub === "used") return toolUsed();
+      if (state.route.sub === "value") return toolValue();
+      return `<div class="page"><section class="section"><div class="section-head"><div><span class="eyebrow">${svgIcon("tools")} Tools</span><h2>Decision tools</h2><p class="section-lead">Four focused ways to compare cars.</p></div></div>${toolCards()}</section></div>`;
+    }
+
+    function toolFinancial() {
+      const result = M.analyze({ assumptions: state.assumptions, cars: state.financialCars });
+      const rows = result.rows || [];
+      return `<div class="page"><section class="section">
+        <div class="section-head"><div><span class="eyebrow">${svgIcon("bolt")} Financial Compare</span><h2>Which car leaves more money?</h2><p class="section-lead">Budget, financing, running costs, resale, investments, and net worth.</p></div></div>
+        <div class="tool-layout">
+          <div class="panel">
+            <h3>Setup</h3>
+            <div class="form-grid" style="margin-top:12px">
+              ${assumptionInput("initialCashBudget", "Initial budget", 500)}
+              ${assumptionInput("monthlyBudget", "Monthly budget", 25)}
+              ${assumptionInput("yearsOwned", "Years", .5)}
+              ${assumptionInput("annualKm", "Km/year", 500)}
+              ${assumptionInput("fuelPrice", "Fuel €/L", .05)}
+              ${assumptionInput("electricityPrice", "Electric €/kWh", .01)}
+            </div>
+          </div>
+          <div class="grid">
+            <div class="compare-grid">${["car1", "car2"].map(financialCarPanel).join("")}</div>
+            <div class="compare-grid">${rows.map(financialResultCard).join("")}</div>
+          </div>
+        </div>
+      </section></div>`;
+    }
+
+    function assumptionInput(field, label, step) {
+      return `<label>${escapeHtml(label)}<input data-assumption="${escapeHtml(field)}" type="number" step="${step}" value="${escapeHtml(state.assumptions[field])}"></label>`;
+    }
+
+    function financialCarPanel(key) {
+      const car = state.financialCars[key];
+      return `<div class="panel">
+        <div class="label-row"><h3>${escapeHtml(key === "car1" ? "Car A" : "Car B")}</h3><select data-fin-mode="${key}"><option value="upfront" ${car.paymentMode === "upfront" ? "selected" : ""}>Upfront</option><option value="finance" ${car.paymentMode === "finance" ? "selected" : ""}>Finance</option></select></div>
+        <div class="form-grid" style="margin-top:12px">
+          <label>Model ${carInput(`fin:${key}`, car.modelId)}</label>
+          <label>Value <input data-fin-field="${key}:upfrontPrice" type="number" step="500" value="${escapeHtml(car.upfrontPrice)}"></label>
+          ${car.paymentMode === "finance" ? `<label>Down <input data-fin-field="${key}:downPayment" type="number" step="250" value="${escapeHtml(car.downPayment)}"></label><label>Monthly <input data-fin-field="${key}:monthlyPayment" type="number" step="25" value="${escapeHtml(car.monthlyPayment)}"></label><label>Months <input data-fin-field="${key}:loanMonths" type="number" step="1" value="${escapeHtml(car.loanMonths)}"></label>` : ""}
+          <label>${car.type === "ev" ? "kWh/100km" : "L/100km"} <input data-fin-field="${key}:${car.type === "ev" ? "kwhPer100Km" : "litersPer100Km"}" type="number" step=".1" value="${escapeHtml(car.type === "ev" ? car.kwhPer100Km : car.litersPer100Km)}"></label>
+          <label>Maintenance <input data-fin-field="${key}:annualMaintenance" type="number" step="25" value="${escapeHtml(car.annualMaintenance)}"></label>
+          <label>Insurance <input data-fin-field="${key}:annualInsurance" type="number" step="25" value="${escapeHtml(car.annualInsurance)}"></label>
+          <label>Repairs <input data-fin-field="${key}:annualRepairs" type="number" step="25" value="${escapeHtml(car.annualRepairs)}"></label>
+          <label>Tax <input data-fin-field="${key}:annualTax" type="number" step="5" value="${escapeHtml(car.annualTax)}"></label>
+        </div>
+      </div>`;
+    }
+
+    function financialResultCard(row) {
+      return `<div class="panel">
+        <div class="label-row"><h3>${escapeHtml(row.option)}</h3>${row.isWinner ? `<span class="tag green">Winner</span>` : `<span class="tag">Option</span>`}</div>
+        <div class="spec-strip" style="margin-top:12px">
+          ${metric("Total paid", money(row.totalPaid))}
+          ${metric("Net worth", money(row.finalMoney))}
+          ${metric("Car/month", money(row.averageMonthlyCarCost))}
+          ${metric("Resale", money(row.resaleValue))}
+        </div>
+      </div>`;
+    }
+
+    function selectedCars(ids) {
+      return ids.map((id) => byId[id]).filter(Boolean);
+    }
+
+    function selectionPanel(kind, ids, max = 4) {
+      const rows = Array.from({ length:max }, (_, index) => ids[index] || "");
+      return `<div class="panel"><h3>Cars</h3><div class="form-grid" style="margin-top:12px">${rows.map((id, index) => `<label>Car ${index + 1}${carInput(`${kind}:${index}`, id)}</label>`).join("")}</div></div>`;
+    }
+
+    function toolSpec() {
+      const chosen = selectedCars(state.specIds);
+      const fields = [
+        ["Power", (car) => `${number(car.horsepower, 0)} hp`],
+        ["0-100", (car) => `${number(car.acceleration0to100, 1)} s`],
+        ["Top speed", (car) => `${number(car.topSpeed, 0)} km/h`],
+        ["Range", (car) => car.rangeKm ? `${number(car.rangeKm, 0)} km` : "Fuel"],
+        ["Use", energyLabel],
+        ["Boot", (car) => `${number(car.bootLiters, 0)} L`],
+        ["Seats", (car) => number(car.seats, 0)],
+        ["Safety", (car) => `${number(car.scores.safety, 1)}/10`],
+        ["Tech", (car) => `${number(car.scores.tech, 1)}/10`],
+        ["Comfort", (car) => `${number(car.scores.comfort, 1)}/10`],
+        ["Practicality", (car) => `${number(car.scores.practicality, 1)}/10`],
+        ["Driving", (car) => `${number(car.scores.drivingEnjoyment, 1)}/10`],
+      ];
+      return `<div class="page"><section class="section">
+        <div class="section-head"><div><span class="eyebrow">${svgIcon("gauge")} Spec Compare</span><h2>Which car is stronger?</h2><p class="section-lead">Performance, range, efficiency, space, and core scores.</p></div></div>
+        <div class="tool-layout">${selectionPanel("spec", state.specIds)}<div class="panel"><div class="comparison-table" style="--cols:${chosen.length}">${compareHeader(chosen)}${fields.map(([label, fn]) => compareLine(label, chosen, fn)).join("")}</div></div></div>
+      </section></div>`;
+    }
+
+    function compareHeader(chosen) {
+      return `<div class="compare-line" style="--cols:${chosen.length}"><div></div>${chosen.map((car) => `<div><strong>${escapeHtml(car.fullName)}</strong><p class="mini">${escapeHtml(car.categoryGroup)}</p></div>`).join("")}</div>`;
+    }
+
+    function compareLine(label, chosen, fn) {
+      return `<div class="compare-line" style="--cols:${chosen.length}"><div><strong>${escapeHtml(label)}</strong></div>${chosen.map((car) => `<div>${escapeHtml(fn(car))}</div>`).join("")}</div>`;
+    }
+
+    function toolUsed() {
+      const offers = state.usedOffers.map((offer) => Object.assign({ car: byId[offer.modelId] }, offer)).filter((offer) => offer.car);
+      const ranked = offers.map(scoreUsedOffer).sort((a, b) => b.score - a.score);
+      return `<div class="page"><section class="section">
+        <div class="section-head"><div><span class="eyebrow">${svgIcon("search")} Used Market Compare</span><h2>Is the used offer good?</h2><p class="section-lead">Offer price, mileage, condition, battery health, warranty, service history, risk, and expected repairs.</p></div></div>
+        <div class="wide-layout">
+          <div class="grid">${state.usedOffers.map((offer, index) => usedOfferPanel(offer, index)).join("")}</div>
+          <div class="grid">${ranked.map((offer, index) => `<div class="panel"><div class="label-row"><h3>${index + 1}. ${escapeHtml(offer.car.fullName)}</h3><span class="tag ${offer.score >= 0 ? "green" : "rose"}">${money(offer.score)}</span></div><div class="spec-strip" style="margin-top:12px">${metric("Offer", money(offer.offerPrice))}${metric("Adjusted value", money(offer.adjustedValue))}${metric("Risk reserve", money(offer.riskReserve))}${metric("Verdict", offer.score >= 0 ? "Good offer" : "Overpriced")}</div></div>`).join("")}</div>
+        </div>
+      </section></div>`;
+    }
+
+    function usedOfferPanel(offer, index) {
+      return `<div class="panel"><h3>Offer ${index + 1}</h3><div class="form-grid" style="margin-top:12px">
+        <label>Model ${carInput(`used:${index}:modelId`, offer.modelId)}</label>
+        ${usedInput(index, "offerPrice", "Offer price", 500)}
+        ${usedInput(index, "mileage", "Mileage", 5000)}
+        ${usedInput(index, "condition", "Condition 1-10", 1)}
+        ${usedInput(index, "batteryHealth", "Battery health %", 1)}
+        ${usedInput(index, "warranty", "Warranty months", 1)}
+        ${usedInput(index, "service", "Service history 1-10", 1)}
+        ${usedInput(index, "risk", "Accident/import risk 0-10", 1)}
+        ${usedInput(index, "repairs", "Expected repairs", 100)}
+      </div></div>`;
+    }
+
+    function usedInput(index, field, label, step) {
+      return `<label>${escapeHtml(label)}<input data-used-field="${index}:${field}" type="number" step="${step}" value="${escapeHtml(state.usedOffers[index][field])}"></label>`;
+    }
+
+    function scoreUsedOffer(offer) {
+      const car = offer.car;
+      const mileageFactor = Math.max(.58, 1 - Math.max(0, Number(offer.mileage) - 30000) / 260000);
+      const conditionFactor = .78 + Math.max(1, Math.min(10, Number(offer.condition))) * .028;
+      const batteryFactor = car.energyType === "electricity" ? Math.max(.72, Math.min(1.04, Number(offer.batteryHealth) / 100)) : 1;
+      const warrantyBonus = Math.min(1800, Number(offer.warranty) * 80);
+      const servicePenalty = (10 - Math.max(1, Math.min(10, Number(offer.service)))) * 260;
+      const riskReserve = Number(offer.repairs) + Number(offer.risk) * 420 + servicePenalty;
+      const adjustedValue = Math.round((car.defaultUpfrontPrice * mileageFactor * conditionFactor * batteryFactor + warrantyBonus - riskReserve) / 100) * 100;
+      return Object.assign({}, offer, { adjustedValue, riskReserve, score: adjustedValue - Number(offer.offerPrice || 0) });
+    }
+
+    function toolValue() {
+      const chosen = selectedCars(state.valueIds);
+      const rows = valueRows(chosen);
+      return `<div class="page"><section class="section">
+        <div class="section-head"><div><span class="eyebrow">${svgIcon("rank")} Value Compare</span><h2>Best total value</h2><p class="section-lead">Transparent normalized score: financial outcome, quality, spec value, and reliability/practicality.</p></div></div>
+        <div class="tool-layout">${selectionPanel("value", state.valueIds)}<div class="grid">${rows.map((row, index) => `<div class="panel"><div class="label-row"><h3>${index + 1}. ${escapeHtml(row.car.fullName)}</h3><span class="tag green">${number(row.valueScore, 0)}</span></div><div class="spec-strip" style="margin-top:12px">${metric("Financial", `${number(row.financial, 0)}`)}${metric("Quality", `${number(row.quality, 0)}`)}${metric("Spec value", `${number(row.spec, 0)}`)}${metric("Reliable/practical", `${number(row.life, 0)}`)}</div><p class="mini" style="margin-top:10px">Formula: 40% financial, 25% quality, 20% performance per euro, 15% reliability and practicality.</p></div>`).join("")}</div></div>
+      </section></div>`;
+    }
+
+    function performanceScore(car) {
+      const accel = Math.max(0, 100 - (Number(car.acceleration0to100) || 10) * 7);
+      const power = Math.min(100, (Number(car.horsepower) || 0) / 5);
+      const range = car.rangeKm ? Math.min(100, car.rangeKm / 5) : Math.max(20, 100 - (Number(car.realWorldLitersPer100km) || 7) * 8);
+      return (accel + power + range) / 3;
+    }
+
+    function normalizeRows(rows, field, invert = false) {
+      const values = rows.map((row) => row[field]);
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      rows.forEach((row) => {
+        const raw = max === min ? 70 : (row[field] - min) / (max - min) * 100;
+        row[`${field}Norm`] = invert ? 100 - raw : raw;
       });
     }
 
-    function numberInput(carKey, field, label, step, chips = "") {
-      return inputRow(carKey, field, label, `<input id="${carKey}-${field}" data-car="${carKey}" data-field="${field}" type="number" step="${step}" value="${state.cars[carKey][field] ?? ""}">`, chips);
-    }
-
-    function marketInput(field, label, step) {
-      return `<div class="setup-field"><label class="field-label help-target" for="market-${field}"${helpAttrs(field)}>${escapeHtml(label)}</label><input id="market-${field}" data-market="${field}" type="number" step="${step}" value="${state.assumptions[field] ?? ""}"></div>`;
-    }
-
-    function scoreInput(carKey, field, label) {
-      const value = state.cars[carKey].scores?.[field] ?? 0;
-      return inputRow(carKey, `score-${field}`, label, `<input id="${carKey}-score-${field}" data-car="${carKey}" data-score="${field}" type="number" min="0" max="10" step="1" value="${value}">`);
-    }
-
-    function inputRow(carKey, field, label, control, chips = "") {
-      return `<div class="field-row"><div class="field-copy">${fieldLabel(carKey, field, label)}${chips}</div><div>${control}</div></div>`;
-    }
-
-    function chip(text, tone = "") {
-      return `<span class="pill ${tone}">${escapeHtml(text)}</span>`;
-    }
-
-    function runningChips(car) {
-      const running = M.annualRunningBreakdown(car, state.assumptions);
-      const energyLabel = car.type === "ev" ? "Electricity" : "Fuel";
-      return [
-        chip(`${energyLabel}: ${euro(running.energy / 12)}/mo`),
-        chip(`Monthly running: ${euro(running.total / 12)}`),
-        chip(`Annual running: ${euro(running.total)}`),
-      ].join("");
-    }
-
-    function updateCarTitles(carKey) {
-      if (!document.querySelectorAll) return;
-      document.querySelectorAll(`[data-car-title="${carKey}"]`).forEach((node) => {
-        node.textContent = M.displayCarName(state.cars[carKey]);
-      });
-    }
-
-    function bindMarketInputs() {
-      if (!document.querySelectorAll) return;
-      document.querySelectorAll("[data-market]").forEach((input) => {
-        if (input.dataset.marketBound) return;
-        input.dataset.marketBound = "1";
-        input.addEventListener("input", () => {
-          state.assumptions[input.dataset.market] = input.value === "" ? "" : Number(input.value);
-          updateRunningMeta("car1");
-          updateRunningMeta("car2");
-          update();
-        });
-      });
-    }
-
-    function bindCarSearchInputs() {
-      if (!document.querySelectorAll) return;
-      document.querySelectorAll("[data-car-search]").forEach((input) => {
-        if (input.dataset.searchBound) return;
-        input.dataset.searchBound = "1";
-        input.addEventListener("input", () => {
-          const carKey = input.dataset.carSearch;
-          state.modelSearch[carKey] = input.value;
-          renderModelOptions(carKey);
-        });
-      });
-    }
-
-    function renderModelOptions(carKey) {
-      const optionsHost = document.querySelectorAll(`[data-car-options="${carKey}"]`)[0];
-      if (!optionsHost) return;
-      optionsHost.innerHTML = modelOptions(carKey, state.cars[carKey]);
-      bindModelPickerInputs();
-    }
-
-    function bindModelPickerInputs() {
-      if (!document.querySelectorAll) return;
-      document.querySelectorAll("[data-car-select-toggle]").forEach((button) => {
-        if (button.dataset.pickerBound) return;
-        button.dataset.pickerBound = "1";
-        button.addEventListener("click", () => toggleModelDropdown(button.dataset.carSelectToggle));
-      });
-      document.querySelectorAll("[data-car-option]").forEach((button) => {
-        if (button.dataset.optionBound) return;
-        button.dataset.optionBound = "1";
-        button.addEventListener("click", () => selectModel(button.dataset.carOption, button.dataset.modelId));
-      });
-    }
-
-    function toggleModelDropdown(carKey, forceOpen) {
-      state.modelDropdownOpen[carKey] = typeof forceOpen === "boolean" ? forceOpen : !state.modelDropdownOpen[carKey];
-      if (!state.modelDropdownOpen[carKey]) state.modelSearch[carKey] = "";
-      renderCars();
-      bindHelp();
-      if (state.modelDropdownOpen[carKey]) {
-        const input = document.getElementById(`${carKey}-modelSearch`);
-        if (input) input.focus();
-      }
-    }
-
-    function selectModel(carKey, modelId) {
-      if (!modelId) return;
-      state.cars[carKey] = M.applyCarModelDefaults(state.cars[carKey], modelId, { keepPayment:true });
-      const saved = state.savedOffers[carKey][modelId];
-      if (saved) Object.assign(state.cars[carKey], saved);
-      state.modelDropdownOpen[carKey] = false;
-      state.modelSearch[carKey] = "";
-      refreshAutoResale();
-      renderAllInputs();
-      bindHelp();
-      update();
-    }
-
-    function bindModelPickerDismiss() {
-      if (!document.addEventListener) return;
-      document.addEventListener("pointerdown", (event) => {
-        if (!state.modelDropdownOpen.car1 && !state.modelDropdownOpen.car2) return;
-        const target = event.target;
-        const inside = target && target.closest && target.closest("[data-model-picker]");
-        if (inside) return;
-        state.modelDropdownOpen.car1 = false;
-        state.modelDropdownOpen.car2 = false;
-        state.modelSearch.car1 = "";
-        state.modelSearch.car2 = "";
-        renderCars();
-      });
-    }
-
-    function showToast(message) {
-      const toast = document.getElementById("toast");
-      if (!toast) return;
-      toast.textContent = message;
-      toast.classList.add("show");
-      clearTimeout(showToast.timer);
-      showToast.timer = setTimeout(() => toast.classList.remove("show"), 1200);
-    }
-
-    function buttonFeedback(button, text) {
-      if (!button) return;
-      const original = button.dataset.originalText || button.textContent;
-      button.dataset.originalText = original;
-      button.textContent = text;
-      button.classList.add("is-feedback");
-      clearTimeout(button._feedbackTimer);
-      button._feedbackTimer = setTimeout(() => {
-        button.textContent = original;
-        button.classList.remove("is-feedback");
-      }, 1000);
-    }
-
-    function bindPanelFeedback() {
-      if (!document.querySelectorAll) return;
-      document.querySelectorAll("details.panel > summary").forEach((summary) => {
-        if (summary.dataset.panelFeedbackBound) return;
-        summary.dataset.panelFeedbackBound = "1";
-        summary.addEventListener("click", () => {
-          const panel = summary.parentElement;
-          setTimeout(() => showToast(panel?.open ? "Opened" : "Closed"), 0);
-        });
-      });
-    }
-
-    function updateRunningMeta(carKey) {
-      if (!document.querySelectorAll) return;
-      document.querySelectorAll(`[data-running-meta="${carKey}"]`).forEach((node) => {
-        node.innerHTML = runningChips(state.cars[carKey]);
-      });
-    }
-
-    function syncAutoResaleInput(carKey) {
-      const input = document.getElementById(`${carKey}-resaleValue`);
-      if (input && document.activeElement !== input) input.value = state.cars[carKey].resaleValue ?? "";
-    }
-
-    function dynamicHelpText(key) {
-      const result = latestResult || M.analyze(state);
-      const years = number(result.assumptions.yearsOwned, 1);
-      const budget = euro(result.assumptions.monthlyBudget);
-      const cars = result.cars || state.cars;
-      const rows = Object.fromEntries((result.rows || []).map((row) => [row.carKey, row]));
-      if (key === "heroWinner") return heroComparisonText("winner");
-      if (key === "heroCostDiff") return heroComparisonText("cost");
-      if (key === "heroNetWorthDiff") return heroComparisonText("net");
-      if (key === "setup") return `You are comparing ${carName("car1", cars)} and ${carName("car2", cars)} over ${years} years with ${euro(result.assumptions.initialCashBudget)} initial cash and a ${budget}/month budget.`;
-      if (key === "cars") return `${carName("car1", cars)} is ${typeLabel(cars.car1)} and ${carName("car2", cars)} is ${typeLabel(cars.car2)}. Names shown here are used everywhere in the results and help text.`;
-      if (key === "payment") return `${carName("car1", cars)} is ${paymentLabel(cars.car1)} at ${euro(cars.car1.upfrontPrice)}. ${carName("car2", cars)} is ${paymentLabel(cars.car2)} at ${euro(cars.car2.upfrontPrice)}.`;
-      if (key === "costs") return `${carName("car1", cars)} running cost is ${euro(rows.car1?.monthlyRunningCost || 0)}/month. ${carName("car2", cars)} running cost is ${euro(rows.car2?.monthlyRunningCost || 0)}/month at ${number(result.assumptions.annualKm, 0)} km/year.`;
-      if (key === "results") return heroComparisonText("winner");
-      if (key === "initialCashBudget") return `${euro(result.assumptions.initialCashBudget)} is available at the start. Upfront purchases or finance down payments are taken from this before leftover cash is invested.`;
-      if (key === "monthlyBudget") return `${budget}/month is available for car payments and running costs. Anything left after those costs keeps working in the background.`;
-      if (key === "yearsOwned") return `The model runs for ${years} years. Resale, loan left, total paid, and final money all update when this changes.`;
-      if (key === "annualKm") return `${number(result.assumptions.annualKm, 0)} km/year drives the current electricity/fuel running totals.`;
-      if (key === "fuelPrice") return `${euroPrecise(result.assumptions.fuelPrice)}/L for fuel and hybrid cars.`;
-      if (key === "electricityPrice") return `${euroPrecise(result.assumptions.electricityPrice)}/kWh for EVs. Assumes 100% home charging.`;
-      if (key === "marketReturn") return `${number(result.assumptions.marketReturn, 1)}% annual return for leftover money.`;
-      const carField = key.match(/^(car[12])\.(.+)$/);
-      if (carField) return carFieldHelp(carField[1], carField[2], cars, rows, result);
-      const rowMatch = key.match(/^row\.(car[12])\.(.+)$/);
-      if (rowMatch) return rowHelp(rowMatch[1], rowMatch[2], rows, result);
-      return "";
-    }
-
-    function carName(carKey, cars = state.cars) {
-      return M.displayCarName(cars[carKey]);
-    }
-
-    function typeLabel(car) {
-      if (car?.category === "supercar") return "a supercar";
-      if (car?.category === "luxury") return car?.type === "ev" ? "a luxury EV" : "a luxury car";
-      if (car?.category === "pickup") return "a pickup";
-      return ({ ev:"an EV", hybrid:"a hybrid", combustion:"a combustion car" }[car?.type] || "a car");
-    }
-
-    function paymentLabel(car) {
-      return car?.paymentMode === "finance"
-        ? `financed with ${euro(car.downPayment)} down and ${euro(car.monthlyPayment)}/month for ${number(car.loanMonths, 0)} months`
-        : `paid upfront`;
-    }
-
-    function carFieldHelp(carKey, field, cars, rows, result) {
-      const car = cars[carKey];
-      const row = rows[carKey];
-      const name = carName(carKey, cars);
-      const years = number(result.assumptions.yearsOwned, 1);
-      const running = M.annualRunningBreakdown(car, result.assumptions);
-      const map = {
-        panel: `${name} is ${typeLabel(car)}, ${paymentLabel(car)}, and currently leaves ${euro(row?.finalMoney || 0)} after ${years} years.`,
-        modelId: `${name} is loaded from the local car database as ${typeLabel(car)}. Selecting a different model reloads realistic defaults for price, energy use, maintenance, insurance, repairs, tax, and resale.`,
-        carValue: `${name} car value is ${euro(car.carValue)}. It is used for default resale; the offer price can be different.`,
-        paymentMode: `${name} is currently ${paymentLabel(car)}.`,
-        upfrontPrice: `${name} upfront offer is ${euro(car.upfrontPrice)}. This is the cash paid at month 0 for an upfront deal.`,
-        downPayment: `${name} down payment is ${euro(car.downPayment)}.`,
-        monthlyPayment: `${name} finance payment is ${euro(car.monthlyPayment)}/month while the loan is active.`,
-        loanMonths: `${name} loan term is ${number(car.loanMonths, 0)} months. If it extends beyond ${years} years, loan left is subtracted from net worth.`,
-        kwhPer100Km: `${name} uses ${number(car.kwhPer100Km, 1)} kWh/100 km. Current electricity cost is ${euro(running.energy / 12)}/month.${sourceText(car, "electricity use")}`,
-        litersPer100Km: `${name} uses ${number(car.litersPer100Km, 1)} L/100 km. Current fuel cost is ${euro(running.energy / 12)}/month.${sourceText(car, "fuel use")}`,
-        annualMaintenance: `${name} maintenance is ${euro(car.annualMaintenance)}/year.${sourceText(car, "maintenance")}`,
-        annualInsurance: `${name} insurance is ${euro(car.annualInsurance)}/year.${sourceText(car, "insurance")}`,
-        annualRepairs: `${name} repair reserve is ${euro(car.annualRepairs)}/year.${sourceText(car, "repairs")}`,
-        annualTax: `${name} road tax is ${euro(car.annualTax)}/year.${sourceText(car, "Portugal IUC/tax")}`,
-        resaleValue: `${name} resale after ${years} years is ${euro(car.resaleValue)}. Net worth includes this value.${sourceText(car, "depreciation/resale")}`,
-      };
-      return map[field] || "";
-    }
-
-    function sourceText(car, fieldLabel) {
-      if (!car.loadedFromDatabase) return "";
-      return ` ${car.modelDisplayName || car.name} ${fieldLabel} is based on: ${car.sourceNotes || "local database assumptions"}. It may differ with trim, year, mileage, driver profile, location, battery health, and service history.`;
-    }
-
-    function rowHelp(carKey, field, rows, result) {
-      const row = rows[carKey];
-      const other = (result.rows || []).find((item) => item.carKey !== carKey);
-      if (!row) return "";
-      const name = row.option;
-      const otherName = other?.option || "the other option";
-      const map = {
-        option: `${name} leaves ${euro(row.finalMoney)} after ${number(row.years, 1)} years. ${otherName} leaves ${euro(other?.finalMoney || 0)}.`,
-        carMonth: `${name} car payment is ${euro(row.carMonthlyPaymentDisplay)}/month while active.`,
-        carTotal: `${name} car total is ${euro(row.carTotalDisplay)}. Paid during selected years: ${euro(row.carPaymentsPaid)}.`,
-        costsMonth: `${name} running costs are ${euro(row.monthlyRunningCost)}/month.`,
-        costsTotal: `${name} running costs total ${euro(row.extraTotal)} over ${number(row.years, 1)} years.`,
-        totalPaid: `${name} total paid during the selected years is ${euro(row.totalPaid)}.`,
-        netWorth: `${name} leaves ${euro(row.finalMoney)} after resale, investments, deficits, and any loan left.`,
-      };
-      return map[field] || "";
-    }
-
-    function bindCarInputs(rootId) {
-      document.getElementById(rootId).querySelectorAll("[data-car][data-field], [data-car][data-score]").forEach((input) => {
-        const handleInput = () => {
-          const carKey = input.dataset.car;
-          const car = state.cars[carKey];
-          const field = input.dataset.field;
-          if (input.dataset.score) {
-            car.scores = car.scores || {};
-            car.scores[input.dataset.score] = input.value === "" ? "" : Number(input.value);
-            update();
-            return;
-          }
-          if (input.tagName === "SELECT" || input.type === "text") {
-            if (field === "modelId") {
-              state.cars[carKey] = M.applyCarModelDefaults(car, input.value, { keepPayment:true });
-              const saved = state.savedOffers[carKey][input.value];
-              if (saved) Object.assign(state.cars[carKey], saved);
-              refreshAutoResale();
-              renderAllInputs();
-              bindHelp();
-            } else if (field === "paymentMode") {
-              car[field] = input.value;
-              renderPayment();
-              bindHelp();
-            } else {
-              car[field] = input.value;
-              car.name = M.displayCarName(car);
-              updateCarTitles(carKey);
-            }
-          } else {
-            car[field] = input.value === "" ? "" : Number(input.value);
-            if (field === "resaleValue") car.resaleCustom = true;
-            else M.markCustom(car, field);
-            if (field === "carValue" && !car.resaleCustom) {
-              refreshAutoResale();
-              syncAutoResaleInput(carKey);
-            }
-            if (["carValue", "upfrontPrice", "resaleValue", "kwhPer100Km", "litersPer100Km", "annualMaintenance", "annualInsurance", "annualRepairs", "annualTax"].includes(field)) updateRunningMeta(carKey);
-          }
-          update();
+    function valueRows(chosen) {
+      const ranked = M.rankCarDatabase(state.assumptions);
+      const byModel = Object.fromEntries(ranked.map((row) => [row.modelId, row]));
+      const rows = chosen.map((car) => {
+        const financialRow = byModel[car.id] || {};
+        return {
+          car,
+          finalMoney: Number(financialRow.finalMoney) || 0,
+          totalPaid: Number(financialRow.totalPaid) || car.defaultUpfrontPrice,
+          qualityBase: avgScore(car) * 10,
+          specBase: performanceScore(car) / Math.max(1, car.defaultUpfrontPrice / 30000),
+          lifeBase: ((car.scores.reliability || 0) + (car.scores.practicality || 0)) * 5,
         };
-        input.addEventListener("input", handleInput);
-        if (input.tagName === "SELECT") input.addEventListener("change", handleInput);
       });
+      normalizeRows(rows, "finalMoney");
+      normalizeRows(rows, "totalPaid", true);
+      rows.forEach((row) => {
+        row.financial = row.finalMoneyNorm * .7 + row.totalPaidNorm * .3;
+        row.quality = row.qualityBase;
+        row.spec = Math.min(100, row.specBase);
+        row.life = row.lifeBase;
+        row.valueScore = row.financial * .4 + row.quality * .25 + row.spec * .2 + row.life * .15;
+      });
+      return rows.sort((a, b) => b.valueScore - a.valueScore);
     }
 
-    function bindHelp() {
-      if (!document.querySelectorAll) return;
-      document.querySelectorAll(".help-target").forEach((node) => {
-        if (node.dataset.helpBound) return;
-        node.dataset.helpBound = "1";
-        const openOnHover = () => {
-          if (!helpPinned) showHelp(node, false);
-        };
-        const closeOnLeave = () => {
-          if (!helpPinned) hideHelp(true);
-        };
-        node.addEventListener("mouseenter", openOnHover);
-        node.addEventListener("mouseover", openOnHover);
-        node.addEventListener("mouseleave", closeOnLeave);
-        node.addEventListener("mouseout", closeOnLeave);
-        node.addEventListener("pointerdown", (event) => {
-          const key = node.dataset.helpKey;
-          if (!key) return;
-          if (helpPinned && activeHelpKey === key) hideHelp(true);
-          else showHelp(node, true);
-          event.stopPropagation();
+    function pageRanking() {
+      const rows = rankingRows();
+      const filtered = rows.filter((row) => rankingMatches(row));
+      const visible = filtered.slice(0, state.rankingLimit);
+      return `<div class="page"><section class="section">
+        <div class="section-head"><div><span class="eyebrow">${svgIcon("rank")} Ranking</span><h2>Rank cars</h2><p class="section-lead">${filtered.length.toLocaleString("en-IE")} matches. Rank follows the active mode.</p></div></div>
+        <div class="panel" style="margin-bottom:14px">
+          <div class="mode-bar">${[
+            ["cheap", "Cheapest"],
+            ["net", "Highest net worth"],
+            ["score", "Highest score"],
+            ["value", "Best value"],
+          ].map(([id, label]) => `<button class="mode-button ${state.rankingMode === id ? "active" : ""}" data-ranking-mode="${id}" type="button">${escapeHtml(label)}</button>`).join("")}</div>
+          <div class="toolbar" style="margin:14px 0 0">
+            <input data-ranking-search type="search" placeholder="Search ranking" value="${escapeHtml(state.rankingSearch)}">
+            <select data-ranking-category>${categoryList.map((cat) => `<option value="${escapeHtml(cat)}" ${cat === state.rankingCategory ? "selected" : ""}>${escapeHtml(cat)}</option>`).join("")}</select>
+            <button class="button" data-ranking-more type="button">Show more</button>
+          </div>
+        </div>
+        <div class="ranking-list">${visible.map(rankingRow).join("")}</div>
+      </section></div>`;
+    }
+
+    function rankingRows() {
+      if (!state.rankingRows) {
+        const rows = M.rankCarDatabase(state.assumptions);
+        const minNet = Math.min(...rows.map((row) => row.finalMoney));
+        const maxNet = Math.max(...rows.map((row) => row.finalMoney));
+        const minPaid = Math.min(...rows.map((row) => row.totalPaid));
+        const maxPaid = Math.max(...rows.map((row) => row.totalPaid));
+        rows.forEach((row) => {
+          const car = byId[row.modelId] || {};
+          row.qualityScore = row.qualityScore || avgScore(car);
+          row.performanceScore = performanceScore(car);
+          const net = maxNet === minNet ? 70 : (row.finalMoney - minNet) / (maxNet - minNet) * 100;
+          const paid = maxPaid === minPaid ? 70 : 100 - (row.totalPaid - minPaid) / (maxPaid - minPaid) * 100;
+          row.valueScore = net * .4 + row.qualityScore * 10 * .25 + row.performanceScore * .2 + paid * .15;
         });
+        state.rankingRows = rows;
+      }
+      const sorted = state.rankingRows;
+      const rows = sorted.slice().sort((a, b) => {
+        if (state.rankingMode === "cheap") return a.totalPaid - b.totalPaid || a.carName.localeCompare(b.carName);
+        if (state.rankingMode === "net") return b.finalMoney - a.finalMoney || a.carName.localeCompare(b.carName);
+        if (state.rankingMode === "score") return b.qualityScore - a.qualityScore || a.carName.localeCompare(b.carName);
+        return b.valueScore - a.valueScore || a.carName.localeCompare(b.carName);
       });
-      if (document.body && !document.body.dataset.helpDismissBound) {
-        document.body.dataset.helpDismissBound = "1";
-        document.addEventListener("pointerdown", (event) => {
-          const bubble = document.getElementById("floatingHelp");
-          if (!bubble || !activeHelpTarget) return;
-          if (bubble.contains(event.target) || activeHelpTarget.contains(event.target)) return;
-          hideHelp(true);
-        }, true);
-        window.addEventListener("scroll", () => {
-          if (activeHelpTarget) positionHelp(activeHelpTarget);
-        }, { passive:true });
-        window.addEventListener("resize", () => {
-          if (activeHelpTarget) positionHelp(activeHelpTarget);
-        });
+      rows.forEach((row, index) => row.activeRank = index + 1);
+      state.rankingRows = rows;
+      return rows;
+    }
+
+    function rankingMatches(row) {
+      const car = byId[row.modelId] || {};
+      if (state.rankingCategory !== "All" && (car.categoryGroup || row.categoryGroup) !== state.rankingCategory) return false;
+      const terms = normalize(state.rankingSearch).split(/\s+/).filter(Boolean);
+      if (!terms.length) return true;
+      const haystack = car.searchText || normalize([row.carName, row.categoryGroup, car.brand, car.model, car.year].join(" "));
+      return terms.every((term) => haystack.includes(term));
+    }
+
+    function rankingRow(row) {
+      const car = byId[row.modelId] || {};
+      return `<a class="rank-row" href="#car/${escapeHtml(row.modelId)}">
+        <div class="rank-num">${row.activeRank}</div>
+        <div><strong>${escapeHtml(row.carName)}</strong><p class="mini">${escapeHtml(row.categoryGroup || car.categoryGroup || "")}</p></div>
+        <div class="hide-mobile">${metric("Total paid", money(row.totalPaid))}</div>
+        <div class="hide-mobile">${metric("Net worth", money(row.finalMoney))}</div>
+        <div class="hide-mobile">${metric("Score", `${number(row.qualityScore, 1)}/10`)}</div>
+        <div>${metric("Value", number(row.valueScore, 0))}</div>
+      </a>`;
+    }
+
+    function handleClick(event) {
+      const target = event.target.closest("[data-home-explore],[data-view-toggle],[data-show-more-cars],[data-ranking-mode],[data-ranking-more]");
+      if (!target) return;
+      if (target.dataset.homeExplore !== undefined) {
+        const search = document.querySelector("[data-home-search]");
+        const category = document.querySelector("[data-home-category]");
+        state.carSearch = search ? search.value : "";
+        state.carCategory = category ? category.value : "All";
+        state.carVisible = 48;
+        location.hash = "#cars";
+      }
+      if (target.dataset.viewToggle !== undefined) {
+        state.carView = state.carView === "grid" ? "compact" : "grid";
+        render();
+      }
+      if (target.dataset.showMoreCars !== undefined) {
+        state.carVisible += 48;
+        render();
+      }
+      if (target.dataset.rankingMode) {
+        state.rankingMode = target.dataset.rankingMode;
+        state.rankingLimit = 80;
+        render();
+      }
+      if (target.dataset.rankingMore !== undefined) {
+        state.rankingLimit += 80;
+        render();
       }
     }
 
-    let activeHelpTarget = null;
-    let activeHelpKey = "";
-    let helpPinned = false;
-
-    function showHelp(node, pinned) {
-      const text = helpText(node.dataset.helpKey);
-      if (!text || !document.createElement) return;
-      let bubble = document.getElementById("floatingHelp");
-      if (!bubble) {
-        bubble = document.createElement("div");
-        bubble.id = "floatingHelp";
-        bubble.className = "help-bubble";
-        (document.body || node.parentNode).appendChild(bubble);
+    function handleInput(event) {
+      const el = event.target;
+      if (el.dataset.carsSearch !== undefined) {
+        state.carSearch = el.value;
+        state.carVisible = 48;
+        render();
       }
-      activeHelpTarget = node;
-      activeHelpKey = node.dataset.helpKey || "";
-      helpPinned = pinned;
-      bubble.textContent = text;
-      positionHelp(node);
-      bubble.classList.add("show");
-    }
-
-    function positionHelp(node) {
-      const bubble = document.getElementById("floatingHelp");
-      if (!bubble || !node.getBoundingClientRect) return;
-      const rect = node.getBoundingClientRect();
-      const bubbleRect = bubble.getBoundingClientRect ? bubble.getBoundingClientRect() : { width:260, height:50 };
-      const margin = 12;
-      const width = bubbleRect.width || 260;
-      const height = bubbleRect.height || 50;
-      const left = Math.min(window.innerWidth - width - margin, Math.max(margin, rect.left + rect.width / 2 - width / 2));
-      const above = rect.top - height - 9;
-      const top = above > margin ? above : Math.min(window.innerHeight - height - margin, rect.bottom + 9);
-      bubble.style.left = `${left}px`;
-      bubble.style.top = `${Math.max(margin, top)}px`;
-    }
-
-    function hideHelp(force = false) {
-      if (helpPinned && !force) return;
-      const bubble = document.getElementById("floatingHelp");
-      if (bubble) bubble.classList.remove("show");
-      activeHelpTarget = null;
-      activeHelpKey = "";
-      helpPinned = false;
-    }
-
-    function update() {
-      refreshAutoResale();
-      const result = M.analyze(state);
-      latestResult = result;
-      renderHero(result);
-      renderRanking(result);
-      renderWarnings(result);
-      renderMobileResults(result);
-      renderTable(result);
-    }
-
-    function renderHero(result) {
-      const winner = result.winner;
-      const runnerUp = result.runnerUp;
-      document.getElementById("heroSummary").innerHTML = winner ? `
-        <div class="hero-metric help-target flow" ${helpAttrs("heroWinner")}><span>${icon("winner")}Winner</span><strong>${escapeHtml(winner.option)}</strong></div>
-        <div class="hero-metric help-target flow" ${helpAttrs("heroCostDiff")}><span>${icon("budget")}Cost difference</span><strong>${formatCostDifferencePct(winner, runnerUp)}</strong></div>
-        <div class="hero-metric help-target flow" ${helpAttrs("heroNetWorthDiff")}><span>${icon("car")}Net worth difference</span><strong>${formatNetWorthDifferencePct(winner, runnerUp)}</strong></div>
-      ` : "";
-      bindRankButton();
-      bindHelp();
-    }
-
-    function bindRankButton() {
-      if (!document.querySelectorAll) return;
-      document.querySelectorAll("[data-rank-toggle]").forEach((button) => {
-        button.textContent = state.rankingOpen ? "Hide rank" : "Rank";
-        if (button.dataset.rankBound) return;
-        button.dataset.rankBound = "1";
-        button.addEventListener("click", () => {
-          const opening = !state.rankingOpen;
-          toggleRanking();
-          button.dataset.originalText = opening ? "Hide rank" : "Rank";
-          buttonFeedback(button, opening ? "Shown" : "Hidden");
-          showToast(opening ? "Ranking shown" : "Ranking hidden");
-        });
-      });
-      const close = document.getElementById("rankingClose");
-      if (close && !close.dataset.rankBound) {
-        close.dataset.rankBound = "1";
-        close.addEventListener("click", () => {
-          toggleRanking(false);
-          buttonFeedback(close, "Hidden");
-          showToast("Ranking hidden");
-        });
+      if (el.dataset.carsCategory !== undefined) {
+        state.carCategory = el.value;
+        state.carVisible = 48;
+        render();
+      }
+      if (el.dataset.rankingSearch !== undefined) {
+        state.rankingSearch = el.value;
+        state.rankingLimit = 80;
+        render();
+      }
+      if (el.dataset.rankingCategory !== undefined) {
+        state.rankingCategory = el.value;
+        state.rankingLimit = 80;
+        render();
+      }
+      if (el.dataset.assumption) {
+        state.assumptions[el.dataset.assumption] = Number(el.value);
+        state.rankingRows = null;
+        render();
+      }
+      if (el.dataset.finField) {
+        const [key, field] = el.dataset.finField.split(":");
+        state.financialCars[key] = M.markCustom(Object.assign({}, state.financialCars[key], { [field]: Number(el.value) }), field);
+        render();
+      }
+      if (el.dataset.finMode) {
+        const key = el.dataset.finMode;
+        state.financialCars[key].paymentMode = el.value;
+        render();
+      }
+      if (el.dataset.usedField) {
+        const [index, field] = el.dataset.usedField.split(":");
+        state.usedOffers[Number(index)][field] = Number(el.value);
+        render();
       }
     }
 
-    function toggleRanking(forceOpen) {
-      state.rankingOpen = typeof forceOpen === "boolean" ? forceOpen : !state.rankingOpen;
-      if (!state.rankingOpen) state.rankingControlsRendered = false;
-      update();
-      const panel = document.getElementById("rankingPanel");
-      if (state.rankingOpen && panel && panel.scrollIntoView) panel.scrollIntoView({ behavior:"smooth", block:"start" });
-    }
-
-    function renderRankingControls() {
-      const tools = document.getElementById("rankingTools");
-      if (!tools) return;
-      if (state.rankingControlsRendered && tools.querySelector("[data-ranking-filter]")) return;
-      tools.innerHTML = `
-        <label class="search-control" for="rankingSearch"><span class="icon">${iconOnly("search")}</span><input id="rankingSearch" data-ranking-filter="search" type="search" placeholder="Search" value="${escapeHtml(state.rankingFilters.search)}"></label>
-        <select id="rankingCategory" data-ranking-filter="category" aria-label="Category">
-          <option value="">All categories</option>
-          ${rankingCategoryOptions()}
-        </select>
-        <button class="small-button" id="rankingClose" type="button">Hide</button>
-      `;
-      state.rankingControlsRendered = true;
-      bindRankingControls();
-      bindRankButton();
-    }
-
-    function rankingCategoryOptions() {
-      const categories = [...new Set(M.CAR_DATABASE.map(carCategoryGroup))]
-        .sort((a, b) => categoryOrder.indexOf(a) - categoryOrder.indexOf(b) || a.localeCompare(b));
-      return categories.map((category) => `<option value="${escapeHtml(category)}" ${state.rankingFilters.category === category ? "selected" : ""}>${escapeHtml(category)}</option>`).join("");
-    }
-
-    function bindRankingControls() {
-      if (!document.querySelectorAll) return;
-      document.querySelectorAll("[data-ranking-filter]").forEach((input) => {
-        if (input.dataset.filterBound) return;
-        input.dataset.filterBound = "1";
-        const eventName = input.tagName === "SELECT" ? "change" : "input";
-        input.addEventListener(eventName, () => {
-          state.rankingFilters[input.dataset.rankingFilter] = input.value;
-          state.rankingVisibleCount = rankingPageSize;
-          state.rankingShowAll = false;
-          renderRankingResults();
-        });
-      });
-      document.querySelectorAll("[data-ranking-sort]").forEach((button) => {
-        if (button.dataset.sortBound) return;
-        button.dataset.sortBound = "1";
-        button.addEventListener("click", () => setRankingSort(button.dataset.rankingSort));
-      });
-      document.querySelectorAll("[data-ranking-page]").forEach((button) => {
-        if (button.dataset.pageBound) return;
-        button.dataset.pageBound = "1";
-        button.addEventListener("click", () => {
-          if (button.dataset.rankingPage === "more") {
-            state.rankingVisibleCount += rankingPageSize;
-            showToast("More shown");
-          } else {
-            state.rankingShowAll = true;
-            showToast("All shown");
-          }
-          buttonFeedback(button, button.dataset.rankingPage === "more" ? "Shown" : "All");
-          renderRankingResults();
-        });
-      });
-    }
-
-    function setRankingSort(field) {
-      if (state.rankingSort.field === field) {
-        state.rankingSort.direction = state.rankingSort.direction === "asc" ? "desc" : "asc";
-      } else {
-        state.rankingSort.field = field;
-        state.rankingSort.direction = field === "totalPaid" ? "asc" : "desc";
+    function handleChange(event) {
+      const el = event.target;
+      if (el.dataset.carInput) {
+        const car = findCarByInput(el.value);
+        if (!car) return;
+        const [kind, a, field] = el.dataset.carInput.split(":");
+        if (kind === "fin") state.financialCars[a] = M.applyCarModelDefaults(state.financialCars[a], car.id);
+        if (kind === "spec") state.specIds[Number(a)] = car.id;
+        if (kind === "value") state.valueIds[Number(a)] = car.id;
+        if (kind === "used") state.usedOffers[Number(a)][field || "modelId"] = car.id;
+        render();
       }
-      renderRankingResults();
     }
 
-    function renderRanking() {
-      const panel = document.getElementById("rankingPanel");
-      if (!panel) return;
-      panel.hidden = !state.rankingOpen;
-      if (!state.rankingOpen) return;
-      renderRankingControls();
-      renderRankingResults();
+    function render() {
+      state.route = parseRoute();
+      setActiveNav();
+      let html = "";
+      if (state.route.page === "home") html = pageHome();
+      else if (state.route.page === "cars") html = pageCars();
+      else if (state.route.page === "car") html = pageCarDetail(state.route.id);
+      else if (state.route.page === "tools") html = pageTools();
+      else if (state.route.page === "ranking") html = pageRanking();
+      else html = pageHome();
+      document.getElementById("app").innerHTML = html;
+      window.scrollTo({ top:0, behavior:"instant" in window ? "instant" : "auto" });
     }
 
-    function renderRankingResults() {
-      const panel = document.getElementById("rankingPanel");
-      const table = document.getElementById("rankingTable");
-      const summary = document.getElementById("rankingSummary");
-      if (!panel || !table || panel.hidden || !state.rankingOpen) return;
-      const orderedRows = rankRowsForCurrentSort(M.rankCarDatabase(state.assumptions, state.scoreWeights));
-      const rows = orderedRows.filter((row) => {
-        const model = M.carModelById(row.modelId) || row;
-        return rankingRowMatches(row, model);
-      });
-      const visibleRows = state.rankingShowAll ? rows : rows.slice(0, state.rankingVisibleCount);
-      const top = orderedRows[0];
-      const total = M.CAR_DATABASE.length;
-      if (summary) summary.textContent = rows.length ? `${rows.length}/${total} cars. Showing ${visibleRows.length}. Best: #${top.globalRank} ${top.carName}.` : "No matches.";
-      table.innerHTML = `<table><thead><tr>
-        <th>Rank</th>
-        <th>Car</th>
-        <th>Category</th>
-        ${rankingHeader("totalPaid", "Total paid")}
-        ${rankingHeader("finalMoney", "Net worth")}
-        ${rankingHeader("score", "Score")}
-      </tr></thead><tbody>${visibleRows.map((row, index) => `
-        <tr>
-          <td>#${row.globalRank}</td>
-          <td><strong class="${row.globalRank === 1 ? "winner" : ""}">${escapeHtml(row.carName)}</strong></td>
-          <td>${escapeHtml(carCategoryGroup(M.carModelById(row.modelId) || row))}</td>
-          <td>${euro(row.totalPaid)}</td>
-          <td class="${row.globalRank === 1 ? "winner" : ""}">${euro(row.finalMoney)}</td>
-          <td>${number(row.qualityScore, 1)}/10</td>
-        </tr>
-      `).join("")}</tbody></table>${rankingPager(rows.length, visibleRows.length)}`;
-      bindRankingControls();
-    }
-
-    function rankingRowMatches(row, model) {
-      const filters = state.rankingFilters;
-      const query = (filters.search || "").trim().toLowerCase();
-      if (query && !modelMatchesSearch(model, query)) return false;
-      if (filters.category && carCategoryGroup(model) !== filters.category) return false;
-      return true;
-    }
-
-    function rankRowsForCurrentSort(rows) {
-      const field = state.rankingSort.field;
-      const direction = state.rankingSort.direction === "desc" ? -1 : 1;
-      const getters = {
-        totalPaid: (row) => row.totalPaid,
-        finalMoney: (row) => row.finalMoney,
-        score: (row) => row.qualityScore,
-      };
-      const getter = getters[field] || getters.finalMoney;
-      return rows.slice().sort((a, b) => {
-        const av = getter(a);
-        const bv = getter(b);
-        return (av - bv) * direction || a.carName.localeCompare(b.carName);
-      }).map((row, index) => Object.assign({}, row, { globalRank: index + 1 }));
-    }
-
-    function rankingHeader(field, label) {
-      const active = state.rankingSort.field === field;
-      const arrow = active ? (state.rankingSort.direction === "asc" ? " ↑" : " ↓") : "";
-      return `<th><button class="sort-button" type="button" data-ranking-sort="${field}" aria-label="Sort by ${escapeHtml(label)}">${escapeHtml(label)}${arrow}</button></th>`;
-    }
-
-    function rankingPager(totalRows, visibleCount) {
-      if (visibleCount >= totalRows) return "";
-      return `<div class="ranking-pager"><button class="small-button" type="button" data-ranking-page="more">Show more</button><button class="small-button" type="button" data-ranking-page="all">Show all</button></div>`;
-    }
-
-    function formatPct(value) {
-      return `${value >= 0 ? "+" : ""}${number(value, 1)}%`;
-    }
-
-    function percentageDifference(a, b) {
-      const base = Math.abs(finite(b));
-      return base > 0 ? (finite(a) - finite(b)) / base * 100 : 0;
-    }
-
-    function formatCostDifferencePct(winner, runnerUp) {
-      if (!winner || !runnerUp) return "+0.0%";
-      return formatPct(percentageDifference(winner.totalPaid, runnerUp.totalPaid));
-    }
-
-    function formatNetWorthDifferencePct(winner, runnerUp) {
-      if (!winner || !runnerUp) return "+0.0%";
-      return formatPct(percentageDifference(winner.finalMoney, runnerUp.finalMoney));
-    }
-
-    function euroDifference(a, b) {
-      const diff = finite(a) - finite(b);
-      const sign = diff >= 0 ? "+" : "";
-      return `${sign}${euro(diff)}`;
-    }
-
-    function signedEuro(value) {
-      const amount = finite(value);
-      return `${amount >= 0 ? "+" : ""}${euro(amount)}`;
-    }
-
-    function heroComparisonText(topic) {
-      const result = latestResult || M.analyze(state);
-      const winner = result.winner;
-      const other = result.runnerUp;
-      if (!winner || !other) return "";
-      const years = number(result.assumptions.yearsOwned, 1);
-      const netDiff = winner.finalMoney - other.finalMoney;
-      const paidDiff = winner.totalPaid - other.totalPaid;
-      const paidDirection = paidDiff <= 0 ? "cheaper" : "more expensive";
-      const base = `${winner.option} leaves ${euro(winner.finalMoney)} after ${years} years. ${other.option} leaves ${euro(other.finalMoney)}. Net worth difference: ${signedEuro(netDiff)}. Total paid: ${winner.option} ${euro(winner.totalPaid)}, ${other.option} ${euro(other.totalPaid)}. Cost difference: ${signedEuro(paidDiff)}.`;
-      if (topic === "cost") return `${winner.option} is ${Math.abs(percentageDifference(winner.totalPaid, other.totalPaid)).toLocaleString("en-IE", { maximumFractionDigits:1 })}% ${paidDirection} on total paid. ${base}`;
-      if (topic === "net") return `${winner.option} leaves ${formatNetWorthDifferencePct(winner, other)} more net worth than ${other.option}. ${base}`;
-      return base;
-    }
-
-    function renderWarnings(result) {
-      const seen = new Set();
-      const warnings = result.warnings.filter((item) => {
-        const key = `${item.option}-${item.message}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-      document.getElementById("warningBox").innerHTML = warnings.length ? warnings.map((item) => `
-        <div class="notice ${item.severity === "no" ? "no" : ""}">${icon("warning")}<span>${escapeHtml(item.message)}</span></div>
-      `).join("") : "";
-    }
-
-    function renderMobileResults(result) {
-      document.getElementById("mobileResultCards").innerHTML = result.rows.map((row) => `
-        <article class="mobile-card help-target" ${helpAttrs(`row.${row.carKey}.option`)}>
-          <strong class="${row.isWinner ? "winner" : ""}">${escapeHtml(row.option)}</strong>
-          <p>${euro(row.finalMoney)} net worth</p>
-          <div class="meta">${rowBadges(row)}</div>
-        </article>
-      `).join("");
-    }
-
-    function renderTable(result) {
-      document.getElementById("primaryTable").innerHTML = `<table><thead><tr>
-        <th>Option</th>
-        <th>Car/month</th>
-        <th>Car total</th>
-        <th>Costs/month</th>
-        <th>Costs total</th>
-        <th>Total paid</th>
-        <th>Net worth</th>
-      </tr></thead><tbody>${result.rows.map((row) => `
-        <tr>
-          <td class="help-target" ${helpAttrs(`row.${row.carKey}.option`)}><strong class="${row.isWinner ? "winner" : ""}">${escapeHtml(row.option)}</strong><div class="meta">${rowBadges(row)}</div></td>
-          <td class="help-target" ${helpAttrs(`row.${row.carKey}.carMonth`)}>${euro(row.carMonthlyPaymentDisplay)}/mo</td>
-          <td class="help-target" ${helpAttrs(`row.${row.carKey}.carTotal`)}>${euro(row.carTotalDisplay)}${row.loanStillOwed > 0 ? `<br><span class="pill warn">loan continues</span>` : ""}</td>
-          <td class="help-target" ${helpAttrs(`row.${row.carKey}.costsMonth`)}>${euro(row.monthlyRunningCost)}/mo</td>
-          <td class="help-target" ${helpAttrs(`row.${row.carKey}.costsTotal`)}>${euro(row.extraTotal)}</td>
-          <td class="help-target" ${helpAttrs(`row.${row.carKey}.totalPaid`)}>${euro(row.totalPaid)}</td>
-          <td class="help-target ${row.isWinner ? "winner" : ""}" ${helpAttrs(`row.${row.carKey}.netWorth`)}>${euro(row.finalMoney)}</td>
-        </tr>
-      `).join("")}</tbody></table>`;
-      bindHelp();
-    }
-
-    function rowBadges(row) {
-      const badges = [];
-      const warningIds = new Set(row.warnings.map((warning) => warning.id));
-      if (warningIds.has("missing-name") || warningIds.has("missing-price") || warningIds.has("resale-invalid")) badges.push(chip("Missing value", "no"));
-      if (warningIds.has("upfront-cash") || warningIds.has("down-cash")) badges.push(chip("Initial cash not enough", "no"));
-      if (warningIds.has("monthly-budget")) badges.push(chip("Monthly budget exceeded", "warn"));
-      if (warningIds.has("loan-long")) badges.push(chip("Loan continues", "warn"));
-      return badges.join("");
-    }
-
-    init();
+    document.addEventListener("click", handleClick);
+    document.addEventListener("input", handleInput);
+    document.addEventListener("change", handleChange);
+    window.addEventListener("hashchange", render);
+    fillDatalist();
+    render();
   </script>
 </body>
 </html>

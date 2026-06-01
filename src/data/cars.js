@@ -1015,6 +1015,63 @@
     return Number(retention.toFixed(2));
   }
 
+  function specProfile(car) {
+    const group = categoryGroup(car);
+    const text = `${car.id || ""} ${car.displayName || ""} ${car.model || ""}`.toLowerCase();
+    const price = Number(car.defaultUpfrontPrice) || 0;
+    const ev = car.energyType === "electricity";
+    const hybrid = car.category === "hybrid";
+    const supercar = car.category === "supercar" || /Supercar|Hypercar/.test(group);
+    const sports = supercar || /Sports car|Coupe|Convertible/.test(group) || /amg| rs|rs3|m3|m4|gti|golf-r|gr86|supra|911|cayman|boxster|ferrari|lamborghini|mclaren|bugatti|rimac|koenigsegg|pagani/.test(text);
+    const city = group === "City car";
+    const suv = /SUV|Crossover|Off-road|Pickup/.test(group);
+    const family = /Hatchback|Supermini|Sedan|Estate|MPV|Van/.test(group);
+    const luxury = /^Luxury/.test(group) || price >= 65000;
+    const premium = luxury || price >= 42000 || /^EV (sedan|SUV)$/.test(group);
+    const seats = /Van|MPV/.test(group) ? 7 : /Pickup|Off-road|SUV|Crossover|Estate|Sedan|Hatchback/.test(group) ? 5 : sports || /mx-5|boxster|cayman|911|f-type|z4|tt|r8|corvette|huracan|aventador|488|720s/.test(text) ? 2 : 4;
+    const doors = seats >= 5 ? 5 : /coupe|coupé|cayman|911|supra|tt|mx-5|boxster|f-type|z4|r8|corvette|huracan|aventador|488|720s/.test(text) ? 2 : 3;
+    const bodyStyle = group.replace(/^EV /, "");
+    const bootBase = /Van|MPV/.test(group) ? 650 : /Estate|SUV|Off-road|Pickup/.test(group) ? 560 : /Crossover/.test(group) ? 430 : /Sedan|Luxury sedan|EV sedan/.test(group) ? 470 : city ? 230 : sports ? 170 : family ? 380 : 320;
+    const bootLiters = roundTo(bootBase + Math.min(140, price / 1200) - (sports ? 60 : 0), 5);
+    let horsepower = ev ? 170 : hybrid ? 135 : city ? 75 : 115;
+    horsepower += Math.min(520, price / (supercar ? 520 : sports ? 420 : premium ? 680 : 950));
+    if (sports) horsepower += supercar ? 260 : 70;
+    if (suv) horsepower += 25;
+    if (/tesla|taycan|i4|ev6|ioniq-5|model-s|model-x|rimac|nevera/.test(text)) horsepower += 80;
+    horsepower = roundTo(clampNumber(horsepower, city ? 55 : 85, supercar ? 1200 : sports ? 650 : premium ? 560 : 360), 5);
+    let acceleration0to100 = 12.8 - horsepower / 80 - (ev ? 1.1 : 0) - (sports ? 1.5 : 0) + (suv ? 0.4 : 0) + (city ? 1.2 : 0);
+    if (supercar) acceleration0to100 = Math.min(acceleration0to100, 3.4);
+    acceleration0to100 = Number(clampNumber(acceleration0to100, supercar ? 1.8 : sports ? 3.2 : 4.8, city ? 15.5 : 12.8).toFixed(1));
+    const topSpeed = roundTo(clampNumber(150 + horsepower * (sports ? 0.27 : 0.18) + (supercar ? 70 : 0) - (city ? 20 : 0), city ? 135 : 155, supercar ? 430 : sports ? 330 : ev ? 260 : 285), 5);
+    const rangeKm = ev ? roundTo(clampNumber((group === "EV hatchback" ? 44 : group === "EV SUV" ? 72 : 68) * 100 / Math.max(12, Number(car.realWorldKwhPer100km) || 17), 130, premium ? 650 : 520), 5) : 0;
+    const drivetrain = /xdrive|quattro|4matic|awd|4wd|land-cruiser|defender|wrangler|range-rover|g-class|hilux|ranger|navara|l200|d-max/.test(text) || supercar || luxury && suv ? "AWD" : /bmw|mercedes|porsche|mazda-mx-5|gr86|supra|mustang|camaro|corvette|tesla-model-3|tesla-model-y/.test(text) ? "RWD" : "FWD";
+    const transmission = ev ? "single-speed" : hybrid || premium || sports ? "automatic" : "manual/auto";
+    return {
+      horsepower,
+      acceleration0to100,
+      topSpeed,
+      rangeKm,
+      drivetrain,
+      transmission,
+      seats,
+      doors,
+      bootLiters,
+      bodyStyle,
+    };
+  }
+
+  function imageKeyFor(car) {
+    const group = categoryGroup(car);
+    if (/Hypercar|Supercar/.test(group)) return "supercar";
+    if (/Sports car|Coupe|Convertible/.test(group)) return "sports";
+    if (/SUV|Crossover|Off-road|Pickup|Luxury SUV|EV SUV/.test(group)) return "suv";
+    if (/Estate|MPV|Van/.test(group)) return "practical";
+    if (/EV/.test(group) || car.energyType === "electricity") return "ev";
+    if (/Luxury|Sedan/.test(group)) return "sedan";
+    if (/City|Supermini/.test(group)) return "city";
+    return "hatch";
+  }
+
   function representativeYear(car) {
     const text = `${car.id || ""} ${car.displayName || ""}`.toLowerCase();
     const displayTokens = String(car.displayName || "").trim().split(/\s+/);
@@ -1128,9 +1185,16 @@
       categoryGroup: categoryGroup(normalizedCar),
       categoryLabel: categoryGroup(normalizedCar),
       resaleRetentionEstimate: reviewedResale(car),
+      resaleEstimate: Math.round((Number(car.defaultUpfrontPrice) || 0) * reviewedResale(car) / 100) * 100,
+      depreciation: Number((1 - reviewedResale(car)).toFixed(2)),
       scores: reviewedScores(normalizedCar),
+      image: car.image || "",
+      gallery: Array.isArray(car.gallery) ? car.gallery : [],
+      fallbackCategoryImage: imageKeyFor(normalizedCar),
+      estimatedMonthlyRunningCost: Math.round((costs.maintenancePerYear + costs.insurancePerYear + costs.repairsPerYear + costs.taxPerYear + ((consumption.realWorldKwhPer100km || 0) * 15000 / 100 * 0.24) + ((consumption.realWorldLitersPer100km || 0) * 15000 / 100 * 2)) / 12),
+      dataConfidence: car.confidence || "medium",
       sourceNotes: `${car.sourceNotes} Values reviewed against Portugal/EU 2026 market bands, IUC context, official/spec baselines, real-world consumption evidence, and owner/reliability heuristics.`,
-    });
+    }, specProfile(Object.assign({}, normalizedCar, costs, consumption)));
     reviewed.searchText = normalizeSearchText([reviewed.fullName, reviewed.brand, reviewed.model, reviewed.year, reviewed.yearRange, reviewed.id, reviewed.categoryGroup, reviewed.category, reviewed.powertrain, reviewed.segment, reviewed.energyType, reviewed.fuelType, reviewed.typicalMarket].filter(Boolean).join(" "));
     return reviewed;
   }
