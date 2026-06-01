@@ -1,0 +1,218 @@
+{
+  "generatedAt": "2026-06-01T21:04:29.036Z",
+  "source": "Wikipedia pageimages plus Wikimedia Commons imageinfo thumb URLs and source pages",
+  "groupsProcessed": 625,
+  "groupsWithImages": 491,
+  "coverage": {
+    "total": 9392,
+    "exact": 122,
+    "generation": 3364,
+    "model": 4249,
+    "fallback": 1657,
+    "real": 7735,
+    "realPct": 82.4,
+    "fallbackPct": 17.6,
+    "missingExamples": [
+      {
+        "id": "fiat-panda-2009",
+        "fullName": "Fiat Panda 2009"
+      },
+      {
+        "id": "fiat-panda-2010",
+        "fullName": "Fiat Panda 2010"
+      },
+      {
+        "id": "peugeot-107-2009",
+        "fullName": "Peugeot 107 2009"
+      },
+      {
+        "id": "peugeot-107-2010",
+        "fullName": "Peugeot 107 2010"
+      },
+      {
+        "id": "seat-cupra-leon-2009",
+        "fullName": "SEAT CUPRA Leon 2009"
+      },
+      {
+        "id": "seat-mii-2009",
+        "fullName": "SEAT Mii 2009"
+      },
+      {
+        "id": "skoda-citigo-2009",
+        "fullName": "Skoda Citigo 2009"
+      },
+      {
+        "id": "fiat-panda-2011",
+        "fullName": "Fiat Panda 2011"
+      },
+      {
+        "id": "fiat-panda-2012",
+        "fullName": "Fiat Panda 2012"
+      },
+      {
+        "id": "fiat-panda-2013",
+        "fullName": "Fiat Panda 2013"
+      },
+      {
+        "id": "mazda-mazda-2-2009",
+        "fullName": "Mazda Mazda 2 2009"
+      },
+      {
+        "id": "peugeot-107-2011",
+        "fullName": "Peugeot 107 2011"
+      },
+      {
+        "id": "peugeot-107-2012",
+        "fullName": "Peugeot 107 2012"
+      },
+      {
+        "id": "peugeot-107-2013",
+        "fullName": "Peugeot 107 2013"
+      },
+      {
+        "id": "seat-cupra-leon-2010",
+        "fullName": "SEAT CUPRA Leon 2010"
+      },
+      {
+        "id": "seat-cupra-leon-2011",
+        "fullName": "SEAT CUPRA Leon 2011"
+      },
+      {
+        "id": "seat-cupra-leon-2012",
+        "fullName": "SEAT CUPRA Leon 2012"
+      },
+      {
+        "id": "seat-cupra-leon-2013",
+        "fullName": "SEAT CUPRA Leon 2013"
+      },
+      {
+        "id": "seat-mii-2010",
+        "fullName": "SEAT Mii 2010"
+      },
+      {
+        "id": "seat-mii-2011",
+        "fullName": "SEAT Mii 2011"
+      },
+      {
+        "id": "seat-mii-2012",
+        "fullName": "SEAT Mii 2012"
+      },
+      {
+        "id": "seat-mii-2013",
+        "fullName": "SEAT Mii 2013"
+      },
+      {
+        "id": "skoda-citigo-2010",
+        "fullName": "Skoda Citigo 2010"
+      },
+      {
+        "id": "skoda-citigo-2011",
+        "fullName": "Skoda Citigo 2011"
+      },
+      {
+        "id": "skoda-citigo-2012",
+        "fullName": "Skoda Citigo 2012"
+      },
+      {
+        "id": "skoda-citigo-2013",
+        "fullName": "Skoda Citigo 2013"
+      },
+      {
+        "id": "citroen-ds3-2009",
+        "fullName": "Citroën DS3 2009"
+      },
+      {
+        "id": "citroen-ds3-2010",
+        "fullName": "Citroën DS3 2010"
+      },
+      {
+        "id": "citroen-ds4-2009",
+        "fullName": "Citroën DS4 2009"
+      },
+      {
+        "id": "citroen-ds4-2010",
+        "fullName": "Citroën DS4 2010"
+      },
+      {
+        "id": "fiat-grande-punto-2009",
+        "fullName": "Fiat Grande Punto 2009"
+      },
+      {
+        "id": "fiat-grande-punto-2010",
+        "fullName": "Fiat Grande Punto 2010"
+      },
+      {
+        "id": "fiat-grande-punto-2011",
+        "fullName": "Fiat Grande Punto 2011"
+      },
+      {
+        "id": "fiat-tipo-2009",
+        "fullName": "Fiat Tipo 2009"
+      },
+      {
+        "id": "fiat-tipo-2010",
+        "fullName": "Fiat Tipo 2010"
+      },
+      {
+        "id": "fiat-tipo-2011",
+        "fullName": "Fiat Tipo 2011"
+      },
+      {
+        "id": "honda-e-ny1-2009",
+        "fullName": "Honda e:Ny1 2009"
+      },
+      {
+        "id": "honda-e-ny1-2010",
+        "fullName": "Honda e:Ny1 2010"
+      },
+      {
+        "id": "honda-honda-e-2009",
+        "fullName": "Honda Honda e 2009"
+      },
+      {
+        "id": "honda-honda-e-2010",
+        "fullName": "Honda Honda e 2010"
+      },
+      {
+        "id": "kia-optima-2009",
+        "fullName": "Kia Optima 2009"
+      },
+      {
+        "id": "kia-optima-2010",
+        "fullName": "Kia Optima 2010"
+      },
+      {
+        "id": "mazda-mazda-2-2010",
+        "fullName": "Mazda Mazda 2 2010"
+      },
+      {
+        "id": "mazda-mazda-2-2011",
+        "fullName": "Mazda Mazda 2 2011"
+      },
+      {
+        "id": "mazda-mazda-2-2012",
+        "fullName": "Mazda Mazda 2 2012"
+      },
+      {
+        "id": "mazda-mazda-3-2009",
+        "fullName": "Mazda Mazda 3 2009"
+      },
+      {
+        "id": "mazda-mazda-3-2010",
+        "fullName": "Mazda Mazda 3 2010"
+      },
+      {
+        "id": "mg-mg3-2009",
+        "fullName": "MG MG3 2009"
+      },
+      {
+        "id": "mg-mg3-2010",
+        "fullName": "MG MG3 2010"
+      },
+      {
+        "id": "mg-mg3-2011",
+        "fullName": "MG MG3 2011"
+      }
+    ]
+  }
+}

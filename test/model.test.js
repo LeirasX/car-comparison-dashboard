@@ -415,14 +415,14 @@ run("score heuristics avoid obvious nonsense", () => {
   assert.ok(ferrari.scores.drivingEnjoyment >= 9 && ferrari.scores.practicality <= 2, "Ferrari should be driving-heavy, not practical");
 });
 
-run("image metadata has clean fallbacks and curated real photos where available", () => {
+run("image metadata has clean fallbacks and real sourced photos where available", () => {
   model.CAR_DATABASE.forEach((entry) => {
     assert.ok(entry.fallbackCategoryImage, `${entry.id} fallback image key`);
     assert.ok(["exact", "generation", "model", "fallback"].includes(entry.imageConfidence), `${entry.id} image confidence`);
     assert.ok(Array.isArray(entry.gallery), `${entry.id} gallery array`);
     if (entry.imageConfidence !== "fallback") {
-      assert.ok(/^https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\//.test(entry.image), `${entry.id} real image URL`);
-      assert.ok(entry.imageSource, `${entry.id} image source`);
+      assert.ok(/^https:\/\/(?:upload\.wikimedia\.org\/wikipedia\/commons|commons\.wikimedia\.org\/wiki\/Special:FilePath\/)/.test(entry.image), `${entry.id} real image URL`);
+      assert.ok(/^https:\/\/(?:en\.wikipedia\.org|commons\.wikimedia\.org)\//.test(entry.imageSource), `${entry.id} image source`);
     }
   });
   ["tesla-model-3", "toyota-corolla", "volkswagen-golf", "honda-civic", "kia-ev9-2024"].forEach((id) => {

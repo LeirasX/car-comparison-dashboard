@@ -5,6 +5,13 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function buildCarDatabase() {
   "use strict";
 
+  const IMAGE_OVERRIDES = (function loadImageOverrides() {
+    if (typeof module !== "undefined" && module.exports) {
+      try { return require("./car-images.generated.js"); } catch (error) { return {}; }
+    }
+    return (typeof globalThis !== "undefined" && globalThis.CarImageOverrides) || {};
+  })();
+
   // Assumption basis, May 2026:
   // - Values are source-informed estimates, not scraped live listings. They use official/WLTP/EPA/spec baselines,
   //   EU real-world consumption evidence, Portugal used-market bands, and owner/reliability heuristics.
@@ -1154,22 +1161,34 @@
   ];
 
   function imageProfile(car) {
+    const override = IMAGE_OVERRIDES[car.id];
+    if (override && override.image) {
+      return {
+        image: override.image,
+        gallery: Array.isArray(override.gallery) ? override.gallery : [override.image],
+        imageSource: override.imageSource || "",
+        imageConfidence: override.imageConfidence || "model",
+        imageQueryUsed: override.imageQueryUsed || "",
+      };
+    }
     if (car.image) {
       return {
         image: car.image,
         gallery: Array.isArray(car.gallery) ? car.gallery : [car.image],
         imageSource: car.imageSource || "",
         imageConfidence: car.imageConfidence || "exact",
+        imageQueryUsed: car.imageQueryUsed || "",
       };
     }
     const haystack = `${car.fullName || car.displayName || ""} ${car.brand || ""} ${car.model || ""}`;
     const rule = MODEL_IMAGE_RULES.find((item) => item.pattern.test(haystack));
-    if (!rule) return { image: "", gallery: [], imageSource: "", imageConfidence: "fallback" };
+    if (!rule) return { image: "", gallery: [], imageSource: "", imageConfidence: "fallback", imageQueryUsed: "" };
     return {
       image: rule.image,
       gallery: rule.gallery,
       imageSource: rule.imageSource,
       imageConfidence: rule.imageConfidence,
+      imageQueryUsed: "",
     };
   }
 
@@ -1294,6 +1313,7 @@
       gallery: images.gallery,
       imageSource: images.imageSource,
       imageConfidence: images.imageConfidence,
+      imageQueryUsed: images.imageQueryUsed,
       fallbackCategoryImage: imageKeyFor(normalizedCar),
       estimatedMonthlyRunningCost: Math.round((costs.maintenancePerYear + costs.insurancePerYear + costs.repairsPerYear + costs.taxPerYear + ((consumption.realWorldKwhPer100km || 0) * 15000 / 100 * 0.24) + ((consumption.realWorldLitersPer100km || 0) * 15000 / 100 * 2)) / 12),
       dataConfidence: car.confidence || "medium",
