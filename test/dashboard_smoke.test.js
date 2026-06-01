@@ -116,6 +116,11 @@ assert.match(page, /Main Specs/);
 assert.match(page, /Ownership/);
 assert.match(page, /Scores/);
 assert.match(page, /Compare financially/);
+assert.match(page, /gallery-strip|commons\.wikimedia\.org/);
+
+page = renderRoute("#car/kia-ev9");
+assert.match(page, /Kia EV9/);
+assert.match(page, /commons\.wikimedia\.org/);
 
 page = renderRoute("#tools");
 assert.match(page, /Decision tools/);

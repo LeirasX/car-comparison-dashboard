@@ -746,10 +746,12 @@
     const text = `${brand} ${modelName}`.toLowerCase();
     if (/tourbillon|utopia|revuelto|junior electric|ev3|ev5|r2|gravity|spectre|cybertruck|ex30|ex40|ex90|5 e-tech|bigster|600e|seagull|ora 07|galaxy e5|haval jolion|tank 300/.test(text)) return 2024;
     if (/model y|seal u|seal|dolphin|atto 3|han|tang|song plus|yuan plus|ev9|ev6|ioniq 5|ioniq 6|id\.4|id\.5|id\.7|q4 e-tron|q8 e-tron|eqa|eqb|eqe|eqs|ix1|ix3|ix|i4|i5|i7|taycan|macan electric|mg4|marvel r|zs ev|spring|mokka-e|e-208|e-2008|ë-c3|ë-c4|500e|solterra|bz4x|ariya|scenic e-tech|megane e-tech|evenger electric|hummer ev|air sapphire|nevera|sf90|296 gtb|purosangue|mc20|cyberster/.test(text)) return 2021;
+    if (/model x/.test(text)) return 2016;
+    if (/model s/.test(text)) return 2012;
     if (/model 3|kona electric|niro ev|leaf|zoe|ioniq electric|ioniq plug-in|soul ev|i3|i8|bolt ev|i-pace|e-tron gt|polestar 2|et5|et7|es6|es8|p5|p7|r1t|r1s|air|roadster/.test(text)) return 2018;
     if (/hyundai ioniq/.test(text)) return 2016;
     if (/c-hr|yaris cross|t-roc|t-cross|kamiq|karoq|kodiaq|arona|ateca|tarraco|captur|kadjar|austral|2008|3008|5008|mokka|grandland|puma|bayon|stonic|xceed|cx-30|ux|nx|lbx|xc40|gv60|gv70|gv80|formentor|tonale|grecale|dbx|urus|bentayga/.test(text)) return 2016;
-    if (/gr yaris|gr86|supra|m2|m4|m5 cs|m3 csl|rs3|rs4|rs6|amg gt|amg one|911 gt3 rs|918 spyder|p1|senna|speedtail|765lt|laferrari|enzo|regera|jesko|huayra|chiron|veyron|valkyrie|lfa/.test(text)) return 2014;
+    if (/488|huracan|gr yaris|gr86|supra|m2|m4|m5 cs|m3 csl|rs3|rs4|rs6|amg gt|amg one|911 gt3 rs|918 spyder|p1|senna|speedtail|765lt|laferrari|enzo|regera|jesko|huayra|chiron|veyron|valkyrie|lfa/.test(text)) return 2014;
     return 2008;
   }
 
@@ -907,9 +909,11 @@
     const group = categoryGroup(car);
     const signals = brandSignals(car);
     const price = Number(car.defaultUpfrontPrice) || 0;
+    const year = representativeYear(car);
+    const age = Math.max(0, 2026 - year);
     const ev = car.energyType === "electricity";
     const hybrid = car.category === "hybrid";
-    const supercar = car.category === "supercar";
+    const supercar = car.category === "supercar" || /Supercar|Hypercar/.test(group);
     const luxury = car.category === "luxury" || /^Luxury/.test(group);
     const premium = luxury || /^EV (sedan|SUV)$/.test(group) && price >= 36000 || price >= 45000;
     const cheap = price <= 9000;
@@ -917,26 +921,40 @@
     const suvish = /SUV|Crossover|Estate|MPV|Van|Pickup|Off-road/.test(group);
     const city = group === "City car";
 
-    let reliability = 6;
-    if (signals.toyotaHonda) reliability += 2.2;
+    let reliability = 5.7;
+    if (signals.toyotaHonda) reliability += 2.5;
     if (signals.korean) reliability += 1.2;
     if (signals.simpleValue) reliability += 0.6;
     if (signals.germanPremium) reliability -= 0.4;
     if (signals.fragilePremium) reliability -= 1.4;
-    if (oldCheap) reliability -= 1.3;
-    if (supercar) reliability -= 2.0;
-    if (ev && !signals.fragilePremium) reliability += 0.6;
+    if (oldCheap) reliability -= 1.1;
+    if (supercar) reliability -= 2.1;
+    if (ev && !signals.fragilePremium && !/dacia-spring/.test(car.id)) reliability += 0.4;
+    if (age > 12) reliability -= 0.7;
 
-    let comfort = 5.2 + (premium ? 2.0 : 0) + (luxury ? 1.0 : 0) + (suvish ? 0.8 : 0) + (/Sedan|Estate/.test(group) ? 0.5 : 0) - (city ? 1.2 : 0) - (oldCheap ? 0.6 : 0) - (supercar ? 1.3 : 0);
-    let safety = 6.0 + (price > 25000 ? 1.0 : 0) + (price > 55000 ? 0.7 : 0) + (premium ? 0.5 : 0) + (ev ? 0.5 : 0) - (oldCheap ? 1.9 : 0) - (city && !ev ? 0.4 : 0);
+    let comfort = 5.0 + (premium ? 1.7 : 0) + (luxury ? 1.7 : 0) + (suvish ? 0.6 : 0) + (/Sedan|Estate/.test(group) ? 0.5 : 0) - (city ? 1.3 : 0) - (oldCheap ? 0.7 : 0) - (supercar ? 1.7 : 0);
+    let safety = 5.5 + (year >= 2020 ? 1.1 : year >= 2015 ? 0.4 : -1.3) + (price > 25000 ? 0.8 : 0) + (price > 55000 ? 0.6 : 0) + (premium ? 0.4 : 0) + (ev ? 0.4 : 0) - (oldCheap ? 1.0 : 0) - (city && !ev ? 0.4 : 0);
     let practicality = 6.0 + (suvish ? 1.6 : 0) + (hybrid ? 0.3 : 0) - (city ? 1.1 : 0) - (supercar ? 5.0 : 0) - (/mx-5|cayman|911|f40|aventador|huracan|chiron|nevera|p1|laferrari|918/.test(car.id) ? 2.0 : 0);
-    let tech = 5.0 + (ev ? 1.7 : 0) + (signals.tesla ? 1.5 : 0) + (signals.germanPremium ? 1.0 : 0) + (premium ? 0.8 : 0) - (oldCheap ? 2.2 : 0) - (/dacia-spring|smart-eq|twingo|c1|107|206|fiat-panda|fiat-punto/.test(car.id) ? 1.7 : 0);
-    let driving = 5.1 + (signals.performance ? 2.2 : 0) + (premium ? 0.8 : 0) + (signals.tesla ? 1.4 : 0) - (city ? 1.0 : 0) - (/van|berlingo|rifter|combo|kangoo|caddy|citan|tourneo|jogger/.test(car.id) ? 1.3 : 0);
+    let tech = 4.3 + (year >= 2022 ? 1.7 : year >= 2018 ? 1.0 : year >= 2013 ? 0.2 : -1.2) + (ev ? 1.1 : 0) + (signals.tesla ? 1.5 : 0) + (signals.germanPremium ? 0.8 : 0) + (premium ? 0.7 : 0) - (oldCheap ? 1.2 : 0) - (/dacia-spring|smart-eq|twingo|c1|107|206|fiat-panda|fiat-punto/.test(car.id) ? 1.8 : 0);
+    let driving = 5.0 + (signals.performance ? 2.4 : 0) + (premium ? 0.6 : 0) + (signals.tesla ? 1.3 : 0) - (city ? 1.0 : 0) - (/van|berlingo|rifter|combo|kangoo|caddy|citan|tourneo|jogger/.test(car.id) ? 1.3 : 0);
+    if (/rolls|bentley|maybach/.test(car.id)) {
+      comfort = 10;
+      practicality -= 0.7;
+      driving = Math.min(driving, 6);
+      reliability -= 0.8;
+    }
+    if (/dacia-spring/.test(car.id)) {
+      comfort = Math.min(comfort, 4);
+      safety = Math.min(safety, 5);
+      tech = Math.min(tech, 4);
+      driving = Math.min(driving, 4);
+    }
+    if (signals.tesla) driving = Math.max(driving, 7);
     if (supercar) {
       comfort = Math.max(4, comfort);
       practicality = Math.min(2, practicality);
       tech = Math.max(6, tech);
-      driving = Math.max(9, driving);
+      driving = Math.max(9.5, driving);
     }
 
     return {
@@ -952,6 +970,7 @@
   function reviewedCosts(car) {
     const group = categoryGroup(car);
     const signals = brandSignals(car);
+    const text = `${car.id || ""} ${car.displayName || ""}`.toLowerCase();
     const price = Number(car.defaultUpfrontPrice) || 0;
     const band = Math.max(0.4, price / 10000);
     const ev = car.energyType === "electricity";
@@ -964,9 +983,9 @@
     const oldCheap = price <= 6500 || /206|107|c2|punto|modus|ka|note|toledo/.test(car.id);
     const reliability = reviewedScores(car).reliability;
 
-    let maintenance = (ev ? 260 : hybrid ? 500 : city ? 380 : 520) + band * (supercar ? 360 : luxury ? 150 : premium ? 110 : sports ? 95 : 42);
-    let insurance = (city ? 235 : ev ? 390 : 330) + band * (supercar ? 650 : luxury ? 175 : premium ? 115 : sports ? 105 : 42);
-    let repairs = (ev ? 390 : hybrid ? 460 : city ? 430 : 540) + band * (supercar ? 720 : luxury ? 230 : premium ? 145 : sports ? 125 : 55);
+    let maintenance = (ev ? 260 : hybrid ? 500 : city ? 380 : 520) + band * (supercar ? 420 : luxury ? 210 : premium ? 110 : sports ? 95 : 42);
+    let insurance = (city ? 235 : ev ? 390 : 330) + band * (supercar ? 720 : luxury ? 220 : premium ? 115 : sports ? 105 : 42);
+    let repairs = (ev ? 390 : hybrid ? 460 : city ? 430 : 540) + band * (supercar ? 780 : luxury ? 300 : premium ? 145 : sports ? 125 : 55);
     let tax = ev ? 0 : (city ? 55 : hybrid ? 105 : 120) + band * (supercar ? 35 : luxury ? 55 : premium ? 35 : sports ? 30 : 18);
 
     if (signals.toyotaHonda) repairs -= 140;
@@ -981,6 +1000,11 @@
       maintenance += 240;
       repairs += 520;
       insurance += 140;
+    }
+    if (/rolls|bentley|maybach/.test(text)) {
+      maintenance += 1800;
+      repairs += 2400;
+      insurance += 900;
     }
     if (oldCheap) {
       insurance -= 70;
@@ -1039,10 +1063,12 @@
     if (suv) horsepower += 25;
     if (/tesla|taycan|i4|ev6|ioniq-5|model-s|model-x|rimac|nevera/.test(text)) horsepower += 80;
     horsepower = roundTo(clampNumber(horsepower, city ? 55 : 85, supercar ? 1200 : sports ? 650 : premium ? 560 : 360), 5);
-    let acceleration0to100 = 12.8 - horsepower / 80 - (ev ? 1.1 : 0) - (sports ? 1.5 : 0) + (suv ? 0.4 : 0) + (city ? 1.2 : 0);
+    if (/dacia-spring/.test(text)) horsepower = 45;
+    let acceleration0to100 = 12.8 - horsepower / 80 - (ev ? 1.8 : 0) - (sports ? 1.5 : 0) - (/tesla|taycan|i4|ev6|ioniq-5|model-s|model-x/.test(text) ? 0.9 : 0) + (suv ? 0.4 : 0) + (city ? 1.2 : 0);
     if (supercar) acceleration0to100 = Math.min(acceleration0to100, 3.4);
     acceleration0to100 = Number(clampNumber(acceleration0to100, supercar ? 1.8 : sports ? 3.2 : 4.8, city ? 15.5 : 12.8).toFixed(1));
-    const topSpeed = roundTo(clampNumber(150 + horsepower * (sports ? 0.27 : 0.18) + (supercar ? 70 : 0) - (city ? 20 : 0), city ? 135 : 155, supercar ? 430 : sports ? 330 : ev ? 260 : 285), 5);
+    if (/dacia-spring/.test(text)) acceleration0to100 = 19.1;
+    const topSpeed = /dacia-spring/.test(text) ? 125 : roundTo(clampNumber(150 + horsepower * (sports ? 0.27 : 0.18) + (supercar ? 70 : 0) - (city ? 20 : 0), city ? 135 : 155, supercar ? 430 : sports ? 330 : ev ? 260 : 285), 5);
     const rangeKm = ev ? roundTo(clampNumber((group === "EV hatchback" ? 44 : group === "EV SUV" ? 72 : 68) * 100 / Math.max(12, Number(car.realWorldKwhPer100km) || 17), 130, premium ? 650 : 520), 5) : 0;
     const drivetrain = /xdrive|quattro|4matic|awd|4wd|land-cruiser|defender|wrangler|range-rover|g-class|hilux|ranger|navara|l200|d-max/.test(text) || supercar || luxury && suv ? "AWD" : /bmw|mercedes|porsche|mazda-mx-5|gr86|supra|mustang|camaro|corvette|tesla-model-3|tesla-model-y/.test(text) ? "RWD" : "FWD";
     const transmission = ev ? "single-speed" : hybrid || premium || sports ? "automatic" : "manual/auto";
@@ -1070,6 +1096,81 @@
     if (/Luxury|Sedan/.test(group)) return "sedan";
     if (/City|Supermini/.test(group)) return "city";
     return "hatch";
+  }
+
+  function commonsFile(filename, width = 1200) {
+    return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}?width=${width}`;
+  }
+
+  function commonsPage(filename) {
+    return `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(filename).replace(/%20/g, "_")}`;
+  }
+
+  // Curated stable image rules. These intentionally cover models/generations rather than every generated year
+  // so the catalog gets real car photos without downloading thousands of large images or hotlinking random listings.
+  const MODEL_IMAGE_RULES = [
+    {
+      pattern: /kia ev9/i,
+      image: commonsFile("2023 Kia EV9 front view.png"),
+      gallery: [commonsFile("2023 Kia EV9 front view.png"), commonsFile("2023 Kia EV9 rear view 01.png")],
+      imageSource: commonsPage("2023 Kia EV9 front view.png"),
+      imageConfidence: "generation",
+    },
+    {
+      pattern: /tesla model 3/i,
+      image: commonsFile("2021 Tesla Model 3, front 11.10.21.jpg"),
+      gallery: [commonsFile("2021 Tesla Model 3, front 11.10.21.jpg")],
+      imageSource: commonsPage("2021 Tesla Model 3, front 11.10.21.jpg"),
+      imageConfidence: "generation",
+    },
+    {
+      pattern: /toyota corolla/i,
+      image: commonsFile("2021 Toyota Corolla LE, Front Right, 10-19-2020.jpg"),
+      gallery: [commonsFile("2021 Toyota Corolla LE, Front Right, 10-19-2020.jpg")],
+      imageSource: commonsPage("2021 Toyota Corolla LE, Front Right, 10-19-2020.jpg"),
+      imageConfidence: "generation",
+    },
+    {
+      pattern: /volkswagen golf/i,
+      image: commonsFile("Volkswagen Golf VIII IMG 4021.jpg"),
+      gallery: [commonsFile("Volkswagen Golf VIII IMG 4021.jpg"), commonsFile("Volkswagen Golf VIII (2021) (53941107656).jpg")],
+      imageSource: commonsPage("Volkswagen Golf VIII IMG 4021.jpg"),
+      imageConfidence: "generation",
+    },
+    {
+      pattern: /honda civic/i,
+      image: commonsFile("Honda Civic 2.0 EX 2021 (52091298297).jpg"),
+      gallery: [commonsFile("Honda Civic 2.0 EX 2021 (52091298297).jpg")],
+      imageSource: commonsPage("Honda Civic 2.0 EX 2021 (52091298297).jpg"),
+      imageConfidence: "generation",
+    },
+    {
+      pattern: /bmw 3 series/i,
+      image: commonsFile("BMW 3-Series (52823659891).jpg"),
+      gallery: [commonsFile("BMW 3-Series (52823659891).jpg"), commonsFile("BMW 3-Series (52824098028).jpg")],
+      imageSource: commonsPage("BMW 3-Series (52823659891).jpg"),
+      imageConfidence: "generation",
+    },
+  ];
+
+  function imageProfile(car) {
+    if (car.image) {
+      return {
+        image: car.image,
+        gallery: Array.isArray(car.gallery) ? car.gallery : [car.image],
+        imageSource: car.imageSource || "",
+        imageConfidence: car.imageConfidence || "exact",
+      };
+    }
+    const haystack = `${car.fullName || car.displayName || ""} ${car.brand || ""} ${car.model || ""}`;
+    const rule = MODEL_IMAGE_RULES.find((item) => item.pattern.test(haystack));
+    if (!rule) return { image: "", gallery: [], imageSource: "", imageConfidence: "fallback" };
+    return {
+      image: rule.image,
+      gallery: rule.gallery,
+      imageSource: rule.imageSource,
+      imageConfidence: rule.imageConfidence,
+    };
   }
 
   function representativeYear(car) {
@@ -1171,6 +1272,7 @@
     const costs = reviewedCosts(car);
     const consumption = reviewedConsumption(normalizedCar);
     const identity = carIdentity(normalizedCar);
+    const images = imageProfile(Object.assign({}, normalizedCar, identity));
     const reviewed = Object.assign({}, normalizedCar, costs, consumption, {
       fullName: displayName,
       visibleName: displayName,
@@ -1188,8 +1290,10 @@
       resaleEstimate: Math.round((Number(car.defaultUpfrontPrice) || 0) * reviewedResale(car) / 100) * 100,
       depreciation: Number((1 - reviewedResale(car)).toFixed(2)),
       scores: reviewedScores(normalizedCar),
-      image: car.image || "",
-      gallery: Array.isArray(car.gallery) ? car.gallery : [],
+      image: images.image,
+      gallery: images.gallery,
+      imageSource: images.imageSource,
+      imageConfidence: images.imageConfidence,
       fallbackCategoryImage: imageKeyFor(normalizedCar),
       estimatedMonthlyRunningCost: Math.round((costs.maintenancePerYear + costs.insurancePerYear + costs.repairsPerYear + costs.taxPerYear + ((consumption.realWorldKwhPer100km || 0) * 15000 / 100 * 0.24) + ((consumption.realWorldLitersPer100km || 0) * 15000 / 100 * 2)) / 12),
       dataConfidence: car.confidence || "medium",

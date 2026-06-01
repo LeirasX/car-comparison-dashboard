@@ -331,7 +331,7 @@ run("changing car model reloads model defaults", () => {
   model.markCustom(corolla, "annualInsurance");
   const phantom = model.applyCarModelDefaults(corolla, "rolls-royce-phantom");
   assert.equal(phantom.modelId, "rolls-royce-phantom");
-  assert.equal(phantom.annualInsurance, 9000);
+  assert.equal(phantom.annualInsurance, model.carModelById("rolls-royce-phantom").insurancePerYear);
   assert.equal(phantom.customFields.length, 0);
 });
 
@@ -397,6 +397,65 @@ run("six scores are meaningful and spread across the database", () => {
   assert.ok(corolla.scores.reliability >= 8);
   assert.ok(ferrari.scores.practicality <= 2);
   assert.ok(ferrari.scores.drivingEnjoyment >= 9);
+});
+
+run("score heuristics avoid obvious nonsense", () => {
+  const find = (fullName) => model.CAR_DATABASE.find((entry) => entry.fullName === fullName) || model.CAR_DATABASE.find((entry) => entry.id === fullName);
+  const corolla = find("Toyota Corolla 2021");
+  const civic = find("Honda Civic 2021");
+  const spring = find("Dacia Spring 2022");
+  const tesla = find("Tesla Model 3 2021");
+  const phantom = find("Rolls-Royce Phantom 2021");
+  const ferrari = find("Ferrari 488 2015");
+  assert.ok(corolla.scores.reliability >= 8, "Corolla reliability should be high");
+  assert.ok(civic.scores.reliability >= 8, "Civic reliability should be high");
+  assert.ok(spring.scores.tech <= 4 && spring.scores.comfort <= 4, "Dacia Spring should stay basic");
+  assert.ok(tesla.scores.tech >= 8 && tesla.acceleration0to100 <= 7, "Model 3 should be tech-forward and quick");
+  assert.ok(phantom.scores.comfort >= 9 && phantom.maintenancePerYear >= 3500, "Phantom should be comfort-heavy and expensive");
+  assert.ok(ferrari.scores.drivingEnjoyment >= 9 && ferrari.scores.practicality <= 2, "Ferrari should be driving-heavy, not practical");
+});
+
+run("image metadata has clean fallbacks and curated real photos where available", () => {
+  model.CAR_DATABASE.forEach((entry) => {
+    assert.ok(entry.fallbackCategoryImage, `${entry.id} fallback image key`);
+    assert.ok(["exact", "generation", "model", "fallback"].includes(entry.imageConfidence), `${entry.id} image confidence`);
+    assert.ok(Array.isArray(entry.gallery), `${entry.id} gallery array`);
+    if (entry.imageConfidence !== "fallback") {
+      assert.ok(/^https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\//.test(entry.image), `${entry.id} real image URL`);
+      assert.ok(entry.imageSource, `${entry.id} image source`);
+    }
+  });
+  ["tesla-model-3", "toyota-corolla", "volkswagen-golf", "honda-civic", "kia-ev9-2024"].forEach((id) => {
+    const entry = model.carModelById(id);
+    assert.ok(entry.image, `${id} should have a real image`);
+    assert.notEqual(entry.imageConfidence, "fallback", `${id} should not use category fallback`);
+  });
+});
+
+run("data validation catches impossible scores, costs, energy fields, and images", () => {
+  model.CAR_DATABASE.forEach((entry) => {
+    assert.ok(Number(entry.defaultUpfrontPrice) > 0, `${entry.id} value`);
+    ["maintenancePerYear", "insurancePerYear", "repairsPerYear", "taxPerYear", "resaleRetentionEstimate", "horsepower", "acceleration0to100", "topSpeed", "seats", "doors", "bootLiters"].forEach((field) => {
+      assert.ok(Number.isFinite(Number(entry[field])), `${entry.id} ${field}`);
+      assert.ok(Number(entry[field]) >= 0, `${entry.id} ${field} non-negative`);
+    });
+    Object.values(entry.scores).forEach((score) => {
+      assert.ok(Number(score) >= 0 && Number(score) <= 10, `${entry.id} score range`);
+    });
+    if (entry.energyType === "electricity") {
+      assert.ok(Number(entry.realWorldKwhPer100km) > 0, `${entry.id} EV kWh`);
+      assert.equal(Number(entry.realWorldLitersPer100km), 0, `${entry.id} EV liters`);
+    } else {
+      assert.ok(Number(entry.realWorldLitersPer100km) > 0, `${entry.id} fuel liters`);
+      assert.equal(Number(entry.realWorldKwhPer100km), 0, `${entry.id} fuel kWh`);
+    }
+    if (/supercar|hypercar/i.test(entry.categoryGroup || "")) {
+      assert.ok(entry.scores.practicality <= 3, `${entry.id} supercar practicality`);
+    }
+    if (entry.year <= 2012 && entry.defaultUpfrontPrice < 12000 && entry.energyType !== "electricity" && !/Sports|Supercar|Hypercar|Luxury/i.test(entry.categoryGroup || "")) {
+      assert.ok(entry.scores.tech <= 5, `${entry.id} old cheap tech`);
+    }
+  });
 });
 
 run("car value drives resale independently from offer price", () => {

@@ -271,7 +271,10 @@
       padding:18px 0 24px;
     }
     .detail-title { display:grid; align-content:center; gap:18px; padding:28px; border-radius:28px; min-height:320px; }
-    .detail-art { border-radius:28px; overflow:hidden; min-height:320px; }
+    .detail-art { border-radius:28px; overflow:hidden; min-height:320px; display:grid; grid-template-rows:minmax(260px,1fr) auto; }
+    .detail-art > img { width:100%; height:100%; min-height:260px; object-fit:cover; }
+    .gallery-strip { display:flex; gap:8px; padding:10px; overflow-x:auto; border-top:1px solid var(--line); background:rgba(255,255,255,.54); }
+    .gallery-strip img { width:94px; height:58px; flex:0 0 auto; object-fit:cover; border:1px solid var(--line); border-radius:var(--radius); }
     .spec-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
     .ranking-list { display:grid; gap:10px; }
     .rank-row {
@@ -1095,10 +1098,12 @@
     const text = `${brand} ${modelName}`.toLowerCase();
     if (/tourbillon|utopia|revuelto|junior electric|ev3|ev5|r2|gravity|spectre|cybertruck|ex30|ex40|ex90|5 e-tech|bigster|600e|seagull|ora 07|galaxy e5|haval jolion|tank 300/.test(text)) return 2024;
     if (/model y|seal u|seal|dolphin|atto 3|han|tang|song plus|yuan plus|ev9|ev6|ioniq 5|ioniq 6|id\.4|id\.5|id\.7|q4 e-tron|q8 e-tron|eqa|eqb|eqe|eqs|ix1|ix3|ix|i4|i5|i7|taycan|macan electric|mg4|marvel r|zs ev|spring|mokka-e|e-208|e-2008|ë-c3|ë-c4|500e|solterra|bz4x|ariya|scenic e-tech|megane e-tech|evenger electric|hummer ev|air sapphire|nevera|sf90|296 gtb|purosangue|mc20|cyberster/.test(text)) return 2021;
+    if (/model x/.test(text)) return 2016;
+    if (/model s/.test(text)) return 2012;
     if (/model 3|kona electric|niro ev|leaf|zoe|ioniq electric|ioniq plug-in|soul ev|i3|i8|bolt ev|i-pace|e-tron gt|polestar 2|et5|et7|es6|es8|p5|p7|r1t|r1s|air|roadster/.test(text)) return 2018;
     if (/hyundai ioniq/.test(text)) return 2016;
     if (/c-hr|yaris cross|t-roc|t-cross|kamiq|karoq|kodiaq|arona|ateca|tarraco|captur|kadjar|austral|2008|3008|5008|mokka|grandland|puma|bayon|stonic|xceed|cx-30|ux|nx|lbx|xc40|gv60|gv70|gv80|formentor|tonale|grecale|dbx|urus|bentayga/.test(text)) return 2016;
-    if (/gr yaris|gr86|supra|m2|m4|m5 cs|m3 csl|rs3|rs4|rs6|amg gt|amg one|911 gt3 rs|918 spyder|p1|senna|speedtail|765lt|laferrari|enzo|regera|jesko|huayra|chiron|veyron|valkyrie|lfa/.test(text)) return 2014;
+    if (/488|huracan|gr yaris|gr86|supra|m2|m4|m5 cs|m3 csl|rs3|rs4|rs6|amg gt|amg one|911 gt3 rs|918 spyder|p1|senna|speedtail|765lt|laferrari|enzo|regera|jesko|huayra|chiron|veyron|valkyrie|lfa/.test(text)) return 2014;
     return 2008;
   }
 
@@ -1256,9 +1261,11 @@
     const group = categoryGroup(car);
     const signals = brandSignals(car);
     const price = Number(car.defaultUpfrontPrice) || 0;
+    const year = representativeYear(car);
+    const age = Math.max(0, 2026 - year);
     const ev = car.energyType === "electricity";
     const hybrid = car.category === "hybrid";
-    const supercar = car.category === "supercar";
+    const supercar = car.category === "supercar" || /Supercar|Hypercar/.test(group);
     const luxury = car.category === "luxury" || /^Luxury/.test(group);
     const premium = luxury || /^EV (sedan|SUV)$/.test(group) && price >= 36000 || price >= 45000;
     const cheap = price <= 9000;
@@ -1266,26 +1273,40 @@
     const suvish = /SUV|Crossover|Estate|MPV|Van|Pickup|Off-road/.test(group);
     const city = group === "City car";
 
-    let reliability = 6;
-    if (signals.toyotaHonda) reliability += 2.2;
+    let reliability = 5.7;
+    if (signals.toyotaHonda) reliability += 2.5;
     if (signals.korean) reliability += 1.2;
     if (signals.simpleValue) reliability += 0.6;
     if (signals.germanPremium) reliability -= 0.4;
     if (signals.fragilePremium) reliability -= 1.4;
-    if (oldCheap) reliability -= 1.3;
-    if (supercar) reliability -= 2.0;
-    if (ev && !signals.fragilePremium) reliability += 0.6;
+    if (oldCheap) reliability -= 1.1;
+    if (supercar) reliability -= 2.1;
+    if (ev && !signals.fragilePremium && !/dacia-spring/.test(car.id)) reliability += 0.4;
+    if (age > 12) reliability -= 0.7;
 
-    let comfort = 5.2 + (premium ? 2.0 : 0) + (luxury ? 1.0 : 0) + (suvish ? 0.8 : 0) + (/Sedan|Estate/.test(group) ? 0.5 : 0) - (city ? 1.2 : 0) - (oldCheap ? 0.6 : 0) - (supercar ? 1.3 : 0);
-    let safety = 6.0 + (price > 25000 ? 1.0 : 0) + (price > 55000 ? 0.7 : 0) + (premium ? 0.5 : 0) + (ev ? 0.5 : 0) - (oldCheap ? 1.9 : 0) - (city && !ev ? 0.4 : 0);
+    let comfort = 5.0 + (premium ? 1.7 : 0) + (luxury ? 1.7 : 0) + (suvish ? 0.6 : 0) + (/Sedan|Estate/.test(group) ? 0.5 : 0) - (city ? 1.3 : 0) - (oldCheap ? 0.7 : 0) - (supercar ? 1.7 : 0);
+    let safety = 5.5 + (year >= 2020 ? 1.1 : year >= 2015 ? 0.4 : -1.3) + (price > 25000 ? 0.8 : 0) + (price > 55000 ? 0.6 : 0) + (premium ? 0.4 : 0) + (ev ? 0.4 : 0) - (oldCheap ? 1.0 : 0) - (city && !ev ? 0.4 : 0);
     let practicality = 6.0 + (suvish ? 1.6 : 0) + (hybrid ? 0.3 : 0) - (city ? 1.1 : 0) - (supercar ? 5.0 : 0) - (/mx-5|cayman|911|f40|aventador|huracan|chiron|nevera|p1|laferrari|918/.test(car.id) ? 2.0 : 0);
-    let tech = 5.0 + (ev ? 1.7 : 0) + (signals.tesla ? 1.5 : 0) + (signals.germanPremium ? 1.0 : 0) + (premium ? 0.8 : 0) - (oldCheap ? 2.2 : 0) - (/dacia-spring|smart-eq|twingo|c1|107|206|fiat-panda|fiat-punto/.test(car.id) ? 1.7 : 0);
-    let driving = 5.1 + (signals.performance ? 2.2 : 0) + (premium ? 0.8 : 0) + (signals.tesla ? 1.4 : 0) - (city ? 1.0 : 0) - (/van|berlingo|rifter|combo|kangoo|caddy|citan|tourneo|jogger/.test(car.id) ? 1.3 : 0);
+    let tech = 4.3 + (year >= 2022 ? 1.7 : year >= 2018 ? 1.0 : year >= 2013 ? 0.2 : -1.2) + (ev ? 1.1 : 0) + (signals.tesla ? 1.5 : 0) + (signals.germanPremium ? 0.8 : 0) + (premium ? 0.7 : 0) - (oldCheap ? 1.2 : 0) - (/dacia-spring|smart-eq|twingo|c1|107|206|fiat-panda|fiat-punto/.test(car.id) ? 1.8 : 0);
+    let driving = 5.0 + (signals.performance ? 2.4 : 0) + (premium ? 0.6 : 0) + (signals.tesla ? 1.3 : 0) - (city ? 1.0 : 0) - (/van|berlingo|rifter|combo|kangoo|caddy|citan|tourneo|jogger/.test(car.id) ? 1.3 : 0);
+    if (/rolls|bentley|maybach/.test(car.id)) {
+      comfort = 10;
+      practicality -= 0.7;
+      driving = Math.min(driving, 6);
+      reliability -= 0.8;
+    }
+    if (/dacia-spring/.test(car.id)) {
+      comfort = Math.min(comfort, 4);
+      safety = Math.min(safety, 5);
+      tech = Math.min(tech, 4);
+      driving = Math.min(driving, 4);
+    }
+    if (signals.tesla) driving = Math.max(driving, 7);
     if (supercar) {
       comfort = Math.max(4, comfort);
       practicality = Math.min(2, practicality);
       tech = Math.max(6, tech);
-      driving = Math.max(9, driving);
+      driving = Math.max(9.5, driving);
     }
 
     return {
@@ -1301,6 +1322,7 @@
   function reviewedCosts(car) {
     const group = categoryGroup(car);
     const signals = brandSignals(car);
+    const text = `${car.id || ""} ${car.displayName || ""}`.toLowerCase();
     const price = Number(car.defaultUpfrontPrice) || 0;
     const band = Math.max(0.4, price / 10000);
     const ev = car.energyType === "electricity";
@@ -1313,9 +1335,9 @@
     const oldCheap = price <= 6500 || /206|107|c2|punto|modus|ka|note|toledo/.test(car.id);
     const reliability = reviewedScores(car).reliability;
 
-    let maintenance = (ev ? 260 : hybrid ? 500 : city ? 380 : 520) + band * (supercar ? 360 : luxury ? 150 : premium ? 110 : sports ? 95 : 42);
-    let insurance = (city ? 235 : ev ? 390 : 330) + band * (supercar ? 650 : luxury ? 175 : premium ? 115 : sports ? 105 : 42);
-    let repairs = (ev ? 390 : hybrid ? 460 : city ? 430 : 540) + band * (supercar ? 720 : luxury ? 230 : premium ? 145 : sports ? 125 : 55);
+    let maintenance = (ev ? 260 : hybrid ? 500 : city ? 380 : 520) + band * (supercar ? 420 : luxury ? 210 : premium ? 110 : sports ? 95 : 42);
+    let insurance = (city ? 235 : ev ? 390 : 330) + band * (supercar ? 720 : luxury ? 220 : premium ? 115 : sports ? 105 : 42);
+    let repairs = (ev ? 390 : hybrid ? 460 : city ? 430 : 540) + band * (supercar ? 780 : luxury ? 300 : premium ? 145 : sports ? 125 : 55);
     let tax = ev ? 0 : (city ? 55 : hybrid ? 105 : 120) + band * (supercar ? 35 : luxury ? 55 : premium ? 35 : sports ? 30 : 18);
 
     if (signals.toyotaHonda) repairs -= 140;
@@ -1330,6 +1352,11 @@
       maintenance += 240;
       repairs += 520;
       insurance += 140;
+    }
+    if (/rolls|bentley|maybach/.test(text)) {
+      maintenance += 1800;
+      repairs += 2400;
+      insurance += 900;
     }
     if (oldCheap) {
       insurance -= 70;
@@ -1388,10 +1415,12 @@
     if (suv) horsepower += 25;
     if (/tesla|taycan|i4|ev6|ioniq-5|model-s|model-x|rimac|nevera/.test(text)) horsepower += 80;
     horsepower = roundTo(clampNumber(horsepower, city ? 55 : 85, supercar ? 1200 : sports ? 650 : premium ? 560 : 360), 5);
-    let acceleration0to100 = 12.8 - horsepower / 80 - (ev ? 1.1 : 0) - (sports ? 1.5 : 0) + (suv ? 0.4 : 0) + (city ? 1.2 : 0);
+    if (/dacia-spring/.test(text)) horsepower = 45;
+    let acceleration0to100 = 12.8 - horsepower / 80 - (ev ? 1.8 : 0) - (sports ? 1.5 : 0) - (/tesla|taycan|i4|ev6|ioniq-5|model-s|model-x/.test(text) ? 0.9 : 0) + (suv ? 0.4 : 0) + (city ? 1.2 : 0);
     if (supercar) acceleration0to100 = Math.min(acceleration0to100, 3.4);
     acceleration0to100 = Number(clampNumber(acceleration0to100, supercar ? 1.8 : sports ? 3.2 : 4.8, city ? 15.5 : 12.8).toFixed(1));
-    const topSpeed = roundTo(clampNumber(150 + horsepower * (sports ? 0.27 : 0.18) + (supercar ? 70 : 0) - (city ? 20 : 0), city ? 135 : 155, supercar ? 430 : sports ? 330 : ev ? 260 : 285), 5);
+    if (/dacia-spring/.test(text)) acceleration0to100 = 19.1;
+    const topSpeed = /dacia-spring/.test(text) ? 125 : roundTo(clampNumber(150 + horsepower * (sports ? 0.27 : 0.18) + (supercar ? 70 : 0) - (city ? 20 : 0), city ? 135 : 155, supercar ? 430 : sports ? 330 : ev ? 260 : 285), 5);
     const rangeKm = ev ? roundTo(clampNumber((group === "EV hatchback" ? 44 : group === "EV SUV" ? 72 : 68) * 100 / Math.max(12, Number(car.realWorldKwhPer100km) || 17), 130, premium ? 650 : 520), 5) : 0;
     const drivetrain = /xdrive|quattro|4matic|awd|4wd|land-cruiser|defender|wrangler|range-rover|g-class|hilux|ranger|navara|l200|d-max/.test(text) || supercar || luxury && suv ? "AWD" : /bmw|mercedes|porsche|mazda-mx-5|gr86|supra|mustang|camaro|corvette|tesla-model-3|tesla-model-y/.test(text) ? "RWD" : "FWD";
     const transmission = ev ? "single-speed" : hybrid || premium || sports ? "automatic" : "manual/auto";
@@ -1419,6 +1448,81 @@
     if (/Luxury|Sedan/.test(group)) return "sedan";
     if (/City|Supermini/.test(group)) return "city";
     return "hatch";
+  }
+
+  function commonsFile(filename, width = 1200) {
+    return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}?width=${width}`;
+  }
+
+  function commonsPage(filename) {
+    return `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(filename).replace(/%20/g, "_")}`;
+  }
+
+  // Curated stable image rules. These intentionally cover models/generations rather than every generated year
+  // so the catalog gets real car photos without downloading thousands of large images or hotlinking random listings.
+  const MODEL_IMAGE_RULES = [
+    {
+      pattern: /kia ev9/i,
+      image: commonsFile("2023 Kia EV9 front view.png"),
+      gallery: [commonsFile("2023 Kia EV9 front view.png"), commonsFile("2023 Kia EV9 rear view 01.png")],
+      imageSource: commonsPage("2023 Kia EV9 front view.png"),
+      imageConfidence: "generation",
+    },
+    {
+      pattern: /tesla model 3/i,
+      image: commonsFile("2021 Tesla Model 3, front 11.10.21.jpg"),
+      gallery: [commonsFile("2021 Tesla Model 3, front 11.10.21.jpg")],
+      imageSource: commonsPage("2021 Tesla Model 3, front 11.10.21.jpg"),
+      imageConfidence: "generation",
+    },
+    {
+      pattern: /toyota corolla/i,
+      image: commonsFile("2021 Toyota Corolla LE, Front Right, 10-19-2020.jpg"),
+      gallery: [commonsFile("2021 Toyota Corolla LE, Front Right, 10-19-2020.jpg")],
+      imageSource: commonsPage("2021 Toyota Corolla LE, Front Right, 10-19-2020.jpg"),
+      imageConfidence: "generation",
+    },
+    {
+      pattern: /volkswagen golf/i,
+      image: commonsFile("Volkswagen Golf VIII IMG 4021.jpg"),
+      gallery: [commonsFile("Volkswagen Golf VIII IMG 4021.jpg"), commonsFile("Volkswagen Golf VIII (2021) (53941107656).jpg")],
+      imageSource: commonsPage("Volkswagen Golf VIII IMG 4021.jpg"),
+      imageConfidence: "generation",
+    },
+    {
+      pattern: /honda civic/i,
+      image: commonsFile("Honda Civic 2.0 EX 2021 (52091298297).jpg"),
+      gallery: [commonsFile("Honda Civic 2.0 EX 2021 (52091298297).jpg")],
+      imageSource: commonsPage("Honda Civic 2.0 EX 2021 (52091298297).jpg"),
+      imageConfidence: "generation",
+    },
+    {
+      pattern: /bmw 3 series/i,
+      image: commonsFile("BMW 3-Series (52823659891).jpg"),
+      gallery: [commonsFile("BMW 3-Series (52823659891).jpg"), commonsFile("BMW 3-Series (52824098028).jpg")],
+      imageSource: commonsPage("BMW 3-Series (52823659891).jpg"),
+      imageConfidence: "generation",
+    },
+  ];
+
+  function imageProfile(car) {
+    if (car.image) {
+      return {
+        image: car.image,
+        gallery: Array.isArray(car.gallery) ? car.gallery : [car.image],
+        imageSource: car.imageSource || "",
+        imageConfidence: car.imageConfidence || "exact",
+      };
+    }
+    const haystack = `${car.fullName || car.displayName || ""} ${car.brand || ""} ${car.model || ""}`;
+    const rule = MODEL_IMAGE_RULES.find((item) => item.pattern.test(haystack));
+    if (!rule) return { image: "", gallery: [], imageSource: "", imageConfidence: "fallback" };
+    return {
+      image: rule.image,
+      gallery: rule.gallery,
+      imageSource: rule.imageSource,
+      imageConfidence: rule.imageConfidence,
+    };
   }
 
   function representativeYear(car) {
@@ -1520,6 +1624,7 @@
     const costs = reviewedCosts(car);
     const consumption = reviewedConsumption(normalizedCar);
     const identity = carIdentity(normalizedCar);
+    const images = imageProfile(Object.assign({}, normalizedCar, identity));
     const reviewed = Object.assign({}, normalizedCar, costs, consumption, {
       fullName: displayName,
       visibleName: displayName,
@@ -1537,8 +1642,10 @@
       resaleEstimate: Math.round((Number(car.defaultUpfrontPrice) || 0) * reviewedResale(car) / 100) * 100,
       depreciation: Number((1 - reviewedResale(car)).toFixed(2)),
       scores: reviewedScores(normalizedCar),
-      image: car.image || "",
-      gallery: Array.isArray(car.gallery) ? car.gallery : [],
+      image: images.image,
+      gallery: images.gallery,
+      imageSource: images.imageSource,
+      imageConfidence: images.imageConfidence,
       fallbackCategoryImage: imageKeyFor(normalizedCar),
       estimatedMonthlyRunningCost: Math.round((costs.maintenancePerYear + costs.insurancePerYear + costs.repairsPerYear + costs.taxPerYear + ((consumption.realWorldKwhPer100km || 0) * 15000 / 100 * 0.24) + ((consumption.realWorldLitersPer100km || 0) * 15000 / 100 * 2)) / 12),
       dataConfidence: car.confidence || "medium",
@@ -3438,6 +3545,7 @@
       rankingCategory: "All",
       rankingLimit: 80,
       rankingRows: null,
+      syncedToolParam: "",
     };
 
     const icons = {
@@ -3511,11 +3619,30 @@
       return escapeHtml(src);
     }
 
+    function fallbackImageFor(car) {
+      return escapeHtml(artSvg(car.fallbackCategoryImage, car.categoryGroup || car.powertrain));
+    }
+
+    function carImage(car, attrs = "") {
+      return `<img ${attrs} alt="" src="${imageFor(car)}" data-fallback-src="${fallbackImageFor(car)}">`;
+    }
+
+    function galleryFor(car) {
+      const gallery = (Array.isArray(car.gallery) ? car.gallery : []).filter(Boolean).slice(0, 4);
+      if (!gallery.length) return "";
+      return `<div class="gallery-strip">${gallery.map((src) => `<img loading="lazy" alt="" src="${escapeHtml(src)}" data-fallback-src="${fallbackImageFor(car)}">`).join("")}</div>`;
+    }
+
     function parseRoute() {
       const loc = typeof location !== "undefined" ? location : { hash:"#home" };
       const hash = (loc.hash || "#home").replace(/^#\/?/, "").split("?")[0];
       const parts = hash.split("/").filter(Boolean);
       return { page: parts[0] || "home", sub: parts[1] || "", id: parts[1] || "" };
+    }
+
+    function routeParams() {
+      const loc = typeof location !== "undefined" ? location : { hash:"" };
+      return new URLSearchParams(String(loc.hash || "").split("?")[1] || "");
     }
 
     function setActiveNav() {
@@ -3540,7 +3667,18 @@
       if (!q) return null;
       return cars.find((car) => normalize(car.fullName || car.displayName) === q)
         || byId[value]
+        || carByRouteId(value)
         || cars.find((car) => car.searchText && car.searchText.includes(q))
+        || null;
+    }
+
+    function carByRouteId(id) {
+      if (!id) return null;
+      const clean = decodeURIComponent(String(id));
+      return byId[clean]
+        || cars.find((car) => car.id === clean)
+        || cars.find((car) => car.id.startsWith(`${clean}-`))
+        || cars.find((car) => normalize(car.fullName || car.displayName) === normalize(clean))
         || null;
     }
 
@@ -3551,7 +3689,7 @@
 
     function carCard(car, compact = false) {
       return `<a class="card" href="#car/${escapeHtml(car.id)}" aria-label="Open ${escapeHtml(car.fullName || car.displayName)}">
-        <div class="card-art"><img loading="lazy" alt="" src="${imageFor(car)}"></div>
+        <div class="card-art">${carImage(car, 'loading="lazy"')}</div>
         <div class="card-body">
           <div class="card-title">
             <div>
@@ -3587,7 +3725,7 @@
             </div>
           </div>
           <a class="feature-stage glass" href="#car/${escapeHtml(featured.id)}">
-            <div class="car-art"><img alt="" src="${imageFor(featured)}"></div>
+            <div class="car-art">${carImage(featured)}</div>
             <div class="feature-caption">
               <div class="caption-top">
                 <div><h3>${escapeHtml(featured.fullName)}</h3><p class="mini">${escapeHtml(featured.categoryGroup)} · ${escapeHtml(featured.powertrain)}</p></div>
@@ -3669,7 +3807,7 @@
     }
 
     function pageCarDetail(id) {
-      const car = byId[id] || cars[0];
+      const car = carByRouteId(id) || cars[0];
       const scores = car.scores || {};
       const specs = [
         ["Value", money(car.defaultUpfrontPrice)],
@@ -3701,12 +3839,13 @@
             <h1>${escapeHtml(car.fullName || car.displayName)}</h1>
             <p class="section-lead">${escapeHtml(car.marketContext || car.typicalMarket || "Portugal/EU estimate")}</p>
             <div class="actions">
+              <a class="button" href="#cars">Back to cars</a>
               <a class="button primary" href="#tools/financial?car=${encodeURIComponent(car.id)}">Compare financially</a>
               <a class="button" href="#tools/spec?car=${encodeURIComponent(car.id)}">Compare specs</a>
               <a class="button" href="#ranking">Add to ranking</a>
             </div>
           </div>
-          <div class="detail-art glass"><img alt="" src="${imageFor(car)}"></div>
+          <div class="detail-art glass">${carImage(car, 'loading="eager"')}${galleryFor(car)}</div>
         </section>
         <section class="section"><div class="section-head"><h2>Main Specs</h2></div><div class="spec-strip">${specs.map(([label, value]) => metric(label, value)).join("")}</div></section>
         <section class="section"><div class="section-head"><h2>Ownership</h2></div><div class="spec-strip">${ownership.map(([label, value]) => metric(label, value)).join("")}</div></section>
@@ -3731,11 +3870,25 @@
     }
 
     function pageTools() {
+      syncToolCarParam();
       if (state.route.sub === "financial") return toolFinancial();
       if (state.route.sub === "spec") return toolSpec();
       if (state.route.sub === "used") return toolUsed();
       if (state.route.sub === "value") return toolValue();
       return `<div class="page"><section class="section"><div class="section-head"><div><span class="eyebrow">${svgIcon("tools")} Tools</span><h2>Decision tools</h2><p class="section-lead">Four focused ways to compare cars.</p></div></div>${toolCards()}</section></div>`;
+    }
+
+    function syncToolCarParam() {
+      const carId = routeParams().get("car");
+      const selected = carByRouteId(carId);
+      if (!selected) return;
+      const key = `${state.route.sub}:${selected.id}`;
+      if (state.syncedToolParam === key) return;
+      state.syncedToolParam = key;
+      if (state.route.sub === "financial") state.financialCars.car1 = M.applyCarModelDefaults(state.financialCars.car1, selected.id);
+      if (state.route.sub === "spec") state.specIds = [selected.id].concat(state.specIds.filter((id) => id !== selected.id)).slice(0, 4);
+      if (state.route.sub === "value") state.valueIds = [selected.id].concat(state.valueIds.filter((id) => id !== selected.id)).slice(0, 4);
+      if (state.route.sub === "used") state.usedOffers[0].modelId = selected.id;
     }
 
     function toolFinancial() {
@@ -3785,8 +3938,9 @@
     }
 
     function financialResultCard(row) {
+      const modelId = row.modelId || row.carKey || "";
       return `<div class="panel">
-        <div class="label-row"><h3>${escapeHtml(row.option)}</h3>${row.isWinner ? `<span class="tag green">Winner</span>` : `<span class="tag">Option</span>`}</div>
+        <div class="label-row"><h3>${modelId ? `<a href="#car/${escapeHtml(modelId)}">${escapeHtml(row.option)}</a>` : escapeHtml(row.option)}</h3>${row.isWinner ? `<span class="tag green">Winner</span>` : `<span class="tag">Option</span>`}</div>
         <div class="spec-strip" style="margin-top:12px">
           ${metric("Total paid", money(row.totalPaid))}
           ${metric("Net worth", money(row.finalMoney))}
@@ -3828,7 +3982,7 @@
     }
 
     function compareHeader(chosen) {
-      return `<div class="compare-line" style="--cols:${chosen.length}"><div></div>${chosen.map((car) => `<div><strong>${escapeHtml(car.fullName)}</strong><p class="mini">${escapeHtml(car.categoryGroup)}</p></div>`).join("")}</div>`;
+      return `<div class="compare-line" style="--cols:${chosen.length}"><div></div>${chosen.map((car) => `<div><strong><a href="#car/${escapeHtml(car.id)}">${escapeHtml(car.fullName)}</a></strong><p class="mini">${escapeHtml(car.categoryGroup)}</p></div>`).join("")}</div>`;
     }
 
     function compareLine(label, chosen, fn) {
@@ -3842,7 +3996,7 @@
         <div class="section-head"><div><span class="eyebrow">${svgIcon("search")} Used Market Compare</span><h2>Is the used offer good?</h2><p class="section-lead">Offer price, mileage, condition, battery health, warranty, service history, risk, and expected repairs.</p></div></div>
         <div class="wide-layout">
           <div class="grid">${state.usedOffers.map((offer, index) => usedOfferPanel(offer, index)).join("")}</div>
-          <div class="grid">${ranked.map((offer, index) => `<div class="panel"><div class="label-row"><h3>${index + 1}. ${escapeHtml(offer.car.fullName)}</h3><span class="tag ${offer.score >= 0 ? "green" : "rose"}">${money(offer.score)}</span></div><div class="spec-strip" style="margin-top:12px">${metric("Offer", money(offer.offerPrice))}${metric("Adjusted value", money(offer.adjustedValue))}${metric("Risk reserve", money(offer.riskReserve))}${metric("Verdict", offer.score >= 0 ? "Good offer" : "Overpriced")}</div></div>`).join("")}</div>
+          <div class="grid">${ranked.map((offer, index) => `<div class="panel"><div class="label-row"><h3>${index + 1}. <a href="#car/${escapeHtml(offer.car.id)}">${escapeHtml(offer.car.fullName)}</a></h3><span class="tag ${offer.score >= 0 ? "green" : "rose"}">${money(offer.score)}</span></div><div class="spec-strip" style="margin-top:12px">${metric("Offer", money(offer.offerPrice))}${metric("Adjusted value", money(offer.adjustedValue))}${metric("Risk reserve", money(offer.riskReserve))}${metric("Verdict", offer.score >= 0 ? "Good offer" : "Overpriced")}</div><div class="actions" style="margin-top:12px"><a class="button" href="#car/${escapeHtml(offer.car.id)}">Open car page</a></div></div>`).join("")}</div>
         </div>
       </section></div>`;
     }
@@ -3882,7 +4036,7 @@
       const rows = valueRows(chosen);
       return `<div class="page"><section class="section">
         <div class="section-head"><div><span class="eyebrow">${svgIcon("rank")} Value Compare</span><h2>Best total value</h2><p class="section-lead">Transparent normalized score: financial outcome, quality, spec value, and reliability/practicality.</p></div></div>
-        <div class="tool-layout">${selectionPanel("value", state.valueIds)}<div class="grid">${rows.map((row, index) => `<div class="panel"><div class="label-row"><h3>${index + 1}. ${escapeHtml(row.car.fullName)}</h3><span class="tag green">${number(row.valueScore, 0)}</span></div><div class="spec-strip" style="margin-top:12px">${metric("Financial", `${number(row.financial, 0)}`)}${metric("Quality", `${number(row.quality, 0)}`)}${metric("Spec value", `${number(row.spec, 0)}`)}${metric("Reliable/practical", `${number(row.life, 0)}`)}</div><p class="mini" style="margin-top:10px">Formula: 40% financial, 25% quality, 20% performance per euro, 15% reliability and practicality.</p></div>`).join("")}</div></div>
+        <div class="tool-layout">${selectionPanel("value", state.valueIds)}<div class="grid">${rows.map((row, index) => `<div class="panel"><div class="label-row"><h3>${index + 1}. <a href="#car/${escapeHtml(row.car.id)}">${escapeHtml(row.car.fullName)}</a></h3><span class="tag green">${number(row.valueScore, 0)}</span></div><div class="spec-strip" style="margin-top:12px">${metric("Financial", `${number(row.financial, 0)}`)}${metric("Quality", `${number(row.quality, 0)}`)}${metric("Spec value", `${number(row.spec, 0)}`)}${metric("Reliable/practical", `${number(row.life, 0)}`)}</div><p class="mini" style="margin-top:10px">Formula: 40% financial, 25% quality, 20% performance per euro, 15% reliability and practicality.</p><div class="actions" style="margin-top:12px"><a class="button" href="#car/${escapeHtml(row.car.id)}">Open car page</a></div></div>`).join("")}</div></div>
       </section></div>`;
     }
 
@@ -4037,32 +4191,36 @@
       if (el.dataset.carsSearch !== undefined) {
         state.carSearch = el.value;
         state.carVisible = 48;
-        render();
+        render({ preserveFocus:true });
       }
       if (el.dataset.carsCategory !== undefined) {
         state.carCategory = el.value;
         state.carVisible = 48;
-        render();
+        render({ preserveFocus:true });
       }
       if (el.dataset.rankingSearch !== undefined) {
         state.rankingSearch = el.value;
         state.rankingLimit = 80;
-        render();
+        render({ preserveFocus:true });
       }
       if (el.dataset.rankingCategory !== undefined) {
         state.rankingCategory = el.value;
         state.rankingLimit = 80;
-        render();
+        render({ preserveFocus:true });
       }
       if (el.dataset.assumption) {
-        state.assumptions[el.dataset.assumption] = Number(el.value);
-        state.rankingRows = null;
-        render();
+        if (isCompleteNumber(el.value)) {
+          state.assumptions[el.dataset.assumption] = Number(el.value);
+          state.rankingRows = null;
+          render({ preserveFocus:true });
+        }
       }
       if (el.dataset.finField) {
         const [key, field] = el.dataset.finField.split(":");
-        state.financialCars[key] = M.markCustom(Object.assign({}, state.financialCars[key], { [field]: Number(el.value) }), field);
-        render();
+        if (isCompleteNumber(el.value)) {
+          state.financialCars[key] = M.markCustom(Object.assign({}, state.financialCars[key], { [field]: Number(el.value) }), field);
+          render({ preserveFocus:true });
+        }
       }
       if (el.dataset.finMode) {
         const key = el.dataset.finMode;
@@ -4071,13 +4229,33 @@
       }
       if (el.dataset.usedField) {
         const [index, field] = el.dataset.usedField.split(":");
-        state.usedOffers[Number(index)][field] = Number(el.value);
-        render();
+        if (isCompleteNumber(el.value)) {
+          state.usedOffers[Number(index)][field] = Number(el.value);
+          render({ preserveFocus:true });
+        }
       }
     }
 
     function handleChange(event) {
       const el = event.target;
+      if (el.dataset.assumption && isFiniteNumberLike(el.value)) {
+        state.assumptions[el.dataset.assumption] = Number(el.value);
+        state.rankingRows = null;
+        render({ preserveFocus:true });
+        return;
+      }
+      if (el.dataset.finField && isFiniteNumberLike(el.value)) {
+        const [key, field] = el.dataset.finField.split(":");
+        state.financialCars[key] = M.markCustom(Object.assign({}, state.financialCars[key], { [field]: Number(el.value) }), field);
+        render({ preserveFocus:true });
+        return;
+      }
+      if (el.dataset.usedField && isFiniteNumberLike(el.value)) {
+        const [index, field] = el.dataset.usedField.split(":");
+        state.usedOffers[Number(index)][field] = Number(el.value);
+        render({ preserveFocus:true });
+        return;
+      }
       if (el.dataset.carInput) {
         const car = findCarByInput(el.value);
         if (!car) return;
@@ -4090,7 +4268,50 @@
       }
     }
 
-    function render() {
+    function isFiniteNumberLike(value) {
+      return String(value).trim() !== "" && Number.isFinite(Number(value));
+    }
+
+    function isCompleteNumber(value) {
+      const text = String(value);
+      return isFiniteNumberLike(text) && !/[.\-+]$/.test(text.trim());
+    }
+
+    function activeInputSnapshot() {
+      const el = document.activeElement;
+      if (!el || !/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return null;
+      const keys = ["carInput", "carsSearch", "carsCategory", "rankingSearch", "rankingCategory", "assumption", "finField", "finMode", "usedField"];
+      const key = keys.find((item) => Object.prototype.hasOwnProperty.call(el.dataset, item));
+      if (!key) return null;
+      return {
+        selector: `[data-${key.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`)}="${cssAttr(el.dataset[key])}"]`,
+        value: el.value,
+        start: typeof el.selectionStart === "number" ? el.selectionStart : null,
+        end: typeof el.selectionEnd === "number" ? el.selectionEnd : null,
+        scrollY: window.scrollY,
+      };
+    }
+
+    function cssAttr(value) {
+      return String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    }
+
+    function restoreInputSnapshot(snapshot) {
+      if (!snapshot) return;
+      const next = document.querySelector(snapshot.selector);
+      if (!next) return;
+      next.focus({ preventScroll:true });
+      if (next.tagName === "INPUT" || next.tagName === "TEXTAREA") {
+        next.value = snapshot.value;
+        if (snapshot.start !== null && snapshot.end !== null) {
+          try { next.setSelectionRange(snapshot.start, snapshot.end); } catch (error) {}
+        }
+      }
+      window.scrollTo({ top:snapshot.scrollY, behavior:"instant" in window ? "instant" : "auto" });
+    }
+
+    function render(options = {}) {
+      const focusSnapshot = options.preserveFocus ? activeInputSnapshot() : null;
       state.route = parseRoute();
       setActiveNav();
       let html = "";
@@ -4101,12 +4322,19 @@
       else if (state.route.page === "ranking") html = pageRanking();
       else html = pageHome();
       document.getElementById("app").innerHTML = html;
-      window.scrollTo({ top:0, behavior:"instant" in window ? "instant" : "auto" });
+      if (focusSnapshot) restoreInputSnapshot(focusSnapshot);
+      else window.scrollTo({ top:0, behavior:"instant" in window ? "instant" : "auto" });
     }
 
     document.addEventListener("click", handleClick);
     document.addEventListener("input", handleInput);
     document.addEventListener("change", handleChange);
+    document.addEventListener("error", (event) => {
+      const img = event.target;
+      if (!img || img.tagName !== "IMG" || !img.dataset.fallbackSrc || img.dataset.fallbackApplied) return;
+      img.dataset.fallbackApplied = "true";
+      img.src = img.dataset.fallbackSrc;
+    }, true);
     window.addEventListener("hashchange", render);
     fillDatalist();
     render();

@@ -271,7 +271,10 @@
       padding:18px 0 24px;
     }
     .detail-title { display:grid; align-content:center; gap:18px; padding:28px; border-radius:28px; min-height:320px; }
-    .detail-art { border-radius:28px; overflow:hidden; min-height:320px; }
+    .detail-art { border-radius:28px; overflow:hidden; min-height:320px; display:grid; grid-template-rows:minmax(260px,1fr) auto; }
+    .detail-art > img { width:100%; height:100%; min-height:260px; object-fit:cover; }
+    .gallery-strip { display:flex; gap:8px; padding:10px; overflow-x:auto; border-top:1px solid var(--line); background:rgba(255,255,255,.54); }
+    .gallery-strip img { width:94px; height:58px; flex:0 0 auto; object-fit:cover; border:1px solid var(--line); border-radius:var(--radius); }
     .spec-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
     .ranking-list { display:grid; gap:10px; }
     .rank-row {
@@ -376,6 +379,7 @@
       rankingCategory: "All",
       rankingLimit: 80,
       rankingRows: null,
+      syncedToolParam: "",
     };
 
     const icons = {
@@ -449,11 +453,30 @@
       return escapeHtml(src);
     }
 
+    function fallbackImageFor(car) {
+      return escapeHtml(artSvg(car.fallbackCategoryImage, car.categoryGroup || car.powertrain));
+    }
+
+    function carImage(car, attrs = "") {
+      return `<img ${attrs} alt="" src="${imageFor(car)}" data-fallback-src="${fallbackImageFor(car)}">`;
+    }
+
+    function galleryFor(car) {
+      const gallery = (Array.isArray(car.gallery) ? car.gallery : []).filter(Boolean).slice(0, 4);
+      if (!gallery.length) return "";
+      return `<div class="gallery-strip">${gallery.map((src) => `<img loading="lazy" alt="" src="${escapeHtml(src)}" data-fallback-src="${fallbackImageFor(car)}">`).join("")}</div>`;
+    }
+
     function parseRoute() {
       const loc = typeof location !== "undefined" ? location : { hash:"#home" };
       const hash = (loc.hash || "#home").replace(/^#\/?/, "").split("?")[0];
       const parts = hash.split("/").filter(Boolean);
       return { page: parts[0] || "home", sub: parts[1] || "", id: parts[1] || "" };
+    }
+
+    function routeParams() {
+      const loc = typeof location !== "undefined" ? location : { hash:"" };
+      return new URLSearchParams(String(loc.hash || "").split("?")[1] || "");
     }
 
     function setActiveNav() {
@@ -478,7 +501,18 @@
       if (!q) return null;
       return cars.find((car) => normalize(car.fullName || car.displayName) === q)
         || byId[value]
+        || carByRouteId(value)
         || cars.find((car) => car.searchText && car.searchText.includes(q))
+        || null;
+    }
+
+    function carByRouteId(id) {
+      if (!id) return null;
+      const clean = decodeURIComponent(String(id));
+      return byId[clean]
+        || cars.find((car) => car.id === clean)
+        || cars.find((car) => car.id.startsWith(`${clean}-`))
+        || cars.find((car) => normalize(car.fullName || car.displayName) === normalize(clean))
         || null;
     }
 
@@ -489,7 +523,7 @@
 
     function carCard(car, compact = false) {
       return `<a class="card" href="#car/${escapeHtml(car.id)}" aria-label="Open ${escapeHtml(car.fullName || car.displayName)}">
-        <div class="card-art"><img loading="lazy" alt="" src="${imageFor(car)}"></div>
+        <div class="card-art">${carImage(car, 'loading="lazy"')}</div>
         <div class="card-body">
           <div class="card-title">
             <div>
@@ -525,7 +559,7 @@
             </div>
           </div>
           <a class="feature-stage glass" href="#car/${escapeHtml(featured.id)}">
-            <div class="car-art"><img alt="" src="${imageFor(featured)}"></div>
+            <div class="car-art">${carImage(featured)}</div>
             <div class="feature-caption">
               <div class="caption-top">
                 <div><h3>${escapeHtml(featured.fullName)}</h3><p class="mini">${escapeHtml(featured.categoryGroup)} · ${escapeHtml(featured.powertrain)}</p></div>
@@ -607,7 +641,7 @@
     }
 
     function pageCarDetail(id) {
-      const car = byId[id] || cars[0];
+      const car = carByRouteId(id) || cars[0];
       const scores = car.scores || {};
       const specs = [
         ["Value", money(car.defaultUpfrontPrice)],
@@ -639,12 +673,13 @@
             <h1>${escapeHtml(car.fullName || car.displayName)}</h1>
             <p class="section-lead">${escapeHtml(car.marketContext || car.typicalMarket || "Portugal/EU estimate")}</p>
             <div class="actions">
+              <a class="button" href="#cars">Back to cars</a>
               <a class="button primary" href="#tools/financial?car=${encodeURIComponent(car.id)}">Compare financially</a>
               <a class="button" href="#tools/spec?car=${encodeURIComponent(car.id)}">Compare specs</a>
               <a class="button" href="#ranking">Add to ranking</a>
             </div>
           </div>
-          <div class="detail-art glass"><img alt="" src="${imageFor(car)}"></div>
+          <div class="detail-art glass">${carImage(car, 'loading="eager"')}${galleryFor(car)}</div>
         </section>
         <section class="section"><div class="section-head"><h2>Main Specs</h2></div><div class="spec-strip">${specs.map(([label, value]) => metric(label, value)).join("")}</div></section>
         <section class="section"><div class="section-head"><h2>Ownership</h2></div><div class="spec-strip">${ownership.map(([label, value]) => metric(label, value)).join("")}</div></section>
@@ -669,11 +704,25 @@
     }
 
     function pageTools() {
+      syncToolCarParam();
       if (state.route.sub === "financial") return toolFinancial();
       if (state.route.sub === "spec") return toolSpec();
       if (state.route.sub === "used") return toolUsed();
       if (state.route.sub === "value") return toolValue();
       return `<div class="page"><section class="section"><div class="section-head"><div><span class="eyebrow">${svgIcon("tools")} Tools</span><h2>Decision tools</h2><p class="section-lead">Four focused ways to compare cars.</p></div></div>${toolCards()}</section></div>`;
+    }
+
+    function syncToolCarParam() {
+      const carId = routeParams().get("car");
+      const selected = carByRouteId(carId);
+      if (!selected) return;
+      const key = `${state.route.sub}:${selected.id}`;
+      if (state.syncedToolParam === key) return;
+      state.syncedToolParam = key;
+      if (state.route.sub === "financial") state.financialCars.car1 = M.applyCarModelDefaults(state.financialCars.car1, selected.id);
+      if (state.route.sub === "spec") state.specIds = [selected.id].concat(state.specIds.filter((id) => id !== selected.id)).slice(0, 4);
+      if (state.route.sub === "value") state.valueIds = [selected.id].concat(state.valueIds.filter((id) => id !== selected.id)).slice(0, 4);
+      if (state.route.sub === "used") state.usedOffers[0].modelId = selected.id;
     }
 
     function toolFinancial() {
@@ -723,8 +772,9 @@
     }
 
     function financialResultCard(row) {
+      const modelId = row.modelId || row.carKey || "";
       return `<div class="panel">
-        <div class="label-row"><h3>${escapeHtml(row.option)}</h3>${row.isWinner ? `<span class="tag green">Winner</span>` : `<span class="tag">Option</span>`}</div>
+        <div class="label-row"><h3>${modelId ? `<a href="#car/${escapeHtml(modelId)}">${escapeHtml(row.option)}</a>` : escapeHtml(row.option)}</h3>${row.isWinner ? `<span class="tag green">Winner</span>` : `<span class="tag">Option</span>`}</div>
         <div class="spec-strip" style="margin-top:12px">
           ${metric("Total paid", money(row.totalPaid))}
           ${metric("Net worth", money(row.finalMoney))}
@@ -766,7 +816,7 @@
     }
 
     function compareHeader(chosen) {
-      return `<div class="compare-line" style="--cols:${chosen.length}"><div></div>${chosen.map((car) => `<div><strong>${escapeHtml(car.fullName)}</strong><p class="mini">${escapeHtml(car.categoryGroup)}</p></div>`).join("")}</div>`;
+      return `<div class="compare-line" style="--cols:${chosen.length}"><div></div>${chosen.map((car) => `<div><strong><a href="#car/${escapeHtml(car.id)}">${escapeHtml(car.fullName)}</a></strong><p class="mini">${escapeHtml(car.categoryGroup)}</p></div>`).join("")}</div>`;
     }
 
     function compareLine(label, chosen, fn) {
@@ -780,7 +830,7 @@
         <div class="section-head"><div><span class="eyebrow">${svgIcon("search")} Used Market Compare</span><h2>Is the used offer good?</h2><p class="section-lead">Offer price, mileage, condition, battery health, warranty, service history, risk, and expected repairs.</p></div></div>
         <div class="wide-layout">
           <div class="grid">${state.usedOffers.map((offer, index) => usedOfferPanel(offer, index)).join("")}</div>
-          <div class="grid">${ranked.map((offer, index) => `<div class="panel"><div class="label-row"><h3>${index + 1}. ${escapeHtml(offer.car.fullName)}</h3><span class="tag ${offer.score >= 0 ? "green" : "rose"}">${money(offer.score)}</span></div><div class="spec-strip" style="margin-top:12px">${metric("Offer", money(offer.offerPrice))}${metric("Adjusted value", money(offer.adjustedValue))}${metric("Risk reserve", money(offer.riskReserve))}${metric("Verdict", offer.score >= 0 ? "Good offer" : "Overpriced")}</div></div>`).join("")}</div>
+          <div class="grid">${ranked.map((offer, index) => `<div class="panel"><div class="label-row"><h3>${index + 1}. <a href="#car/${escapeHtml(offer.car.id)}">${escapeHtml(offer.car.fullName)}</a></h3><span class="tag ${offer.score >= 0 ? "green" : "rose"}">${money(offer.score)}</span></div><div class="spec-strip" style="margin-top:12px">${metric("Offer", money(offer.offerPrice))}${metric("Adjusted value", money(offer.adjustedValue))}${metric("Risk reserve", money(offer.riskReserve))}${metric("Verdict", offer.score >= 0 ? "Good offer" : "Overpriced")}</div><div class="actions" style="margin-top:12px"><a class="button" href="#car/${escapeHtml(offer.car.id)}">Open car page</a></div></div>`).join("")}</div>
         </div>
       </section></div>`;
     }
@@ -820,7 +870,7 @@
       const rows = valueRows(chosen);
       return `<div class="page"><section class="section">
         <div class="section-head"><div><span class="eyebrow">${svgIcon("rank")} Value Compare</span><h2>Best total value</h2><p class="section-lead">Transparent normalized score: financial outcome, quality, spec value, and reliability/practicality.</p></div></div>
-        <div class="tool-layout">${selectionPanel("value", state.valueIds)}<div class="grid">${rows.map((row, index) => `<div class="panel"><div class="label-row"><h3>${index + 1}. ${escapeHtml(row.car.fullName)}</h3><span class="tag green">${number(row.valueScore, 0)}</span></div><div class="spec-strip" style="margin-top:12px">${metric("Financial", `${number(row.financial, 0)}`)}${metric("Quality", `${number(row.quality, 0)}`)}${metric("Spec value", `${number(row.spec, 0)}`)}${metric("Reliable/practical", `${number(row.life, 0)}`)}</div><p class="mini" style="margin-top:10px">Formula: 40% financial, 25% quality, 20% performance per euro, 15% reliability and practicality.</p></div>`).join("")}</div></div>
+        <div class="tool-layout">${selectionPanel("value", state.valueIds)}<div class="grid">${rows.map((row, index) => `<div class="panel"><div class="label-row"><h3>${index + 1}. <a href="#car/${escapeHtml(row.car.id)}">${escapeHtml(row.car.fullName)}</a></h3><span class="tag green">${number(row.valueScore, 0)}</span></div><div class="spec-strip" style="margin-top:12px">${metric("Financial", `${number(row.financial, 0)}`)}${metric("Quality", `${number(row.quality, 0)}`)}${metric("Spec value", `${number(row.spec, 0)}`)}${metric("Reliable/practical", `${number(row.life, 0)}`)}</div><p class="mini" style="margin-top:10px">Formula: 40% financial, 25% quality, 20% performance per euro, 15% reliability and practicality.</p><div class="actions" style="margin-top:12px"><a class="button" href="#car/${escapeHtml(row.car.id)}">Open car page</a></div></div>`).join("")}</div></div>
       </section></div>`;
     }
 
@@ -975,32 +1025,36 @@
       if (el.dataset.carsSearch !== undefined) {
         state.carSearch = el.value;
         state.carVisible = 48;
-        render();
+        render({ preserveFocus:true });
       }
       if (el.dataset.carsCategory !== undefined) {
         state.carCategory = el.value;
         state.carVisible = 48;
-        render();
+        render({ preserveFocus:true });
       }
       if (el.dataset.rankingSearch !== undefined) {
         state.rankingSearch = el.value;
         state.rankingLimit = 80;
-        render();
+        render({ preserveFocus:true });
       }
       if (el.dataset.rankingCategory !== undefined) {
         state.rankingCategory = el.value;
         state.rankingLimit = 80;
-        render();
+        render({ preserveFocus:true });
       }
       if (el.dataset.assumption) {
-        state.assumptions[el.dataset.assumption] = Number(el.value);
-        state.rankingRows = null;
-        render();
+        if (isCompleteNumber(el.value)) {
+          state.assumptions[el.dataset.assumption] = Number(el.value);
+          state.rankingRows = null;
+          render({ preserveFocus:true });
+        }
       }
       if (el.dataset.finField) {
         const [key, field] = el.dataset.finField.split(":");
-        state.financialCars[key] = M.markCustom(Object.assign({}, state.financialCars[key], { [field]: Number(el.value) }), field);
-        render();
+        if (isCompleteNumber(el.value)) {
+          state.financialCars[key] = M.markCustom(Object.assign({}, state.financialCars[key], { [field]: Number(el.value) }), field);
+          render({ preserveFocus:true });
+        }
       }
       if (el.dataset.finMode) {
         const key = el.dataset.finMode;
@@ -1009,13 +1063,33 @@
       }
       if (el.dataset.usedField) {
         const [index, field] = el.dataset.usedField.split(":");
-        state.usedOffers[Number(index)][field] = Number(el.value);
-        render();
+        if (isCompleteNumber(el.value)) {
+          state.usedOffers[Number(index)][field] = Number(el.value);
+          render({ preserveFocus:true });
+        }
       }
     }
 
     function handleChange(event) {
       const el = event.target;
+      if (el.dataset.assumption && isFiniteNumberLike(el.value)) {
+        state.assumptions[el.dataset.assumption] = Number(el.value);
+        state.rankingRows = null;
+        render({ preserveFocus:true });
+        return;
+      }
+      if (el.dataset.finField && isFiniteNumberLike(el.value)) {
+        const [key, field] = el.dataset.finField.split(":");
+        state.financialCars[key] = M.markCustom(Object.assign({}, state.financialCars[key], { [field]: Number(el.value) }), field);
+        render({ preserveFocus:true });
+        return;
+      }
+      if (el.dataset.usedField && isFiniteNumberLike(el.value)) {
+        const [index, field] = el.dataset.usedField.split(":");
+        state.usedOffers[Number(index)][field] = Number(el.value);
+        render({ preserveFocus:true });
+        return;
+      }
       if (el.dataset.carInput) {
         const car = findCarByInput(el.value);
         if (!car) return;
@@ -1028,7 +1102,50 @@
       }
     }
 
-    function render() {
+    function isFiniteNumberLike(value) {
+      return String(value).trim() !== "" && Number.isFinite(Number(value));
+    }
+
+    function isCompleteNumber(value) {
+      const text = String(value);
+      return isFiniteNumberLike(text) && !/[.\-+]$/.test(text.trim());
+    }
+
+    function activeInputSnapshot() {
+      const el = document.activeElement;
+      if (!el || !/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return null;
+      const keys = ["carInput", "carsSearch", "carsCategory", "rankingSearch", "rankingCategory", "assumption", "finField", "finMode", "usedField"];
+      const key = keys.find((item) => Object.prototype.hasOwnProperty.call(el.dataset, item));
+      if (!key) return null;
+      return {
+        selector: `[data-${key.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`)}="${cssAttr(el.dataset[key])}"]`,
+        value: el.value,
+        start: typeof el.selectionStart === "number" ? el.selectionStart : null,
+        end: typeof el.selectionEnd === "number" ? el.selectionEnd : null,
+        scrollY: window.scrollY,
+      };
+    }
+
+    function cssAttr(value) {
+      return String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    }
+
+    function restoreInputSnapshot(snapshot) {
+      if (!snapshot) return;
+      const next = document.querySelector(snapshot.selector);
+      if (!next) return;
+      next.focus({ preventScroll:true });
+      if (next.tagName === "INPUT" || next.tagName === "TEXTAREA") {
+        next.value = snapshot.value;
+        if (snapshot.start !== null && snapshot.end !== null) {
+          try { next.setSelectionRange(snapshot.start, snapshot.end); } catch (error) {}
+        }
+      }
+      window.scrollTo({ top:snapshot.scrollY, behavior:"instant" in window ? "instant" : "auto" });
+    }
+
+    function render(options = {}) {
+      const focusSnapshot = options.preserveFocus ? activeInputSnapshot() : null;
       state.route = parseRoute();
       setActiveNav();
       let html = "";
@@ -1039,12 +1156,19 @@
       else if (state.route.page === "ranking") html = pageRanking();
       else html = pageHome();
       document.getElementById("app").innerHTML = html;
-      window.scrollTo({ top:0, behavior:"instant" in window ? "instant" : "auto" });
+      if (focusSnapshot) restoreInputSnapshot(focusSnapshot);
+      else window.scrollTo({ top:0, behavior:"instant" in window ? "instant" : "auto" });
     }
 
     document.addEventListener("click", handleClick);
     document.addEventListener("input", handleInput);
     document.addEventListener("change", handleChange);
+    document.addEventListener("error", (event) => {
+      const img = event.target;
+      if (!img || img.tagName !== "IMG" || !img.dataset.fallbackSrc || img.dataset.fallbackApplied) return;
+      img.dataset.fallbackApplied = "true";
+      img.src = img.dataset.fallbackSrc;
+    }, true);
     window.addEventListener("hashchange", render);
     fillDatalist();
     render();
